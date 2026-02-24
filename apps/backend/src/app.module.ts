@@ -28,7 +28,7 @@ import { Habit, HabitLog } from './habits/habit.entity';
       useFactory: (configService: ConfigService) => {
         const isProduction = configService.get<string>('NODE_ENV') === 'production';
         const dbHost = configService.get<string>('DB_HOST');
-        const useMySQL = isProduction || !!dbHost;
+        const useMySQL = !!dbHost;
 
         if (useMySQL) {
           return {
