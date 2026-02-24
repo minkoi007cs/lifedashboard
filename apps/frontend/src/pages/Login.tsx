@@ -22,7 +22,8 @@ export const Login: React.FC = () => {
     }, [user, navigate]);
 
     const handleGoogleLogin = () => {
-        window.location.href = 'http://localhost:3000/api/v1/auth/google';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        window.location.href = `${apiUrl}/api/v1/auth/google`;
     };
 
     const handleDevLogin = async () => {
