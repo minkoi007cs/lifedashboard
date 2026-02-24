@@ -39,7 +39,7 @@ export const FinanceWidget: React.FC = () => {
                     <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <p className="text-xs text-gray-500 dark:text-green-300 font-bold uppercase tracking-wider mb-1">Real Profit</p>
                         <p className={`text-3xl font-black ${period?.realProfit && period.realProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
-                            ${period?.realProfit.toFixed(0) ?? '0'}
+                            ${period?.realProfit?.toFixed(0) ?? '0'}
                         </p>
                     </div>
 
@@ -49,14 +49,14 @@ export const FinanceWidget: React.FC = () => {
                                 <ArrowUp className="w-3 h-3 mr-1" />
                                 <span className="text-[10px] font-bold uppercase">Net Payout</span>
                             </div>
-                            <p className="text-lg font-bold text-gray-900 dark:text-white">${period?.netPayout.toFixed(0) ?? '0'}</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">${period?.netPayout?.toFixed(0) ?? '0'}</p>
                         </div>
                         <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
                             <div className="flex items-center text-red-600 mb-1">
                                 <ArrowDown className="w-3 h-3 mr-1" />
                                 <span className="text-[10px] font-bold uppercase">Expenses</span>
                             </div>
-                            <p className="text-lg font-bold text-gray-900 dark:text-white">${period?.totalExpenses.toFixed(0) ?? '0'}</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">${period?.totalExpenses?.toFixed(0) ?? '0'}</p>
                         </div>
                     </div>
                 </div>

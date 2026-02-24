@@ -13,9 +13,42 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 20s
       retries: 10
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./apps/backend/.env
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=lifedashboard
+      - FRONTEND_URL=http://localhost
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+    platform: linux/amd64
+    ports:
+      - '80:80'
+    depends_on:
+      - backend
 
 volumes:
   db_data:

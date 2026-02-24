@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 interface FoodLogFormProps {
     onSuccess?: () => void;

@@ -9,32 +9,32 @@ export class CaloriesController {
 
     @Post('food')
     logFood(@Body() data: any, @Request() req) {
-        return this.caloriesService.logFood(data, req.user.id);
+        return this.caloriesService.logFood(data, req.user.userId);
     }
 
     @Delete('food/:id')
     deleteFood(@Param('id') id: string, @Request() req) {
-        return this.caloriesService.deleteFood(id, req.user.id);
+        return this.caloriesService.deleteFood(id, req.user.userId);
     }
 
     @Post('weight')
     logWeight(@Body() data: { weight: number, date: string }, @Request() req) {
-        return this.caloriesService.logWeight(data.weight, data.date, req.user.id);
+        return this.caloriesService.logWeight(data.weight, data.date, req.user.userId);
     }
 
     @Post('plan')
     createDietPlan(@Body() data: any, @Request() req) {
-        return this.caloriesService.createDietPlan(data, req.user.id);
+        return this.caloriesService.createDietPlan(data, req.user.userId);
     }
 
     @Get('plan/:date')
     getPlan(@Param('date') date: string, @Request() req) {
-        return this.caloriesService.getDietPlan(date, req.user.id);
+        return this.caloriesService.getDietPlan(date, req.user.userId);
     }
 
     @Get('statistics')
     getStatistics(@Request() req) {
-        return this.caloriesService.getStatistics(req.user.id);
+        return this.caloriesService.getStatistics(req.user.userId);
     }
 
     @Get('search')

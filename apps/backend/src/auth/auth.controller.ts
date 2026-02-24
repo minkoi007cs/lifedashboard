@@ -15,7 +15,8 @@ export class AuthController {
     async googleAuthRedirect(@Req() req, @Res() res) {
         const result = await this.authService.googleLogin(req) as any;
         const accessToken = result.accessToken;
-        res.redirect(`http://localhost:5173/login/success?token=${accessToken}`);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/login/success?token=${accessToken}`);
     }
 
     // Dev-only bypass — disabled in production
