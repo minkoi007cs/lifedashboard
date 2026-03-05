@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { habitService } from '../../services/habitService';
 import { X, Bell, Target } from 'lucide-react';
-import { Habit } from '../../types/habit';
+import type { Habit } from '../../types/habit';
 
 interface HabitModalProps {
     habit?: Habit | null;

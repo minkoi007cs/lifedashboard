@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { habitService } from '../services/habitService';
-import { Plus, Zap, BarChart2, Calendar as CalendarIcon, Archive } from 'lucide-react';
+import { Plus, Zap, BarChart2, Calendar as CalendarIcon } from 'lucide-react';
 import { HabitList } from '../components/habits/HabitList';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHeatmap } from '../components/habits/HabitHeatmap';
