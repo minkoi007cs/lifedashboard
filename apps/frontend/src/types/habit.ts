@@ -1,7 +1,4 @@
-export enum FrequencyType {
-    DAILY = 'daily',
-    WEEKLY = 'weekly'
-}
+export type FrequencyType = 'daily' | 'weekly';
 
 export interface HabitLog {
     id: string;
