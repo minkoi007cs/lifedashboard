@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { LayoutDashboard, CheckSquare, Zap, Target, DollarSign, LogOut } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Zap, Target, DollarSign, LogOut, Utensils } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
     const { user, logout } = useAuthStore();
@@ -39,6 +39,10 @@ export const AppLayout: React.FC = () => {
                     <Link to="/finance" className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <DollarSign className="w-5 h-5 mr-3" />
                         Finance
+                    </Link>
+                    <Link to="/calories" className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <Utensils className="w-5 h-5 mr-3" />
+                        Calories
                     </Link>
                 </nav>
                 <div className="absolute bottom-0 w-64 p-4 border-t border-gray-200 dark:border-gray-700">
