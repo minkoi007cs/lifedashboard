@@ -61,7 +61,7 @@ async function bootstrap() {
   return cachedServer;
 }
 
-export default async function handler(req: any, res: any) {
+async function handler(req: any, res: any) {
   console.log(`[VERCEL HANDLER] Incoming Request: ${req.method} ${req.url}`);
   try {
     const server = await bootstrap();
@@ -73,3 +73,6 @@ export default async function handler(req: any, res: any) {
     res.end('Internal Server Error: ' + String(error));
   }
 }
+
+module.exports = handler;
+export default handler;
