@@ -28,7 +28,7 @@ import { Habit, HabitLog } from './habits/habit.entity';
       useFactory: (configService: ConfigService) => {
         const isProduction = configService.get<string>('NODE_ENV') === 'production';
         const dbHost = configService.get<string>('DB_HOST');
-        const dbUrl = configService.get<string>('DATABASE_URL');
+        const dbUrl = configService.get<string>('DATABASE_URL') || process.env.DATABASE_URL;
         const usePostgres = !!dbHost || !!dbUrl;
 
         if (usePostgres) {
