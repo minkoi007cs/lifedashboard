@@ -28,9 +28,19 @@ import { Habit, HabitLog } from './habits/habit.entity';
       useFactory: (configService: ConfigService) => {
         const isProduction = configService.get<string>('NODE_ENV') === 'production';
         const dbHost = configService.get<string>('DB_HOST');
-        const usePostgres = !!dbHost;
+        const dbUrl = configService.get<string>('DATABASE_URL');
+        const usePostgres = !!dbHost || !!dbUrl;
 
         if (usePostgres) {
+          if (dbUrl) {
+            return {
+              type: 'postgres' as const,
+              url: dbUrl,
+              entities: [User, Task, FinanceSale, FinanceExpense, PayPeriod, FocusSession, FoodEntry, WeightLog, DietPlan, FoodDatabase, Habit, HabitLog],
+              synchronize: true,
+              ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+            };
+          }
           return {
             type: 'postgres' as const,
             host: configService.get<string>('DB_HOST', 'localhost'),
