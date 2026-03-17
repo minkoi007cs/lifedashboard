@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 let cachedServer: any;
 
@@ -24,6 +25,16 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
     }));
+
+    // Setup Swagger Api
+    const config = new DocumentBuilder()
+      .setTitle('LifeDashboard API')
+      .setDescription('The backend API for LifeDashboard app')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/v1/docs', app, documentFactory);
 
     await app.init();
     cachedServer = app.getHttpAdapter().getInstance();
