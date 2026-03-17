@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-const serverlessExpress = require('serverless-http');
 require('pg');
 
 let cachedServer: any;
@@ -49,8 +48,8 @@ async function bootstrap() {
       console.log('[NESTJS BOOTSTRAP] app.init() complete.');
 
       const expressApp = app.getHttpAdapter().getInstance();
-      cachedServer = serverlessExpress(expressApp);
-      console.log('[NESTJS BOOTSTRAP] serverlessExpress wrapper created successfully.');
+      cachedServer = expressApp;
+      console.log('[NESTJS BOOTSTRAP] expressApp wrapper created successfully.');
     } catch (e) {
       console.error('[NESTJS BOOTSTRAP ERROR] application failed to initialize:', e);
       throw e;
