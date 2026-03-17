@@ -2,7 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import serverlessExpress from 'serverless-http';
+const serverlessExpress = require('serverless-http');
+require('pg');
 
 let cachedServer: any;
 
