@@ -20,8 +20,21 @@ async function bootstrap() {
       app.setGlobalPrefix('api/v1');
 
       // Enable CORS for frontend
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+      ];
       app.enableCors({
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          // Allow requests with no origin (e.g. mobile apps, curl)
+          if (!origin) return callback(null, true);
+          // Allow any vercel.app subdomain
+          if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
+        },
         credentials: true,
       });
 

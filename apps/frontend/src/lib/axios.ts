@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-let envApiUrl = (window as any).env?.VITE_API_URL;
-if (envApiUrl === '__VITE_API_URL__') envApiUrl = undefined;
-const apiUrl = envApiUrl || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// VITE_API_URL is baked in at build time by Vite.
+// Set it in .env.local for local dev, and in Vercel environment variables for production.
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const api = axios.create({
     baseURL: apiUrl,

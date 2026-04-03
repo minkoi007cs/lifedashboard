@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
 
+// API URL is baked in at build time by Vite from VITE_API_URL env var
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export const Login: React.FC = () => {
     const { login, user } = useAuthStore();
     const navigate = useNavigate();
     const [devLoading, setDevLoading] = useState(false);
+    const isProduction = import.meta.env.PROD;
 
     useEffect(() => {
         // Handle the OAuth callback token in query params (?token=...)
@@ -22,10 +26,7 @@ export const Login: React.FC = () => {
     }, [user, navigate]);
 
     const handleGoogleLogin = () => {
-        let envApiUrl = (window as any).env?.VITE_API_URL;
-        if (envApiUrl === '__VITE_API_URL__') envApiUrl = undefined;
-        const apiUrl = envApiUrl || import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        window.location.href = `${apiUrl}/api/v1/auth/google`;
+        window.location.href = `${API_URL}/api/v1/auth/google`;
     };
 
     const handleDevLogin = async () => {
@@ -42,40 +43,140 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-                <h1 className="text-3xl font-bold mb-3 text-gray-900 dark:text-white">Life Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-300 mb-8">
-                    Manage your tasks, habits, finance, and focus in one place.
-                </p>
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Inter', -apple-system, sans-serif",
+            padding: '1rem',
+        }}>
+            {/* Animated background orbs */}
+            <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                <div style={{
+                    position: 'absolute', width: 400, height: 400, borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)',
+                    top: '-10%', left: '-10%', animation: 'float 8s ease-in-out infinite',
+                }} />
+                <div style={{
+                    position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)',
+                    bottom: '-5%', right: '5%', animation: 'float 10s ease-in-out infinite reverse',
+                }} />
+            </div>
 
-                {/* Google Login */}
-                <button
-                    onClick={handleGoogleLogin}
-                    className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 mb-3"
-                >
-                    <img className="h-5 w-5 mr-2" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-                    Sign in with Google
-                </button>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px) scale(1); }
+                    50% { transform: translateY(-20px) scale(1.05); }
+                }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(24px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .login-card { animation: fadeInUp 0.6s ease-out; }
+                .google-btn:hover { background: rgba(255,255,255,0.18) !important; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(99,102,241,0.4) !important; }
+                .google-btn:active { transform: translateY(0); }
+                .dev-btn:hover { background: rgba(99,102,241,0.25) !important; }
+            `}</style>
 
-                {/* Dev Login — only shown in dev */}
-                <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs text-gray-400">
-                        <span className="bg-white dark:bg-gray-800 px-2">or</span>
-                    </div>
+            <div className="login-card" style={{
+                width: '100%',
+                maxWidth: 420,
+                background: 'rgba(255,255,255,0.07)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 24,
+                padding: '2.5rem 2rem',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                textAlign: 'center',
+            }}>
+                {/* Logo / Icon */}
+                <div style={{
+                    width: 64, height: 64, borderRadius: 18,
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    margin: '0 auto 1.5rem',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 8px 24px rgba(99,102,241,0.5)',
+                    fontSize: 28,
+                }}>
+                    ⚡
                 </div>
 
+                <h1 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                    Life Dashboard
+                </h1>
+                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: 1.5 }}>
+                    Tasks, habits, finance & focus — all in one place.
+                </p>
+
+                {/* Google Login Button */}
                 <button
-                    onClick={handleDevLogin}
-                    disabled={devLoading}
-                    className="w-full px-4 py-3 rounded-md text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 disabled:opacity-50"
+                    id="btn-google-login"
+                    className="google-btn"
+                    onClick={handleGoogleLogin}
+                    style={{
+                        width: '100%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                        padding: '0.875rem 1.5rem',
+                        background: 'rgba(255,255,255,0.12)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 12,
+                        color: '#fff',
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                    }}
                 >
-                    {devLoading ? 'Logging in...' : '⚡ Dev Login (skip OAuth)'}
+                    <img
+                        src="https://www.svgrepo.com/show/475656/google-color.svg"
+                        alt="Google"
+                        style={{ width: 20, height: 20 }}
+                    />
+                    Continue with Google
                 </button>
-                <p className="text-xs text-gray-400 mt-2">Dev mode only — not available in production</p>
+
+                {/* Dev Login — only in development */}
+                {!isProduction && (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
+                            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.12)' }} />
+                            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>dev only</span>
+                            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.12)' }} />
+                        </div>
+
+                        <button
+                            id="btn-dev-login"
+                            className="dev-btn"
+                            onClick={handleDevLogin}
+                            disabled={devLoading}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                background: 'rgba(99,102,241,0.15)',
+                                border: '1px dashed rgba(99,102,241,0.4)',
+                                borderRadius: 12,
+                                color: 'rgba(165,180,252,0.9)',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                opacity: devLoading ? 0.6 : 1,
+                            }}
+                        >
+                            {devLoading ? '⏳ Logging in...' : '⚡ Dev Login (skip OAuth)'}
+                        </button>
+                    </>
+                )}
+
+                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                    By signing in, you agree to our terms of service.
+                </p>
             </div>
         </div>
     );

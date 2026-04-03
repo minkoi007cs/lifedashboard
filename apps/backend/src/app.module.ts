@@ -53,6 +53,15 @@ import { Habit, HabitLog } from './habits/habit.entity';
           };
         }
 
+        if (isProduction) {
+          // On Vercel serverless, SQLite is NOT supported (no writable filesystem).
+          // DATABASE_URL MUST be set in Vercel environment variables!
+          throw new Error(
+            '[CONFIG ERROR] Production mode detected but DATABASE_URL is not set! ' +
+            'Please add DATABASE_URL in your Vercel project environment variables.',
+          );
+        }
+
         // Local dev fallback: SQLite (no Docker required)
         return {
           type: 'better-sqlite3' as const,

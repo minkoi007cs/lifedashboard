@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -14,7 +14,11 @@ export class AuthController {
     @UseGuards(AuthGuard('google'))
     async googleAuthRedirect(@Req() req, @Res() res) {
         const result = await this.authService.googleLogin(req) as any;
+        if (!result?.accessToken) {
+            throw new UnauthorizedException('Google authentication failed');
+        }
         const accessToken = result.accessToken;
+        // FRONTEND_URL must be set in Vercel env vars for production
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/login/success?token=${accessToken}`);
     }
