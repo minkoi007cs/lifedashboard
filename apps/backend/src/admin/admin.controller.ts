@@ -1,20 +1,21 @@
-import { Controller, Get, UseGuards, Request, ForbiddenException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, ForbiddenException, Get, UseGuards } from '@nestjs/common';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/types/auth-user';
 
 @Controller('admin')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class AdminController {
-
-    @Get('stats')
-    getAdminStats(@Request() req) {
-        if (req.user.role !== 'admin') {
-            throw new ForbiddenException('Admin access required');
-        }
-        // Return mock stats for MVP
-        return {
-            totalUsers: 10,
-            activeSessions: 5,
-            systemHealth: 'Healthy'
-        };
+  @Get('stats')
+  getAdminStats(@GetUser() user: AuthenticatedUser) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
     }
+
+    return {
+      totalUsers: 10,
+      activeSessions: 5,
+      systemHealth: 'Healthy',
+    };
+  }
 }
