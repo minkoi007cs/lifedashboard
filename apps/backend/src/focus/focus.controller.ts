@@ -1,29 +1,43 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/types/auth-user';
+import type { FocusSession } from './focus.entity';
 import { FocusService } from './focus.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('focus')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class FocusController {
-    constructor(private readonly focusService: FocusService) { }
+  constructor(private readonly focusService: FocusService) {}
 
-    @Post()
-    create(@Request() req, @Body() createDto: any) {
-        return this.focusService.create(createDto, req.user.userId);
-    }
+  @Post()
+  create(
+    @GetUser() user: AuthenticatedUser,
+    @Body() createDto: Partial<FocusSession>,
+  ) {
+    return this.focusService.create(createDto, user.userId);
+  }
 
-    @Get()
-    findAll(@Request() req) {
-        return this.focusService.findAll(req.user.userId);
-    }
+  @Get()
+  findAll(@GetUser() user: AuthenticatedUser) {
+    return this.focusService.findAll(user.userId);
+  }
 
-    @Get('stats')
-    getStats(@Request() req) {
-        return this.focusService.getStats(req.user.userId);
-    }
+  @Get('stats')
+  getStats(@GetUser() user: AuthenticatedUser) {
+    return this.focusService.getStats(user.userId);
+  }
 
-    @Delete(':id')
-    remove(@Request() req, @Param('id') id: string) {
-        return this.focusService.remove(id, req.user.userId);
-    }
+  @Delete(':id')
+  remove(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.focusService.remove(id, user.userId);
+  }
 }

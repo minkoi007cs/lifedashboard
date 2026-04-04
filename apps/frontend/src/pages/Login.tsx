@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
+import { getApiBaseUrl } from '../lib/api-config';
 
 export const Login: React.FC = () => {
     const { login, user } = useAuthStore();
@@ -22,9 +23,7 @@ export const Login: React.FC = () => {
     }, [user, navigate]);
 
     const handleGoogleLogin = () => {
-        let envApiUrl = (window as any).env?.VITE_API_URL;
-        if (envApiUrl === '__VITE_API_URL__') envApiUrl = undefined;
-        const apiUrl = envApiUrl || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = getApiBaseUrl();
         window.location.href = `${apiUrl}/api/v1/auth/google`;
     };
 
