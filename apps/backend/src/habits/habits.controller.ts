@@ -1,46 +1,69 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { HabitsService } from './habits.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/types/auth-user';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { HabitsService } from './habits.service';
 
 @Controller('habits')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class HabitsController {
-    constructor(private readonly habitsService: HabitsService) { }
+  constructor(private readonly habitsService: HabitsService) {}
 
-    @Post()
-    create(@Request() req, @Body() createHabitDto: CreateHabitDto) {
-        return this.habitsService.create(createHabitDto, req.user.userId);
-    }
+  @Post()
+  create(
+    @GetUser() user: AuthenticatedUser,
+    @Body() createHabitDto: CreateHabitDto,
+  ) {
+    return this.habitsService.create(createHabitDto, user.userId);
+  }
 
-    @Get()
-    findAll(@Request() req) {
-        return this.habitsService.findAll(req.user.userId);
-    }
+  @Get()
+  findAll(@GetUser() user: AuthenticatedUser) {
+    return this.habitsService.findAll(user.userId);
+  }
 
-    @Get('statistics')
-    getStatistics(@Request() req) {
-        return this.habitsService.getStatistics(req.user.userId);
-    }
+  @Get('statistics')
+  getStatistics(@GetUser() user: AuthenticatedUser) {
+    return this.habitsService.getStatistics(user.userId);
+  }
 
-    @Get(':id')
-    findOne(@Request() req, @Param('id') id: string) {
-        return this.habitsService.findOne(id, req.user.userId);
-    }
+  @Get(':id')
+  findOne(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.habitsService.findOne(id, user.userId);
+  }
 
-    @Put(':id')
-    update(@Request() req, @Param('id') id: string, @Body() updateHabitDto: UpdateHabitDto) {
-        return this.habitsService.update(id, updateHabitDto, req.user.userId);
-    }
+  @Put(':id')
+  update(
+    @GetUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() updateHabitDto: UpdateHabitDto,
+  ) {
+    return this.habitsService.update(id, updateHabitDto, user.userId);
+  }
 
-    @Post(':id/log')
-    log(@Request() req, @Param('id') id: string, @Body('date') date: string, @Body('count') count: number) {
-        return this.habitsService.logHabit(id, req.user.userId, date, count);
-    }
+  @Post(':id/log')
+  log(
+    @GetUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body('date') date: string,
+    @Body('count') count: number,
+  ) {
+    return this.habitsService.logHabit(id, user.userId, date, count);
+  }
 
-    @Delete(':id')
-    remove(@Request() req, @Param('id') id: string) {
-        return this.habitsService.remove(id, req.user.userId);
-    }
+  @Delete(':id')
+  remove(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.habitsService.remove(id, user.userId);
+  }
 }

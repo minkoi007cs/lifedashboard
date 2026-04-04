@@ -5,9 +5,9 @@ import { FocusService } from './focus.service';
 import { FocusController } from './focus.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([FocusSession])],
-    controllers: [FocusController],
-    providers: [FocusService],
-    exports: [FocusService],
+  imports: [TypeOrmModule.forFeature([FocusSession])],
+  controllers: [FocusController],
+  providers: [FocusService],
+  exports: [FocusService],
 })
-export class FocusModule { }
+export class FocusModule {}
