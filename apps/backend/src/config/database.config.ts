@@ -13,12 +13,15 @@ import {
   PayPeriod,
 } from '../finance/finance.entity';
 import { Habit, HabitLog } from '../habits/habit.entity';
-import { Task } from '../tasks/task.entity';
+import { AppNotification } from '../notifications/notification.entity';
+import { Task, TaskParticipant } from '../tasks/task.entity';
 import { User } from '../users/user.entity';
+import { WishComment, WishEntry, WishResponse, WishShare } from '../wishes/wish.entity';
 
 export const typeOrmEntities = [
   User,
   Task,
+  TaskParticipant,
   FinanceSale,
   FinanceExpense,
   PayPeriod,
@@ -29,6 +32,11 @@ export const typeOrmEntities = [
   FoodDatabase,
   Habit,
   HabitLog,
+  WishEntry,
+  WishResponse,
+  WishShare,
+  WishComment,
+  AppNotification,
 ];
 
 function getRequiredConfig(configService: ConfigService, key: string): string {

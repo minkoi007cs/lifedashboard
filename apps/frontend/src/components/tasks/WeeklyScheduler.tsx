@@ -5,6 +5,7 @@ import type { Task } from '../../types/task.ts';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Loader2, Clock } from 'lucide-react';
 import clsx from 'clsx';
+import { SurfaceCard } from '../ui/shell';
 
 interface WeeklySchedulerProps {
     startDate: Date;
@@ -23,7 +24,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
         },
     });
 
-    if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
 
     const getTasksForSlot = (day: Date, hour: number) => {
         return tasks?.filter(task => {
@@ -33,15 +34,15 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <SurfaceCard className="overflow-hidden p-0">
             <div className="overflow-x-auto">
                 <div className="min-w-[800px]">
                     {/* Header */}
                     <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-gray-200 dark:border-gray-700">
-                        <div className="p-4 bg-gray-50 dark:bg-gray-800/50"></div>
+                        <div className="bg-orange-50/70 p-4 dark:bg-slate-800/70"></div>
                         {days.map((day) => (
                             <div key={day.toISOString()} className={clsx(
-                                "p-4 text-center border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50",
+                                "border-l border-gray-200 bg-orange-50/70 p-4 text-center dark:border-gray-700 dark:bg-slate-800/70",
                                 isSameDay(day, new Date()) && "bg-primary/5 dark:bg-primary/10"
                             )}>
                                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{format(day, 'EEE')}</div>
@@ -65,7 +66,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
                                 {days.map((day) => {
                                     const slotTasks = getTasksForSlot(day, hour);
                                     return (
-                                        <div key={day.toISOString()} className="border-l border-gray-100 dark:border-gray-800 p-1 relative hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <div key={day.toISOString()} className="relative border-l border-gray-100 p-1 transition-colors hover:bg-orange-50/50 dark:border-gray-800 dark:hover:bg-slate-800/70">
                                             {slotTasks?.map(task => (
                                                 <div
                                                     key={task.id}
@@ -82,6 +83,11 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
                                                         {format(new Date(task.dueDate), 'HH:mm')}
                                                     </div>
                                                     <div className="mt-1 truncate">{task.title}</div>
+                                                    {task.isSharedPlan ? (
+                                                        <div className="mt-1 truncate text-[10px] uppercase tracking-wide">
+                                                            Shared plan
+                                                        </div>
+                                                    ) : null}
                                                 </div>
                                             ))}
                                         </div>
@@ -92,6 +98,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
                     </div>
                 </div>
             </div>
-        </div>
+        </SurfaceCard>
     );
 };

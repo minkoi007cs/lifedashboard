@@ -2,6 +2,7 @@ import React from 'react';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, startOfMonth } from 'date-fns';
 import clsx from 'clsx';
 import { HelpCircle } from 'lucide-react';
+import { SurfaceCard } from '../ui/shell';
 
 interface HabitHeatmapProps {
     data: { date: string; count: number }[];
@@ -17,11 +18,11 @@ export const HabitHeatmap: React.FC<HabitHeatmapProps> = ({ data, isLoading }) =
     });
 
     if (isLoading) {
-        return <div className="h-64 bg-white dark:bg-gray-800 rounded-2xl animate-pulse border border-gray-200 dark:border-gray-700" />;
+        return <div className="h-64 rounded-[28px] bg-white/70 animate-pulse dark:bg-slate-800/70" />;
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <SurfaceCard className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-gray-900 dark:text-white flex items-center">
                     Consistency Heatmap
@@ -74,6 +75,6 @@ export const HabitHeatmap: React.FC<HabitHeatmapProps> = ({ data, isLoading }) =
                 <span>Fri</span>
                 <span>Sat</span>
             </div>
-        </div>
+        </SurfaceCard>
     );
 };

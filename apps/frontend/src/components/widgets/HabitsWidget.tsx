@@ -4,6 +4,7 @@ import api from '../../lib/axios';
 import { Plus, Flame, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
+import { WidgetFrame } from '../ui/shell';
 
 interface Habit {
     id: string;
@@ -39,20 +40,26 @@ export const HabitsWidget: React.FC = () => {
         if (title) createHabitMutation.mutate(title);
     }
 
-    if (isLoading) return <Loader2 className="animate-spin" />;
+    if (isLoading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-pink-500" /></div>;
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Habits</h2>
-                <button onClick={handleCreate} className="text-primary hover:bg-gray-100 p-1 rounded"><Plus className="w-5 h-5" /></button>
-            </div>
+        <WidgetFrame
+            title="Habits"
+            icon={<Flame className="h-5 w-5" />}
+            meta="Keep the streak alive"
+            accent="from-amber-400 via-orange-500 to-pink-500"
+            footer={
+                <button onClick={handleCreate} className="inline-flex items-center rounded-2xl bg-orange-50/80 px-4 py-3 text-sm font-semibold text-pink-600 dark:bg-slate-800/90 dark:text-pink-300">
+                    <Plus className="mr-2 h-4 w-4" /> New Habit
+                </button>
+            }
+        >
 
             <div className="space-y-3 overflow-y-auto flex-1">
                 {habits?.map((habit) => {
                     const isDoneToday = habit.logs.some(log => log.date === today);
                     return (
-                        <div key={habit.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div key={habit.id} className="flex items-center justify-between rounded-2xl border border-orange-100/70 bg-orange-50/70 p-3 dark:border-white/10 dark:bg-slate-800/80">
                             <div className="flex flex-col">
                                 <span className="font-medium text-gray-900 dark:text-gray-100">{habit.title}</span>
                                 <span className="text-xs text-gray-500 flex items-center">
@@ -78,6 +85,6 @@ export const HabitsWidget: React.FC = () => {
                 })}
                 {habits?.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No habits defined.</p>}
             </div>
-        </div>
+        </WidgetFrame>
     );
 };

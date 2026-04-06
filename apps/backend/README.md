@@ -4,11 +4,11 @@ NestJS API cho LifeDashboard.
 
 ## Env Files
 
-- `.env`: local only, bị ignore khỏi git
+- `.env`: local only, bá»‹ ignore khá»i git
 - `.env.sample`: template local/dev
 - `.env.production.sample`: template deploy cloud
 
-Biến được hỗ trợ:
+Biáº¿n Ä‘Æ°á»£c há»— trá»£:
 
 - `NODE_ENV`
 - `PORT`
@@ -26,17 +26,41 @@ Biến được hỗ trợ:
 - `GOOGLE_CALLBACK_URL`
 - `FRONTEND_URL`
 
+## Custom modules
+
+This backend now includes additional product modules beyond the Nest starter template:
+
+- `tasks`: supports personal tasks and shared plan participants.
+- `wishes`: personal wishlist entries, sharing, responses, and plan creation from confirmed activity wishes.
+- `notifications`: lightweight unread notification feed for social wishlist actions.
+- `users/search`: name and email search for sharing wishes with registered users.
+- `wishes/comments`: persistent comment thread on each shared wish.
+
+## Wishlist flow
+
+- Create a wish with `type`, `title`, `description`, and `timeTag`.
+- Share a wish with selected users in the system.
+- Recipients can confirm, decline, or comment.
+- Confirmed activity wishes can be converted into shared task plans with explicit start and end times.
+- Notifications are created when wishes are shared, answered, updated, or converted into plans.
+
+## Validation and tests
+
+- Wishlist business rules are covered by backend e2e tests.
+- The shared plan flow is verified for visibility across owner and participants.
+- Comments remain open after plan creation, while new responses are blocked.
+
 ## Local Development
 
-1. Copy `.env.sample` thành `.env`
-2. Chạy PostgreSQL local
-3. Chạy:
+1. Copy `.env.sample` thÃ nh `.env`
+2. Cháº¡y PostgreSQL local
+3. Cháº¡y:
 
 ```bash
 npm run dev
 ```
 
-API chạy tại `http://localhost:3000`.
+API cháº¡y táº¡i `http://localhost:3000`.
 
 Swagger:
 
@@ -46,11 +70,11 @@ http://localhost:3000/api/v1/docs
 
 ## Production
 
-- Subapage/managed PostgreSQL dùng `DATABASE_URL` dạng connection string
+- Subapage/managed PostgreSQL dÃ¹ng `DATABASE_URL` dáº¡ng connection string
 - Set `DB_SSL=true`
 - Set `DB_SYNCHRONIZE=false`
-- Set `FRONTEND_URL` đúng domain frontend public
-- Set `GOOGLE_CALLBACK_URL` đúng domain backend public
+- Set `FRONTEND_URL` Ä‘Ãºng domain frontend public
+- Set `GOOGLE_CALLBACK_URL` Ä‘Ãºng domain backend public
 
 ## Validation
 

@@ -48,10 +48,9 @@ export interface HabitStatistics {
 export interface CreateHabitDto {
     name: string;
     description?: string;
-    frequencyType: string;
-    targetCount?: number;
-    reminderTime?: string;
-    startDate?: string;
+    frequency_type: FrequencyType;
+    target_count?: number;
+    reminder_time?: string;
 }
 
 export interface UpdateHabitDto extends Partial<CreateHabitDto> {

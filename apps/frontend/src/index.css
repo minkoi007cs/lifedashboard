@@ -1,28 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  color-scheme: light;
+  --background: 30 100% 98%;
+  --foreground: 224 39% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --card-foreground: 224 39% 15%;
+  --primary: 18 91% 57%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 35 100% 96%;
+  --secondary-foreground: 224 39% 15%;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
+  color-scheme: dark;
+  --background: 222 47% 11%;
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
+  --card: 222 47% 13%;
   --card-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
+  --primary: 24 95% 65%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 220 29% 18%;
   --secondary-foreground: 210 40% 98%;
 }
 
+html {
+  background-color: hsl(var(--background));
+  scrollbar-gutter: stable;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-family:
+    "Trebuchet MS",
+    "Avenir Next",
+    "Segoe UI",
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(244, 114, 182, 0.28);
+  color: inherit;
 }

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Plus, Check, Trash2, Loader2, Square } from 'lucide-react';
 import clsx from 'clsx';
+import { WidgetFrame } from '../ui/shell';
 
 interface Task {
     id: string;
@@ -54,18 +55,19 @@ export const TasksWidget: React.FC = () => {
         updateStatusMutation.mutate({ id: task.id, status: newStatus });
     };
 
-    if (isLoading) return <Loader2 className="animate-spin" />;
+    if (isLoading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-pink-500" /></div>;
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-full flex flex-col">
-            <h2 className="text-xl font-bold mb-4 flex items-center justify-between text-gray-900 dark:text-white">
-                Tasks
-                <span className="text-sm font-normal text-gray-500">{tasks?.filter(t => t.status !== 'DONE').length} remaining</span>
-            </h2>
+        <WidgetFrame
+            title="Tasks"
+            icon={<Check className="h-5 w-5" />}
+            meta={<span>{tasks?.filter(t => t.status !== 'DONE').length} remaining</span>}
+            accent="from-pink-500 via-rose-500 to-orange-400"
+        >
 
             <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-1">
                 {tasks?.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between group p-2 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-md transition-colors">
+                    <div key={task.id} className="group flex items-center justify-between rounded-2xl border border-transparent p-3 transition-colors hover:border-orange-100 hover:bg-orange-50/80 dark:hover:border-white/10 dark:hover:bg-slate-800/80">
                         <div className="flex items-center space-x-3">
                             <button onClick={() => toggleStatus(task)} className={clsx("text-gray-400 hover:text-primary", task.status === 'DONE' && "text-green-500")}>
                                 {task.status === 'DONE' ? <Check className="w-5 h-5" /> : <Square className="w-5 h-5" />}
@@ -91,7 +93,7 @@ export const TasksWidget: React.FC = () => {
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="New task..."
-                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 py-3 pl-4 pr-12 text-sm text-slate-800 outline-none ring-0 transition focus:border-pink-300 focus:bg-white dark:border-white/10 dark:bg-slate-800/90 dark:text-white"
                 />
                 <button
                     type="submit"
@@ -101,6 +103,6 @@ export const TasksWidget: React.FC = () => {
                     <Plus className="w-5 h-5" />
                 </button>
             </form>
-        </div>
+        </WidgetFrame>
     );
 };

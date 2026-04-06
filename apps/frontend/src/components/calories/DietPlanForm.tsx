@@ -2,9 +2,15 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Calculator, Loader2, Target } from 'lucide-react';
+import { ActionButton, SurfaceCard } from '../ui/shell';
 
 interface DietPlanFormProps {
-    initialData?: any;
+    initialData?: {
+        targetCalories?: number;
+        proteinRatio?: number;
+        fatRatio?: number;
+        carbsRatio?: number;
+    };
 }
 
 export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
@@ -32,7 +38,7 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
     const totalRatio = formData.proteinRatio + formData.fatRatio + formData.carbsRatio;
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <SurfaceCard>
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
                 <Target className="w-5 h-5 mr-2 text-purple-500" />
                 Set Diet Goals
@@ -45,7 +51,7 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
                         type="number"
                         value={formData.targetCalories}
                         onChange={(e) => setFormData({ ...formData, targetCalories: Number(e.target.value) })}
-                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-purple-500 transition-all text-gray-900 dark:text-white text-lg font-bold"
+                        className="w-full rounded-2xl border border-purple-100 bg-purple-50/70 p-3 text-lg font-bold text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                     />
                 </div>
 
@@ -56,7 +62,7 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
                             type="number"
                             value={formData.proteinRatio}
                             onChange={(e) => setFormData({ ...formData, proteinRatio: Number(e.target.value) })}
-                            className="w-full bg-blue-50 dark:bg-blue-900/20 border-none rounded-xl p-3 focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
@@ -65,7 +71,7 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
                             type="number"
                             value={formData.fatRatio}
                             onChange={(e) => setFormData({ ...formData, fatRatio: Number(e.target.value) })}
-                            className="w-full bg-yellow-50 dark:bg-yellow-900/20 border-none rounded-xl p-3 focus:ring-2 focus:ring-yellow-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-yellow-100 bg-yellow-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
@@ -74,7 +80,7 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
                             type="number"
                             value={formData.carbsRatio}
                             onChange={(e) => setFormData({ ...formData, carbsRatio: Number(e.target.value) })}
-                            className="w-full bg-green-50 dark:bg-green-900/20 border-none rounded-xl p-3 focus:ring-2 focus:ring-green-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-green-100 bg-green-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                 </div>
@@ -83,15 +89,15 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
                     <p className="text-xs text-red-500 font-bold">Total ratio must equal 100% (Current: {totalRatio}%)</p>
                 )}
 
-                <button
+                <ActionButton
                     type="submit"
                     disabled={mutation.isPending || totalRatio !== 100}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-600/20 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full"
                 >
                     {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <Calculator className="w-5 h-5 mr-2" />}
                     Save Diet Plan
-                </button>
+                </ActionButton>
             </form>
-        </div>
+        </SurfaceCard>
     );
 };
