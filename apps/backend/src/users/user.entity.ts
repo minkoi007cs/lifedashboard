@@ -9,7 +9,12 @@ import {
 } from '../finance/finance.entity';
 import { FocusSession } from '../focus/focus.entity';
 import { FoodEntry, WeightLog, DietPlan } from '../calories/calories.entity';
-import { WishComment, WishEntry, WishResponse, WishShare } from '../wishes/wish.entity';
+import {
+  WishComment,
+  WishEntry,
+  WishResponse,
+  WishShare,
+} from '../wishes/wish.entity';
 import { AppNotification } from '../notifications/notification.entity';
 
 @Entity('users')
@@ -68,11 +73,11 @@ export class User extends BaseEntity {
   @OneToMany(() => WishResponse, (response) => response.responder)
   wishResponses: WishResponse[];
 
-    @OneToMany(() => WishShare, (share) => share.recipient)
-    wishShares: WishShare[];
+  @OneToMany(() => WishShare, (share) => share.recipient)
+  wishShares: WishShare[];
 
-    @OneToMany(() => WishComment, (comment) => comment.author)
-    wishComments: WishComment[];
+  @OneToMany(() => WishComment, (comment) => comment.author)
+  wishComments: WishComment[];
 
   @OneToMany(() => AppNotification, (notification) => notification.user)
   notifications: AppNotification[];

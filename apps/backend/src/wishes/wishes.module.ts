@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WishEntry, WishResponse, WishShare } from './wish.entity';
+import { WishComment, WishEntry, WishResponse, WishShare } from './wish.entity';
 import { WishesController } from './wishes.controller';
 import { WishesService } from './wishes.service';
 import { UsersModule } from '../users/users.module';
@@ -9,7 +9,7 @@ import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([WishEntry, WishResponse, WishShare]),
+        TypeOrmModule.forFeature([WishEntry, WishResponse, WishShare, WishComment]),
         UsersModule,
         NotificationsModule,
         TasksModule,
