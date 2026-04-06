@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { habitService } from '../../services/habitService';
 import { Check, Flame, MoreVertical, Plus, Minus, Archive } from 'lucide-react';
-import type { Habit } from '../../types/habit';
+import type { Habit, HabitLog } from '../../types/habit';
 import clsx from 'clsx';
 import { format } from 'date-fns';
+import { SoftButton, SurfaceCard } from '../ui/shell';
 
 interface HabitListProps {
     habits: Habit[];
@@ -32,9 +33,9 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="h-48 bg-white dark:bg-gray-800 rounded-xl animate-pulse border border-gray-200 dark:border-gray-700" />
+                    <div key={i} className="h-48 animate-pulse rounded-[28px] bg-white/70 dark:bg-slate-800/70" />
                 ))}
             </div>
         );
@@ -45,20 +46,20 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
 
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {activeHabits.map((habit) => {
-                    const todayLog = habit.logs?.find((l: any) => l.date === today);
+                    const todayLog = habit.logs?.find((l: HabitLog) => l.date === today);
                     const isCompleted = todayLog?.isCompleted || false;
                     const progress = todayLog?.completedCount || 0;
 
                     return (
-                        <div
+                        <SurfaceCard
                             key={habit.id}
                             className={clsx(
-                                "group bg-white dark:bg-gray-800 p-5 rounded-2xl border transition-all duration-300",
+                                "group transition-all duration-300",
                                 isCompleted
-                                    ? "border-green-200 dark:border-green-900/30 bg-green-50/30 dark:bg-green-900/10"
-                                    : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
+                                    ? "border-green-200 bg-green-50/40 dark:border-green-900/30 dark:bg-green-900/10"
+                                    : "hover:border-pink-200"
                             )}
                         >
                             <div className="flex justify-between items-start mb-4">
@@ -84,7 +85,7 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
 
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">
-                                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-300">
+                                    <span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs text-gray-600 dark:bg-slate-800 dark:text-gray-300">
                                         {habit.streak} day streak
                                     </span>
                                     {habit.targetCount > 1 && (
@@ -97,7 +98,7 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
 
                             <div className="flex items-center justify-between gap-3">
                                 {habit.targetCount > 1 ? (
-                                    <div className="flex items-center w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                                        <div className="flex w-full items-center rounded-2xl bg-orange-50 p-1 dark:bg-slate-800">
                                         <button
                                             onClick={() => logMutation.mutate({ id: habit.id, count: -1 })}
                                             disabled={progress === 0}
@@ -119,10 +120,10 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
                                     <button
                                         onClick={() => logMutation.mutate({ id: habit.id, count: isCompleted ? -1 : 1 })}
                                         className={clsx(
-                                            "w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center transition-all",
+                                            "flex w-full items-center justify-center rounded-2xl py-3 text-sm font-bold transition-all",
                                             isCompleted
                                                 ? "bg-green-500 text-white"
-                                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white"
+                                                : "bg-orange-50 text-gray-600 hover:bg-gradient-to-r hover:from-orange-400 hover:via-pink-500 hover:to-fuchsia-600 hover:text-white dark:bg-slate-800 dark:text-gray-300"
                                         )}
                                     >
                                         {isCompleted ? (
@@ -141,7 +142,7 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
                                     <Archive className="w-5 h-5" />
                                 </button>
                             </div>
-                        </div>
+                        </SurfaceCard>
                     );
                 })}
             </div>
@@ -151,20 +152,19 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                         <Archive className="w-5 h-5 mr-2" /> Archived Habits
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">
+                    <div className="grid grid-cols-1 gap-4 opacity-75 md:grid-cols-2 lg:grid-cols-3">
                         {archivedHabits.map((habit) => (
-                            <div key={habit.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                            <SurfaceCard key={habit.id} className="flex items-center justify-between p-4">
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-white">{habit.name}</h3>
                                     <p className="text-xs text-gray-500">{habit.streak} day longest streak</p>
                                 </div>
-                                <button
+                                <SoftButton
                                     onClick={() => archiveMutation.mutate({ id: habit.id, archive: false })}
-                                    className="text-primary hover:underline text-sm font-medium"
                                 >
                                     Restore
-                                </button>
-                            </div>
+                                </SoftButton>
+                            </SurfaceCard>
                         ))}
                     </div>
                 </div>

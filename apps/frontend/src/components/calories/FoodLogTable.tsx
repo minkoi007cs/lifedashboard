@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FoodEntry } from '../../types/calories';
 import { Trash2, Utensils } from 'lucide-react';
+import { SurfaceCard } from '../ui/shell';
 
 interface FoodLogTableProps {
     entries: FoodEntry[];
@@ -9,7 +10,7 @@ interface FoodLogTableProps {
 
 export const FoodLogTable: React.FC<FoodLogTableProps> = ({ entries, onDelete }) => {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <SurfaceCard className="overflow-hidden p-0">
             <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <h3 className="font-bold flex items-center text-gray-900 dark:text-white">
                     <Utensils className="w-4 h-4 mr-2 text-orange-500" />
@@ -18,7 +19,7 @@ export const FoodLogTable: React.FC<FoodLogTableProps> = ({ entries, onDelete })
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs font-bold text-gray-500 uppercase">
+                    <thead className="bg-orange-50/80 dark:bg-slate-900/70 text-xs font-bold text-gray-500 uppercase">
                         <tr>
                             <th className="px-6 py-3">Food</th>
                             <th className="px-6 py-3">Calories</th>
@@ -34,7 +35,7 @@ export const FoodLogTable: React.FC<FoodLogTableProps> = ({ entries, onDelete })
                             </tr>
                         ) : (
                             entries.map((entry) => (
-                                <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                <tr key={entry.id} className="transition-colors hover:bg-orange-50/70 dark:hover:bg-slate-800/70">
                                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{entry.name}</td>
                                     <td className="px-6 py-4">{entry.calories.toFixed(0)} kcal</td>
                                     <td className="px-6 py-4 text-sm">
@@ -61,6 +62,6 @@ export const FoodLogTable: React.FC<FoodLogTableProps> = ({ entries, onDelete })
                     </tbody>
                 </table>
             </div>
-        </div>
+        </SurfaceCard>
     );
 };

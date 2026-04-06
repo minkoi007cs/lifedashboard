@@ -7,6 +7,8 @@ import { Dashboard } from './pages/Dashboard';
 import { FinancePage } from './pages/FinancePage';
 import { TasksPage } from './pages/TasksPage';
 import { CaloriesPage } from './pages/CaloriesPage';
+import { HabitsPage } from './pages/HabitsPage';
+import { WishlistPage } from './pages/WishlistPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -24,9 +26,11 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
+        <div className="rounded-3xl border border-white/60 bg-white/70 px-8 py-7 text-center shadow-2xl shadow-orange-200/40 backdrop-blur dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-pink-500"></div>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">
+            Loading your dashboard...
+          </p>
         </div>
       </div>
     );
@@ -76,6 +80,8 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="tasks" element={<TasksPage />} />
+            <Route path="wishlist" element={<WishlistPage />} />
+            <Route path="habits" element={<HabitsPage />} />
             <Route path="focus" element={<Dashboard />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="calories" element={<CaloriesPage />} />

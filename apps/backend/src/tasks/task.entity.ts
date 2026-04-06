@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../common/entities/base.entity';
 import { User } from '../users/user.entity';
 
@@ -34,7 +34,41 @@ export class Task extends BaseEntity {
   @Column({ nullable: true })
   reminderTime: Date;
 
+    @Column({ nullable: true })
+    startDate?: Date;
+
+    @Column({ nullable: true })
+    endDate?: Date;
+
+  @Column({ default: false })
+  isSharedPlan: boolean;
+
+    @Column({ nullable: true })
+    sourceWishId?: string;
+
   @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
+  user: User;
+
+  @Column()
+  userId: string;
+
+  @OneToMany(() => TaskParticipant, (participant) => participant.task, {
+    cascade: true,
+  })
+  participants: TaskParticipant[];
+}
+
+@Entity('task_participants')
+export class TaskParticipant extends BaseEntity {
+  @ManyToOne(() => Task, (task) => task.participants, { onDelete: 'CASCADE' })
+  task: Task;
+
+  @Column()
+  taskId: string;
+
+  @ManyToOne(() => User, (user) => user.taskParticipations, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @Column()

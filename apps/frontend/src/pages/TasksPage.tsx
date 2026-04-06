@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/axios';
-import { Plus, Calendar, List, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { TaskStats } from '../types/task';
+import { Plus, Calendar, List, BarChart2, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
+import type { Task, TaskStats } from '../types/task';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { WeeklyScheduler } from '../components/tasks/WeeklyScheduler.tsx';
 import { MonthlyList } from '../components/tasks/MonthlyList.tsx';
 import { TaskStats as TaskStatsView } from '../components/tasks/TaskStats.tsx';
-import clsx from 'clsx';
+import { ActionButton, PageHeader, SegmentedTabs, SoftButton, SurfaceCard } from '../components/ui/shell';
 
 export const TasksPage: React.FC = () => {
     const queryClient = useQueryClient();
@@ -35,8 +35,10 @@ export const TasksPage: React.FC = () => {
         },
     });
 
+    type TaskFormValues = Pick<Task, 'title' | 'description' | 'priority' | 'status' | 'dueDate' | 'reminderTime'>;
+
     const createTaskMutation = useMutation({
-        mutationFn: (data: any) => api.post('/api/v1/tasks', data),
+        mutationFn: (data: TaskFormValues) => api.post('/api/v1/tasks', data),
         onSuccess: (res) => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setIsFormOpen(false);
@@ -44,7 +46,7 @@ export const TasksPage: React.FC = () => {
         },
     });
 
-    const handleCreateTask = (data: any) => {
+    const handleCreateTask = (data: TaskFormValues) => {
         createTaskMutation.mutate(data);
     };
 
@@ -60,71 +62,54 @@ export const TasksPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
-
-                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <button
-                        onClick={() => setView('weekly')}
-                        className={clsx(
-                            "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
-                            view === 'weekly' ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                        )}
-                    >
-                        <Calendar className="w-4 h-4 mr-2" /> Weekly
-                    </button>
-                    <button
-                        onClick={() => setView('monthly')}
-                        className={clsx(
-                            "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
-                            view === 'monthly' ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                        )}
-                    >
-                        <List className="w-4 h-4 mr-2" /> Monthly
-                    </button>
-                    <button
-                        onClick={() => setView('stats')}
-                        className={clsx(
-                            "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
-                            view === 'stats' ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                        )}
-                    >
-                        <BarChart2 className="w-4 h-4 mr-2" /> Stats
-                    </button>
-                </div>
-
-                <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="flex items-center justify-center px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-bold shadow-lg shadow-primary/25 transition-all"
-                >
-                    <Plus className="w-5 h-5 mr-2" /> New Task
-                </button>
-            </div>
+            <PageHeader
+                eyebrow="Execution"
+                title="Tasks"
+                description="Plan weekly priorities, browse monthly commitments and keep momentum visible across devices."
+                icon={<CheckSquare className="h-6 w-6" />}
+                actions={
+                    <>
+                        <SegmentedTabs
+                            value={view}
+                            onChange={setView}
+                            tabs={[
+                                { id: 'weekly', icon: Calendar, label: 'Weekly' },
+                                { id: 'monthly', icon: List, label: 'Monthly' },
+                                { id: 'stats', icon: BarChart2, label: 'Stats' },
+                            ]}
+                            className="xl:w-auto"
+                        />
+                        <ActionButton onClick={() => setIsFormOpen(true)}>
+                            <Plus className="mr-2 h-5 w-5" /> New Task
+                        </ActionButton>
+                    </>
+                }
+            />
 
             {view !== 'stats' && (
-                <div className="flex items-center justify-between mb-4">
+                <SurfaceCard className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center space-x-4">
-                        <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
+                        <SoftButton onClick={() => navigateDate('prev')} className="h-11 w-11 rounded-full px-0">
                             <ChevronLeft className="w-6 h-6" />
-                        </button>
-                        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                        </SoftButton>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 md:text-xl">
                             {view === 'weekly' ? (
                                 `Week of ${currentDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`
                             ) : (
                                 currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
                             )}
                         </h2>
-                        <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
+                        <SoftButton onClick={() => navigateDate('next')} className="h-11 w-11 rounded-full px-0">
                             <ChevronRight className="w-6 h-6" />
-                        </button>
+                        </SoftButton>
                     </div>
-                    <button
+                    <SoftButton
                         onClick={() => setCurrentDate(new Date())}
-                        className="text-sm text-primary hover:underline"
+                        className="self-start md:self-auto"
                     >
                         Today
-                    </button>
-                </div>
+                    </SoftButton>
+                </SurfaceCard>
             )}
 
             <div className="min-h-[600px]">

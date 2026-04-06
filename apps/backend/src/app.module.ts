@@ -12,6 +12,8 @@ import { AdminModule } from './admin/admin.module';
 import { CaloriesModule } from './calories/calories.module';
 import { HabitsModule } from './habits/habits.module';
 import { buildDatabaseOptions } from './config/database.config';
+import { WishesModule } from './wishes/wishes.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { buildDatabaseOptions } from './config/database.config';
     AdminModule,
     CaloriesModule,
     HabitsModule,
+    WishesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

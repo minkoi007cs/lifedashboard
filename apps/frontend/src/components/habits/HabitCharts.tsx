@@ -4,6 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     Cell
 } from 'recharts';
+import { SurfaceCard } from '../ui/shell';
 
 interface HabitChartsProps {
     habits: Habit[];
@@ -15,13 +16,13 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
     if (isLoading || !stats) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="h-80 bg-white dark:bg-gray-800 rounded-2xl animate-pulse" />
-                <div className="h-80 bg-white dark:bg-gray-800 rounded-2xl animate-pulse" />
+                <div className="h-80 rounded-[28px] bg-white/70 animate-pulse dark:bg-slate-800/70" />
+                <div className="h-80 rounded-[28px] bg-white/70 animate-pulse dark:bg-slate-800/70" />
             </div>
         );
     }
 
-    const completionData = stats.weeklySummary.map((day: any) => ({
+    const completionData = stats.weeklySummary.map((day) => ({
         name: format(parseISO(day.date), 'EEE'),
         completed: day.completed,
         target: day.target,
@@ -38,7 +39,7 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Weekly Activity Chart */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <SurfaceCard className="p-6">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-6">Weekly Activity</h3>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -60,10 +61,10 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-            </div>
+            </SurfaceCard>
 
             {/* Top Streaks Chart */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <SurfaceCard className="p-6">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-6">Top Streaks</h3>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -87,7 +88,7 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-            </div>
+            </SurfaceCard>
         </div>
     );
 };

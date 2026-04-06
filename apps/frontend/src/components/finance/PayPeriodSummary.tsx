@@ -3,6 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Calendar, TrendingUp, DollarSign, Wallet, Percent, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
+
+type ApiError = {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+    message?: string;
+};
 
 interface PayPeriod {
     id: string;
@@ -35,7 +45,7 @@ export const PayPeriodSummary: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['active-pay-period'] });
             alert('New pay period started successfully!');
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             alert('Failed to start new period: ' + (error.response?.data?.message || error.message));
         }
     });
@@ -50,21 +60,21 @@ export const PayPeriodSummary: React.FC = () => {
         startPeriodMutation.mutate(date);
     };
 
-    if (isLoading) return <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-64 rounded-xl"></div>;
+    if (isLoading) return <div className="h-64 animate-pulse rounded-[28px] bg-white/70 dark:bg-slate-800/70"></div>;
 
     if (!activePeriod) {
         return (
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center border border-dashed border-gray-300 dark:border-gray-600">
+            <SurfaceCard className="border-dashed text-center">
                 <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No Active Pay Period</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">Start a new 14-day tracking cycle to see your detailed earnings and profits.</p>
-                <button
+                <ActionButton
                     onClick={handleStartNewPeriod}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center mx-auto"
+                    className="mx-auto"
                 >
                     Start Pay Period <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
-            </div>
+                </ActionButton>
+            </SurfaceCard>
         );
     }
 
@@ -72,7 +82,7 @@ export const PayPeriodSummary: React.FC = () => {
     const progress = Math.min(100, (new Date().getTime() - startDate.getTime()) / (14 * 24 * 60 * 60 * 1000) * 100);
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+        <SurfaceCard>
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
@@ -95,8 +105,8 @@ export const PayPeriodSummary: React.FC = () => {
                     <span>Period Progress</span>
                     <span>{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                    <div className="bg-blue-600 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
+                <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-fuchsia-600 transition-all duration-1000" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
 
@@ -141,12 +151,12 @@ export const PayPeriodSummary: React.FC = () => {
                 </span>
             </div>
 
-            <button
+            <SoftButton
                 onClick={handleStartNewPeriod}
-                className="mt-6 w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="mt-6 w-full"
             >
                 Start New Period
-            </button>
-        </div>
+            </SoftButton>
+        </SurfaceCard>
     );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Scale, Loader2, Check } from 'lucide-react';
+import { ActionButton, SurfaceCard } from '../ui/shell';
 
 export const WeightLogForm: React.FC = () => {
     const queryClient = useQueryClient();
@@ -23,7 +24,7 @@ export const WeightLogForm: React.FC = () => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <SurfaceCard>
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
                 <Scale className="w-5 h-5 mr-2 text-blue-500" />
                 Track Weight
@@ -38,7 +39,7 @@ export const WeightLogForm: React.FC = () => {
                             step="0.1"
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                             placeholder="0.0"
                             required
                         />
@@ -49,21 +50,21 @@ export const WeightLogForm: React.FC = () => {
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                             required
                         />
                     </div>
                 </div>
 
-                <button
+                <ActionButton
                     type="submit"
                     disabled={mutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full"
                 >
                     {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : (mutation.isSuccess ? <Check className="w-5 h-5 mr-2" /> : <Scale className="w-5 h-5 mr-2" />)}
                     {mutation.isSuccess ? 'Logged!' : 'Log Weight'}
-                </button>
+                </ActionButton>
             </form>
-        </div>
+        </SurfaceCard>
     );
 };

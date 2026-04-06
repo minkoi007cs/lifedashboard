@@ -21,8 +21,22 @@ export interface Task {
     status: TaskStatus;
     priority: TaskPriority;
     dueDate: string;
+    startDate?: string | null;
+    endDate?: string | null;
     reminderTime?: string;
     userId: string;
+    isSharedPlan?: boolean;
+    sourceWishId?: string | null;
+    participants?: Array<{
+        id: string;
+        userId: string;
+        user?: {
+            id: string;
+            name?: string;
+            email: string;
+            avatarUrl?: string;
+        };
+    }>;
     createdAt: string;
     updatedAt: string;
 }

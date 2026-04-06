@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Plus, Loader2 } from 'lucide-react';
+import { ActionButton, SurfaceCard } from '../ui/shell';
 
 interface FoodLogFormProps {
     onSuccess?: () => void;
@@ -42,7 +43,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <SurfaceCard>
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
                 <Plus className="w-5 h-5 mr-2 text-orange-500" />
                 Log Food Item
@@ -56,7 +57,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                             placeholder="e.g. Chicken Breast"
                             required
                         />
@@ -67,7 +68,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="number"
                             value={formData.amount}
                             onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                             required
                         />
                     </div>
@@ -80,7 +81,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="number"
                             value={formData.calories}
                             onChange={(e) => setFormData({ ...formData, calories: Number(e.target.value) })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
@@ -89,7 +90,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="number"
                             value={formData.protein}
                             onChange={(e) => setFormData({ ...formData, protein: Number(e.target.value) })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
@@ -98,7 +99,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="number"
                             value={formData.fat}
                             onChange={(e) => setFormData({ ...formData, fat: Number(e.target.value) })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
@@ -107,7 +108,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                             type="number"
                             value={formData.carbs}
                             onChange={(e) => setFormData({ ...formData, carbs: Number(e.target.value) })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                 </div>
@@ -118,7 +119,7 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                         <select
                             value={formData.mealType}
                             onChange={(e) => setFormData({ ...formData, mealType: e.target.value })}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 transition-all text-gray-900 dark:text-white"
+                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 p-3 text-gray-900 outline-none transition-all dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         >
                             <option>Breakfast</option>
                             <option>Lunch</option>
@@ -138,15 +139,15 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
                     </div>
                 </div>
 
-                <button
+                <ActionButton
                     type="submit"
                     disabled={mutation.isPending}
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full"
                 >
                     {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus className="w-5 h-5 mr-2" />}
                     Add Entry
-                </button>
+                </ActionButton>
             </form>
-        </div>
+        </SurfaceCard>
     );
 };

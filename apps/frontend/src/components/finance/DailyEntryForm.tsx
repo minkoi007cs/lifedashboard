@@ -2,12 +2,21 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Plus, Trash2, Save, Calculator } from 'lucide-react';
+import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
 
 interface Expense {
     description: string;
     amount: number;
     category?: string;
 }
+
+type DailyEntryPayload = {
+    date: string;
+    serviceSales: number;
+    cashTips: number;
+    ccTips: number;
+    expenses: Expense[];
+};
 
 export const DailyEntryForm: React.FC = () => {
     const queryClient = useQueryClient();
@@ -32,7 +41,7 @@ export const DailyEntryForm: React.FC = () => {
     };
 
     const mutation = useMutation({
-        mutationFn: async (data: any) => {
+        mutationFn: async (data: DailyEntryPayload) => {
             const res = await api.post('/api/v1/finance/daily-entry', data);
             return res.data;
         },
@@ -60,17 +69,18 @@ export const DailyEntryForm: React.FC = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-4">
+        <SurfaceCard>
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                    <Calculator className="w-5 h-5 mr-2 text-blue-500" />
+                    <Calculator className="w-5 h-5 mr-2 text-pink-500" />
                     Daily Entry
                 </h3>
                 <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                    className="rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-2 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white"
                 />
             </div>
 
@@ -81,7 +91,7 @@ export const DailyEntryForm: React.FC = () => {
                         type="number"
                         value={serviceSales}
                         onChange={(e) => setServiceSales(Number(e.target.value))}
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white"
+                        className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         placeholder="0.00"
                     />
                 </div>
@@ -91,7 +101,7 @@ export const DailyEntryForm: React.FC = () => {
                         type="number"
                         value={cashTips}
                         onChange={(e) => setCashTips(Number(e.target.value))}
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white"
+                        className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         placeholder="0.00"
                     />
                 </div>
@@ -101,7 +111,7 @@ export const DailyEntryForm: React.FC = () => {
                         type="number"
                         value={ccTips}
                         onChange={(e) => setCcTips(Number(e.target.value))}
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white"
+                        className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white"
                         placeholder="0.00"
                     />
                 </div>
@@ -110,24 +120,24 @@ export const DailyEntryForm: React.FC = () => {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white">Expenses</h4>
-                    <button
+                    <SoftButton
                         type="button"
                         onClick={addExpense}
-                        className="flex items-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
+                        className="text-pink-600 dark:text-pink-300"
                     >
                         <Plus className="w-4 h-4 mr-1" /> Add Expense
-                    </button>
+                    </SoftButton>
                 </div>
 
                 {expenses.map((expense, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div key={index} className="grid grid-cols-1 items-end gap-4 rounded-[24px] border border-orange-100 bg-orange-50/60 p-4 dark:border-white/10 dark:bg-slate-800/70 md:grid-cols-3">
                         <div className="md:col-span-1">
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
                             <input
                                 type="text"
                                 value={expense.description}
                                 onChange={(e) => updateExpense(index, 'description', e.target.value)}
-                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white"
+                                className="w-full rounded-2xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
                                 placeholder="e.g., Gas, Food, Supplies"
                             />
                         </div>
@@ -137,7 +147,7 @@ export const DailyEntryForm: React.FC = () => {
                                 type="number"
                                 value={expense.amount}
                                 onChange={(e) => updateExpense(index, 'amount', Number(e.target.value))}
-                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white"
+                                className="w-full rounded-2xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white"
                                 placeholder="0.00"
                             />
                         </div>
@@ -154,10 +164,10 @@ export const DailyEntryForm: React.FC = () => {
                 ))}
             </div>
 
-            <button
+            <ActionButton
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                className="w-full"
             >
                 {mutation.isPending ? 'Saving...' : (
                     <>
@@ -165,7 +175,8 @@ export const DailyEntryForm: React.FC = () => {
                         Save Daily Entry
                     </>
                 )}
-            </button>
+            </ActionButton>
         </form>
+        </SurfaceCard>
     );
 };

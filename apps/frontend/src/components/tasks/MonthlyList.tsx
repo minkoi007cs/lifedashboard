@@ -5,6 +5,7 @@ import type { Task } from '../../types/task.ts';
 import { format } from 'date-fns';
 import { Loader2, CheckCircle2, Circle } from 'lucide-react';
 import clsx from 'clsx';
+import { SurfaceCard } from '../ui/shell';
 
 interface MonthlyListProps {
     month: Date;
@@ -21,7 +22,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
         },
     });
 
-    if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
 
     // Group tasks by day
     const groupedTasks = tasks?.reduce((acc, task) => {
@@ -36,13 +37,13 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
     return (
         <div className="space-y-6">
             {sortedDates.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 p-12 text-center rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                <SurfaceCard className="border-dashed p-12 text-center">
                     <p className="text-gray-500">No tasks scheduled for this month.</p>
-                </div>
+                </SurfaceCard>
             ) : (
                 sortedDates.map((date) => (
-                    <div key={date} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <SurfaceCard key={date} className="overflow-hidden p-0">
+                        <div className="flex items-center justify-between border-b border-gray-200 bg-orange-50/70 px-6 py-3 dark:border-gray-700 dark:bg-slate-800/70">
                             <h3 className="font-bold text-gray-900 dark:text-white">
                                 {format(new Date(date), 'EEEE, MMMM do')}
                             </h3>
@@ -52,7 +53,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
                         </div>
                         <div className="divide-y divide-gray-100 dark:divide-gray-700">
                             {groupedTasks?.[date].map((task) => (
-                                <div key={task.id} className="p-4 flex items-center justify-between group hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                <div key={task.id} className="group flex items-center justify-between p-4 transition-colors hover:bg-orange-50/60 dark:hover:bg-slate-800/60">
                                     <div className="flex items-center space-x-4">
                                         <div className={clsx(
                                             "p-1 rounded-full",
@@ -67,6 +68,11 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
                                             )}>
                                                 {task.title}
                                             </h4>
+                                            {task.isSharedPlan ? (
+                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-pink-500 dark:text-pink-300">
+                                                    Shared plan
+                                                </p>
+                                            ) : null}
                                             {task.description && (
                                                 <p className="text-xs text-gray-500 mt-1 line-clamp-1">{task.description}</p>
                                             )}
@@ -88,7 +94,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </SurfaceCard>
                 ))
             )}
         </div>

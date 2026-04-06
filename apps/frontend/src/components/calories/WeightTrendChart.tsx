@@ -1,6 +1,7 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { WeightLog } from '../../types/calories';
+import { SurfaceCard } from '../ui/shell';
 
 interface WeightTrendChartProps {
     logs: WeightLog[];
@@ -13,7 +14,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({ logs }) => {
     }));
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-[350px]">
+        <SurfaceCard className="h-[350px]">
             <h3 className="text-lg font-bold mb-6 text-gray-900 dark:text-white">Weight Trend</h3>
             <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -53,6 +54,6 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({ logs }) => {
                     </LineChart>
                 </ResponsiveContainer>
             </div>
-        </div>
+        </SurfaceCard>
     );
 };
