@@ -10,6 +10,34 @@
   --primary-foreground: 0 0% 100%;
   --secondary: 35 100% 96%;
   --secondary-foreground: 224 39% 15%;
+  --font-body: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+  --font-heading: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+  --radius-shell: 32px;
+  --radius-card: 28px;
+  --radius-pill: 22px;
+  --shell-background:
+    radial-gradient(circle at top, rgba(251, 191, 36, 0.22), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(255, 251, 245, 0.92), rgba(255, 247, 237, 0.88));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 237, 0.9));
+  --topbar-background: rgba(255, 255, 255, 0.76);
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: rgba(255, 255, 255, 0.95);
+  --surface-border: rgba(255, 255, 255, 0.64);
+  --surface-shadow: 0 18px 50px rgba(251, 146, 60, 0.12);
+  --panel-shadow: 0 20px 60px rgba(251, 146, 60, 0.14);
+  --soft-surface: rgba(255, 255, 255, 0.82);
+  --soft-surface-hover: rgba(255, 247, 237, 0.96);
+  --soft-border: rgba(251, 191, 36, 0.24);
+  --tab-strip: rgba(255, 255, 255, 0.8);
+  --icon-gradient: linear-gradient(135deg, #fb923c, #ec4899, #d946ef);
+  --action-gradient: linear-gradient(90deg, #fb923c, #ec4899, #d946ef);
+  --accent-text: #db2777;
+  --muted: rgba(71, 85, 105, 0.82);
+  --nav-active-shadow: 0 18px 40px rgba(236, 72, 153, 0.26);
+  --profile-chip: rgba(255, 255, 255, 0.82);
+  --field-frame: solid;
 }
 
 .dark {
@@ -22,6 +50,208 @@
   --primary-foreground: 222 47% 11%;
   --secondary: 220 29% 18%;
   --secondary-foreground: 210 40% 98%;
+  --shell-background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.15), transparent 24%),
+    linear-gradient(180deg, rgba(9, 14, 26, 0.98), rgba(20, 28, 45, 0.96));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.92));
+  --topbar-background: rgba(2, 6, 23, 0.6);
+  --surface: rgba(15, 23, 42, 0.78);
+  --surface-strong: rgba(15, 23, 42, 0.92);
+  --surface-border: rgba(255, 255, 255, 0.1);
+  --surface-shadow: 0 18px 50px rgba(2, 6, 23, 0.38);
+  --panel-shadow: 0 20px 60px rgba(2, 6, 23, 0.36);
+  --soft-surface: rgba(15, 23, 42, 0.75);
+  --soft-surface-hover: rgba(30, 41, 59, 0.9);
+  --soft-border: rgba(255, 255, 255, 0.1);
+  --tab-strip: rgba(15, 23, 42, 0.75);
+  --muted: rgba(148, 163, 184, 0.88);
+  --profile-chip: rgba(15, 23, 42, 0.82);
+}
+
+:root[data-theme-preset='modernist'] {
+  --font-body: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-heading: "Aptos Display", "Segoe UI", "Helvetica Neue", sans-serif;
+  --radius-shell: 26px;
+  --radius-card: 22px;
+  --radius-pill: 16px;
+  --shell-background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.15), transparent 26%),
+    linear-gradient(180deg, rgba(244, 250, 255, 0.96), rgba(235, 244, 255, 0.94));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(248, 252, 255, 0.98), rgba(235, 244, 255, 0.96));
+  --topbar-background: rgba(244, 250, 255, 0.9);
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-strong: rgba(255, 255, 255, 0.98);
+  --surface-border: rgba(125, 211, 252, 0.32);
+  --surface-shadow: 0 14px 40px rgba(14, 165, 233, 0.12);
+  --panel-shadow: 0 20px 58px rgba(8, 47, 73, 0.14);
+  --soft-surface: rgba(255, 255, 255, 0.9);
+  --soft-surface-hover: rgba(240, 249, 255, 0.96);
+  --soft-border: rgba(14, 165, 233, 0.22);
+  --tab-strip: rgba(255, 255, 255, 0.9);
+  --icon-gradient: linear-gradient(135deg, #0f172a, #0891b2, #38bdf8);
+  --action-gradient: linear-gradient(90deg, #0f172a, #0891b2, #38bdf8);
+  --accent-text: #0f766e;
+  --nav-active-shadow: 0 16px 36px rgba(8, 145, 178, 0.24);
+  --profile-chip: rgba(255, 255, 255, 0.88);
+}
+
+:root.dark[data-theme-preset='modernist'] {
+  --shell-background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.16), transparent 22%),
+    linear-gradient(180deg, rgba(6, 11, 20, 0.98), rgba(11, 18, 32, 0.96));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(4, 10, 18, 0.97), rgba(11, 23, 39, 0.94));
+  --topbar-background: rgba(6, 11, 20, 0.76);
+  --surface: rgba(10, 18, 30, 0.84);
+  --surface-strong: rgba(8, 16, 28, 0.96);
+  --surface-border: rgba(56, 189, 248, 0.18);
+  --surface-shadow: 0 20px 50px rgba(2, 6, 23, 0.42);
+  --soft-surface: rgba(10, 18, 30, 0.8);
+  --soft-surface-hover: rgba(14, 26, 45, 0.96);
+  --soft-border: rgba(56, 189, 248, 0.14);
+  --tab-strip: rgba(8, 16, 28, 0.9);
+  --profile-chip: rgba(10, 18, 30, 0.88);
+}
+
+:root[data-theme-preset='heritage'] {
+  --font-body: Georgia, "Times New Roman", serif;
+  --font-heading: Baskerville, Georgia, "Times New Roman", serif;
+  --radius-shell: 24px;
+  --radius-card: 20px;
+  --radius-pill: 14px;
+  --shell-background:
+    radial-gradient(circle at top, rgba(180, 83, 9, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(249, 244, 234, 0.98), rgba(245, 235, 219, 0.96));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(250, 246, 238, 0.98), rgba(240, 230, 212, 0.95));
+  --topbar-background: rgba(249, 244, 234, 0.9);
+  --surface: rgba(255, 251, 244, 0.92);
+  --surface-strong: rgba(255, 251, 244, 0.98);
+  --surface-border: rgba(161, 98, 7, 0.26);
+  --surface-shadow: 0 14px 36px rgba(120, 53, 15, 0.12);
+  --panel-shadow: 0 20px 54px rgba(120, 53, 15, 0.12);
+  --soft-surface: rgba(255, 250, 241, 0.9);
+  --soft-surface-hover: rgba(250, 240, 221, 0.95);
+  --soft-border: rgba(146, 64, 14, 0.2);
+  --tab-strip: rgba(255, 251, 244, 0.92);
+  --icon-gradient: linear-gradient(135deg, #7c2d12, #a16207, #f59e0b);
+  --action-gradient: linear-gradient(90deg, #7c2d12, #a16207, #d97706);
+  --accent-text: #92400e;
+  --nav-active-shadow: 0 16px 34px rgba(146, 64, 14, 0.22);
+  --profile-chip: rgba(255, 251, 244, 0.9);
+  --field-frame: double;
+}
+
+:root.dark[data-theme-preset='heritage'] {
+  --shell-background:
+    radial-gradient(circle at top, rgba(245, 158, 11, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(27, 20, 15, 0.98), rgba(41, 28, 18, 0.96));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(33, 23, 17, 0.97), rgba(46, 31, 19, 0.94));
+  --topbar-background: rgba(27, 20, 15, 0.84);
+  --surface: rgba(36, 26, 19, 0.85);
+  --surface-strong: rgba(31, 24, 18, 0.96);
+  --surface-border: rgba(251, 191, 36, 0.14);
+  --soft-surface: rgba(36, 26, 19, 0.8);
+  --soft-surface-hover: rgba(56, 37, 22, 0.94);
+  --soft-border: rgba(251, 191, 36, 0.12);
+  --tab-strip: rgba(31, 24, 18, 0.9);
+  --profile-chip: rgba(36, 26, 19, 0.86);
+}
+
+:root[data-theme-preset='vintage'] {
+  --font-body: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-heading: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  --radius-shell: 30px;
+  --radius-card: 24px;
+  --radius-pill: 18px;
+  --shell-background:
+    radial-gradient(circle at top left, rgba(139, 122, 79, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(244, 236, 215, 0.98), rgba(233, 222, 191, 0.94));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(245, 238, 220, 0.97), rgba(229, 216, 178, 0.95));
+  --topbar-background: rgba(244, 236, 215, 0.88);
+  --surface: rgba(250, 244, 227, 0.88);
+  --surface-strong: rgba(250, 244, 227, 0.96);
+  --surface-border: rgba(107, 93, 61, 0.24);
+  --surface-shadow: 0 20px 46px rgba(107, 93, 61, 0.12);
+  --panel-shadow: 0 22px 58px rgba(107, 93, 61, 0.14);
+  --soft-surface: rgba(247, 239, 219, 0.88);
+  --soft-surface-hover: rgba(239, 229, 203, 0.96);
+  --soft-border: rgba(107, 93, 61, 0.18);
+  --tab-strip: rgba(248, 241, 222, 0.88);
+  --icon-gradient: linear-gradient(135deg, #6b5d3d, #8b7a4f, #c7a86a);
+  --action-gradient: linear-gradient(90deg, #6b5d3d, #8b7a4f, #c7a86a);
+  --accent-text: #715b2b;
+  --nav-active-shadow: 0 18px 42px rgba(139, 122, 79, 0.2);
+  --profile-chip: rgba(248, 241, 222, 0.88);
+  --field-frame: dashed;
+}
+
+:root.dark[data-theme-preset='vintage'] {
+  --shell-background:
+    radial-gradient(circle at top left, rgba(199, 168, 106, 0.07), transparent 20%),
+    linear-gradient(180deg, rgba(28, 27, 21, 0.98), rgba(44, 41, 31, 0.95));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(34, 32, 24, 0.97), rgba(53, 48, 35, 0.93));
+  --topbar-background: rgba(28, 27, 21, 0.82);
+  --surface: rgba(37, 35, 27, 0.84);
+  --surface-strong: rgba(33, 31, 24, 0.95);
+  --surface-border: rgba(199, 168, 106, 0.12);
+  --soft-surface: rgba(39, 36, 28, 0.82);
+  --soft-surface-hover: rgba(58, 53, 39, 0.94);
+  --soft-border: rgba(199, 168, 106, 0.1);
+  --tab-strip: rgba(33, 31, 24, 0.9);
+  --profile-chip: rgba(39, 36, 28, 0.84);
+}
+
+:root[data-theme-preset='noir'] {
+  --font-body: "Gill Sans", "Segoe UI", sans-serif;
+  --font-heading: "Franklin Gothic Medium", "Gill Sans", sans-serif;
+  --radius-shell: 24px;
+  --radius-card: 22px;
+  --radius-pill: 16px;
+  --shell-background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.18), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.16), transparent 18%),
+    linear-gradient(180deg, rgba(10, 12, 20, 0.99), rgba(18, 24, 39, 0.98));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(13, 16, 26, 0.98), rgba(17, 23, 36, 0.95));
+  --topbar-background: rgba(10, 12, 20, 0.78);
+  --surface: rgba(17, 24, 39, 0.82);
+  --surface-strong: rgba(17, 24, 39, 0.95);
+  --surface-border: rgba(124, 58, 237, 0.16);
+  --surface-shadow: 0 24px 58px rgba(0, 0, 0, 0.38);
+  --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --soft-surface: rgba(17, 24, 39, 0.76);
+  --soft-surface-hover: rgba(30, 41, 59, 0.94);
+  --soft-border: rgba(34, 211, 238, 0.12);
+  --tab-strip: rgba(17, 24, 39, 0.88);
+  --icon-gradient: linear-gradient(135deg, #111827, #7c3aed, #22d3ee);
+  --action-gradient: linear-gradient(90deg, #111827, #7c3aed, #22d3ee);
+  --accent-text: #67e8f9;
+  --nav-active-shadow: 0 18px 44px rgba(124, 58, 237, 0.28);
+  --profile-chip: rgba(17, 24, 39, 0.82);
+}
+
+:root:not(.dark)[data-theme-preset='noir'] {
+  --shell-background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 20%),
+    linear-gradient(180deg, rgba(236, 248, 255, 0.96), rgba(224, 234, 250, 0.92));
+  --sidebar-background:
+    linear-gradient(180deg, rgba(246, 250, 255, 0.98), rgba(230, 238, 250, 0.96));
+  --topbar-background: rgba(246, 250, 255, 0.9);
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: rgba(255, 255, 255, 0.98);
+  --surface-border: rgba(99, 102, 241, 0.18);
+  --soft-surface: rgba(255, 255, 255, 0.88);
+  --soft-surface-hover: rgba(240, 249, 255, 0.96);
+  --soft-border: rgba(99, 102, 241, 0.14);
+  --tab-strip: rgba(255, 255, 255, 0.9);
+  --profile-chip: rgba(255, 255, 255, 0.88);
 }
 
 html {
@@ -39,13 +269,18 @@ body {
   margin: 0;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family:
-    "Trebuchet MS",
-    "Avenir Next",
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-body);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 button,
@@ -62,4 +297,122 @@ textarea {
 ::selection {
   background: rgba(244, 114, 182, 0.28);
   color: inherit;
+}
+
+.themed-app-shell {
+  background: var(--shell-background);
+}
+
+.themed-sidebar {
+  border-right: 1px solid var(--surface-border);
+  background: var(--sidebar-background);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(24px);
+}
+
+.themed-topbar {
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--topbar-background);
+  backdrop-filter: blur(22px);
+}
+
+.themed-surface,
+.themed-panel {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(20px);
+}
+
+.themed-panel {
+  box-shadow: var(--panel-shadow);
+}
+
+.theme-icon-badge {
+  background: var(--icon-gradient);
+  box-shadow: var(--nav-active-shadow);
+}
+
+.theme-action-button {
+  border-radius: calc(var(--radius-pill) + 2px);
+  background: var(--action-gradient);
+  box-shadow: var(--nav-active-shadow);
+}
+
+.theme-soft-button {
+  border-radius: var(--radius-pill);
+  border: 1px var(--field-frame) var(--soft-border);
+  background: var(--soft-surface);
+  color: hsl(var(--foreground));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.theme-soft-button:hover {
+  background: var(--soft-surface-hover);
+}
+
+.theme-link-footer {
+  border-radius: var(--radius-pill);
+  border: 1px var(--field-frame) var(--soft-border);
+  background: color-mix(in srgb, var(--soft-surface) 84%, white 16%);
+  color: var(--accent-text);
+}
+
+.theme-eyebrow,
+.theme-selected-tag {
+  color: var(--accent-text);
+}
+
+.themed-tab-strip {
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--surface-border);
+  background: var(--tab-strip);
+}
+
+.theme-tab-active {
+  background: var(--action-gradient);
+  color: white;
+  box-shadow: var(--nav-active-shadow);
+}
+
+.theme-tab-idle {
+  color: var(--muted);
+}
+
+.theme-tab-idle:hover {
+  background: var(--soft-surface-hover);
+  color: hsl(var(--foreground));
+}
+
+.theme-settings-chip,
+.theme-selected-tag {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--soft-surface) 84%, white 16%);
+}
+
+.theme-mode-row,
+.theme-preset-card,
+.theme-notification-row,
+.theme-profile-chip {
+  border: 1px solid var(--surface-border);
+  background: var(--soft-surface);
+}
+
+.theme-mode-row-active,
+.theme-preset-card-active {
+  background: color-mix(in srgb, var(--surface-strong) 84%, white 16%);
+  box-shadow: var(--surface-shadow);
+}
+
+.theme-notification-row:hover,
+.theme-mode-row:hover,
+.theme-preset-card:hover {
+  background: var(--soft-surface-hover);
+}
+
+.theme-profile-chip {
+  border-radius: var(--radius-pill);
+  background: var(--profile-chip);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { type ThemeMode, useTheme } from '../theme/theme-context';
+import { themePresets, type ThemePreset } from '../theme/theme-presets';
 import api from '../../lib/axios';
 import {
   Bell,
   CheckSquare,
+  CircleHelp,
   DollarSign,
   Gift,
   LayoutDashboard,
@@ -23,6 +25,8 @@ import {
   Zap,
 } from 'lucide-react';
 import type { NotificationPayload } from '../../types/notification';
+import { HelpPanel } from '../help/HelpPanel';
+import { getHelpPageKey } from '../../help/help-content';
 
 type NavItem = {
   to: string;
@@ -66,13 +70,26 @@ const themeOptions: Array<{
   },
 ];
 
+const presetIcons: Record<
+  ThemePreset,
+  React.ComponentType<{ className?: string }>
+> = {
+  aurora: Sparkles,
+  modernist: LayoutDashboard,
+  heritage: Sun,
+  vintage: Gift,
+  noir: Moon,
+};
+
 function SidebarContent({
   onNavigate,
+  onOpenHelp,
 }: {
   onNavigate?: () => void;
+  onOpenHelp: () => void;
 }) {
   const { user, logout } = useAuthStore();
-  const { mode, resolvedTheme, setMode } = useTheme();
+  const { mode, preset, resolvedTheme, setMode, setPreset } = useTheme();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -89,7 +106,7 @@ function SidebarContent({
     <div className="flex h-full flex-col">
       <div className="border-b border-white/50 px-5 pb-5 pt-6 dark:border-white/10">
         <div className="inline-flex items-center gap-3 rounded-2xl bg-white/80 px-3 py-2 shadow-lg shadow-orange-200/40 ring-1 ring-orange-100 backdrop-blur dark:bg-slate-900/80 dark:shadow-slate-950/30 dark:ring-white/10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-300/50">
+          <div className="theme-icon-badge flex h-10 w-10 items-center justify-center rounded-2xl text-white">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
@@ -116,7 +133,7 @@ function SidebarContent({
                 [
                   'group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all',
                   isActive
-                    ? 'bg-gradient-to-r from-orange-400 via-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-300/40'
+                    ? 'theme-tab-active'
                     : 'text-slate-600 hover:bg-white/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white',
                 ].join(' ')
               }
@@ -129,7 +146,7 @@ function SidebarContent({
       </nav>
 
       <div className="border-t border-white/50 p-4 dark:border-white/10">
-        <div className="rounded-3xl bg-white/80 p-4 shadow-xl shadow-orange-200/25 ring-1 ring-orange-100 backdrop-blur dark:bg-slate-900/80 dark:shadow-slate-950/30 dark:ring-white/10">
+        <div className="themed-surface p-4">
           <div className="mb-3 flex items-center gap-3">
             <img
               src={user?.avatarUrl || 'https://via.placeholder.com/40'}
@@ -148,59 +165,192 @@ function SidebarContent({
 
           <button
             type="button"
-            onClick={() => setIsSettingsOpen((value) => !value)}
-            className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:bg-orange-50 dark:text-slate-200 dark:hover:bg-slate-800"
+            onClick={() => setIsSettingsOpen(true)}
+            className="theme-soft-button flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold"
           >
             <span className="flex items-center gap-3">
               <Settings className="h-4 w-4" />
               Settings
             </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-              {mode}
+            <span className="theme-settings-chip px-2 py-0.5 text-[11px] uppercase tracking-wide">
+              {preset}
             </span>
           </button>
 
           {isSettingsOpen ? (
-            <div className="mt-3 rounded-2xl border border-orange-100 bg-orange-50/80 p-3 dark:border-white/10 dark:bg-slate-800/80">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                Appearance
-              </p>
-              <div className="space-y-2">
-                {themeOptions.map((option) => {
-                  const Icon = option.icon;
-                  const isSelected = mode === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setMode(option.value)}
-                      className={[
-                        'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition',
-                        isSelected
-                          ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
-                          : 'text-slate-600 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-slate-900/70',
-                      ].join(' ')}
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-300 to-pink-500 text-white">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold">{option.label}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {option.description}
-                        </p>
-                      </div>
-                      {isSelected ? (
-                        <span className="text-xs font-semibold uppercase tracking-wide text-pink-500">
-                          {resolvedTheme}
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
+            <div
+              className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm"
+              onClick={() => setIsSettingsOpen(false)}
+            >
+              <div
+                className="absolute bottom-0 left-0 right-0 max-h-[88vh] rounded-t-[32px] border border-white/40 bg-[hsl(var(--background))] p-5 shadow-[0_-20px_80px_rgba(15,23,42,0.22)] sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:w-[430px] sm:rounded-[32px] dark:border-white/10"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.24em]">
+                      Personalize
+                    </p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                      Appearance settings
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                      Choose how the whole app should feel: brightness mode,
+                      typography, color story and frame language.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="theme-soft-button h-11 w-11 px-0"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-6 overflow-y-auto pr-1">
+                  <section className="space-y-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        Brightness mode
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Auto follows device preference. Current output:{' '}
+                        {resolvedTheme}.
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      {themeOptions.map((option) => {
+                        const Icon = option.icon;
+                        const isSelected = mode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setMode(option.value)}
+                            className={[
+                              'theme-mode-row flex w-full items-center gap-3 rounded-[24px] px-4 py-3 text-left transition',
+                              isSelected ? 'theme-mode-row-active' : '',
+                            ].join(' ')}
+                          >
+                            <div className="theme-icon-badge flex h-10 w-10 items-center justify-center text-white">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                {option.label}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {option.description}
+                              </p>
+                            </div>
+                            {isSelected ? (
+                              <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
+                                Active
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        Theme presets
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Each preset changes palette, heading voice, card feel
+                        and shell attitude.
+                      </p>
+                    </div>
+                    <div className="grid gap-3">
+                      {themePresets.map((themePreset) => {
+                        const Icon = presetIcons[themePreset.value];
+                        const isSelected = preset === themePreset.value;
+
+                        return (
+                          <button
+                            key={themePreset.value}
+                            type="button"
+                            onClick={() => setPreset(themePreset.value)}
+                            className={[
+                              'theme-preset-card w-full rounded-[26px] border p-4 text-left transition',
+                              isSelected ? 'theme-preset-card-active' : '',
+                            ].join(' ')}
+                          >
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex h-11 w-11 items-center justify-center rounded-[18px] text-white shadow-lg"
+                                  style={{
+                                    background: `linear-gradient(135deg, ${themePreset.preview.from}, ${themePreset.preview.via}, ${themePreset.preview.to})`,
+                                  }}
+                                >
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="text-base font-black text-slate-900 dark:text-white">
+                                    {themePreset.label}
+                                  </p>
+                                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    {themePreset.era}
+                                  </p>
+                                </div>
+                              </div>
+                              {isSelected ? (
+                                <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
+                                  Selected
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="mb-3 flex items-center gap-2">
+                              {[
+                                themePreset.preview.from,
+                                themePreset.preview.via,
+                                themePreset.preview.to,
+                              ].map((swatch) => (
+                                <span
+                                  key={swatch}
+                                  className="h-3 w-10 rounded-full"
+                                  style={{ backgroundColor: swatch }}
+                                />
+                              ))}
+                              <span
+                                className="ml-1 h-8 flex-1 rounded-[14px] border"
+                                style={{
+                                  backgroundColor: themePreset.preview.surface,
+                                  borderColor: `${themePreset.preview.ink}22`,
+                                }}
+                              />
+                            </div>
+
+                            <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                              {themePreset.description}
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                              {themePreset.mood}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
               </div>
             </div>
           ) : null}
+
+          <button
+            type="button"
+            onClick={onOpenHelp}
+            className="theme-soft-button mt-3 flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
+          >
+            <CircleHelp className="h-4 w-4" />
+            Help
+          </button>
 
           <button
             type="button"
@@ -220,8 +370,11 @@ export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
+  const helpPageKey = getHelpPageKey(location.pathname);
 
   const { data: notifications } = useQuery<NotificationPayload>({
     queryKey: ['notifications'],
@@ -230,12 +383,15 @@ export const AppLayout: React.FC = () => {
 
   const markAllReadMutation = useMutation({
     mutationFn: async () => api.patch('/api/v1/notifications/read-all'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
   const markReadMutation = useMutation({
-    mutationFn: async (notificationId: string) => api.patch(`/api/v1/notifications/${notificationId}/read`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    mutationFn: async (notificationId: string) =>
+      api.patch(`/api/v1/notifications/${notificationId}/read`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
   useEffect(() => {
@@ -248,7 +404,7 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.22),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(236,72,153,0.16),_transparent_28%)] text-slate-900 transition-colors dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_24%)] dark:text-white">
+    <div className="themed-app-shell min-h-screen text-slate-900 transition-colors dark:text-white">
       <div className="mx-auto flex min-h-screen max-w-[1800px]">
         <div
           className={[
@@ -260,7 +416,7 @@ export const AppLayout: React.FC = () => {
 
         <aside
           className={[
-            'fixed inset-y-0 left-0 z-50 w-[86vw] max-w-[320px] -translate-x-full border-r border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,247,237,0.9))] shadow-2xl shadow-orange-200/30 backdrop-blur-xl transition-transform dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] dark:shadow-slate-950/40 md:sticky md:top-0 md:h-screen md:w-80 md:translate-x-0',
+            'themed-sidebar fixed inset-y-0 left-0 z-50 w-[86vw] max-w-[320px] -translate-x-full transition-transform md:sticky md:top-0 md:h-screen md:w-80 md:translate-x-0',
             isSidebarOpen ? 'translate-x-0' : '',
           ].join(' ')}
         >
@@ -276,26 +432,30 @@ export const AppLayout: React.FC = () => {
               <X className="h-5 w-5" />
             </button>
           </div>
-          <SidebarContent onNavigate={() => setIsSidebarOpen(false)} />
+          <SidebarContent
+            onNavigate={() => setIsSidebarOpen(false)}
+            onOpenHelp={() => setIsHelpOpen(true)}
+          />
         </aside>
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-white/40 bg-white/75 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60 md:px-8">
+          <header className="themed-topbar sticky top-0 z-30 px-4 py-3 md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-100 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 md:hidden"
+                  className="theme-soft-button inline-flex h-11 w-11 items-center justify-center px-0 md:hidden"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-pink-500 dark:text-pink-300">
+                  <p className="theme-eyebrow text-xs font-semibold uppercase tracking-[0.25em]">
                     Daily flow
                   </p>
                   <h1 className="text-lg font-black text-slate-900 dark:text-white md:text-2xl">
-                    Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+                    Welcome back
+                    {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
                   </h1>
                 </div>
               </div>
@@ -305,7 +465,7 @@ export const AppLayout: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsNotificationsOpen((value) => !value)}
-                    className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-100 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+                    className="theme-soft-button relative inline-flex h-11 w-11 items-center justify-center px-0"
                   >
                     <Bell className="h-5 w-5" />
                     {notifications?.unreadCount ? (
@@ -316,41 +476,55 @@ export const AppLayout: React.FC = () => {
                   </button>
 
                   {isNotificationsOpen ? (
-                    <div className="absolute right-0 top-14 z-40 w-[320px] rounded-[28px] border border-white/60 bg-white/95 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.2)] backdrop-blur dark:border-white/10 dark:bg-slate-900/92">
+                    <div className="themed-surface absolute right-0 top-14 z-40 w-[320px] p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-black text-slate-900 dark:text-white">Notifications</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{notifications?.unreadCount ?? 0} unread</p>
+                          <p className="text-sm font-black text-slate-900 dark:text-white">
+                            Notifications
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {notifications?.unreadCount ?? 0} unread
+                          </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => markAllReadMutation.mutate()}
-                          className="text-xs font-semibold text-pink-500 transition hover:text-pink-600"
+                          className="theme-eyebrow text-xs font-semibold transition hover:opacity-80"
                         >
                           Mark all read
                         </button>
                       </div>
                       <div className="max-h-80 space-y-2 overflow-y-auto">
-                        {notifications?.items?.length ? notifications.items.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              if (!item.isRead) {
-                                markReadMutation.mutate(item.id);
-                              }
-                              setIsNotificationsOpen(false);
-                              if (item.link) {
-                                navigate(item.link);
-                              }
-                            }}
-                            className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-left transition hover:bg-orange-100/70 dark:border-white/10 dark:bg-slate-800/80 dark:hover:bg-slate-800"
-                          >
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-                            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{item.message}</p>
-                            {!item.isRead ? <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-pink-500">Unread</p> : null}
-                          </button>
-                        )) : (
+                        {notifications?.items?.length ? (
+                          notifications.items.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                if (!item.isRead) {
+                                  markReadMutation.mutate(item.id);
+                                }
+                                setIsNotificationsOpen(false);
+                                if (item.link) {
+                                  navigate(item.link);
+                                }
+                              }}
+                              className="theme-notification-row w-full rounded-2xl px-4 py-3 text-left transition"
+                            >
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                {item.title}
+                              </p>
+                              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                {item.message}
+                              </p>
+                              {!item.isRead ? (
+                                <p className="theme-eyebrow mt-2 text-[10px] font-bold uppercase tracking-[0.18em]">
+                                  Unread
+                                </p>
+                              ) : null}
+                            </button>
+                          ))
+                        ) : (
                           <p className="rounded-2xl border border-dashed border-orange-100 px-4 py-6 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
                             No notifications yet.
                           </p>
@@ -360,20 +534,20 @@ export const AppLayout: React.FC = () => {
                   ) : null}
                 </div>
 
-                <div className="hidden items-center gap-3 rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-orange-100 dark:bg-slate-900/80 dark:ring-white/10 sm:flex">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Your dashboard is synced
-                  </p>
-                </div>
-                <img
-                  src={user?.avatarUrl || 'https://via.placeholder.com/40'}
-                  alt="Avatar"
-                  className="h-10 w-10 rounded-2xl object-cover ring-2 ring-white dark:ring-slate-700"
-                />
+                <div className="theme-profile-chip hidden items-center gap-3 px-3 py-2 sm:flex">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Your dashboard is synced
+                    </p>
+                  </div>
+                  <img
+                    src={user?.avatarUrl || 'https://via.placeholder.com/40'}
+                    alt="Avatar"
+                    className="h-10 w-10 rounded-2xl object-cover ring-2 ring-white dark:ring-slate-700"
+                  />
                 </div>
               </div>
             </div>
@@ -384,6 +558,11 @@ export const AppLayout: React.FC = () => {
           </main>
         </div>
       </div>
+      <HelpPanel
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        pageKey={helpPageKey}
+      />
     </div>
   );
 };
