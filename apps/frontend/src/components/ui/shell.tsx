@@ -12,7 +12,7 @@ export function SurfaceCard({
   return (
     <div
       className={clsx(
-        'rounded-[28px] border border-white/60 bg-white/85 p-5 shadow-[0_18px_50px_rgba(251,146,60,0.12)] backdrop-blur md:p-6 dark:border-white/10 dark:bg-slate-900/78 dark:shadow-[0_18px_50px_rgba(2,6,23,0.38)]',
+        'themed-surface p-5 md:p-6',
         className,
       )}
     >
@@ -35,16 +35,16 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-[30px] border border-white/60 bg-white/70 p-5 shadow-[0_20px_60px_rgba(251,146,60,0.14)] backdrop-blur xl:flex-row xl:items-center xl:justify-between dark:border-white/10 dark:bg-slate-900/70 dark:shadow-[0_20px_60px_rgba(2,6,23,0.36)]">
+    <div className="themed-panel flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-pink-500 dark:text-pink-300">
+          <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.3em]">
             {eyebrow}
           </p>
         ) : null}
         <div className="flex items-center gap-3">
           {icon ? (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-300/35">
+            <div className="theme-icon-badge flex h-12 w-12 shrink-0 items-center justify-center text-white">
               {icon}
             </div>
           ) : null}
@@ -83,7 +83,7 @@ export function SegmentedTabs<T extends string>({
   return (
     <div
       className={clsx(
-        'inline-flex w-full max-w-full gap-2 overflow-x-auto rounded-[22px] border border-white/70 bg-white/80 p-1.5 shadow-sm dark:border-white/10 dark:bg-slate-900/75',
+        'themed-tab-strip inline-flex w-full max-w-full gap-2 overflow-x-auto p-1.5',
         className,
       )}
     >
@@ -98,8 +98,8 @@ export function SegmentedTabs<T extends string>({
             className={clsx(
               'flex min-w-fit items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all',
               active
-                ? 'bg-gradient-to-r from-orange-400 via-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-300/35'
-                : 'text-slate-500 hover:bg-orange-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+                ? 'theme-tab-active'
+                : 'theme-tab-idle',
             )}
           >
             {Icon ? <Icon className="mr-2 h-4 w-4" /> : null}
@@ -120,7 +120,7 @@ export function ActionButton({
     <button
       {...props}
       className={clsx(
-        'inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-orange-400 via-pink-500 to-fuchsia-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-pink-300/35 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60',
+        'theme-action-button inline-flex items-center justify-center px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60',
         className,
       )}
     >
@@ -138,7 +138,7 @@ export function SoftButton({
     <button
       {...props}
       className={clsx(
-        'inline-flex items-center justify-center rounded-2xl border border-orange-100 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-orange-50 dark:border-white/10 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-800',
+        'theme-soft-button inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold transition',
         className,
       )}
     >
@@ -169,7 +169,7 @@ export function WidgetFrame({
           <div className="flex items-center gap-3">
             <div
               className={clsx(
-                'flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg',
+                'theme-icon-badge flex h-11 w-11 items-center justify-center text-white shadow-lg',
                 accent,
               )}
             >
@@ -196,7 +196,7 @@ export function WidgetFrame({
 
 export function LinkLikeFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="inline-flex items-center justify-center gap-1 rounded-2xl border border-orange-100 bg-orange-50/80 px-4 py-3 text-sm font-semibold text-pink-600 dark:border-white/10 dark:bg-slate-800/90 dark:text-pink-300">
+    <div className="theme-link-footer inline-flex items-center justify-center gap-1 px-4 py-3 text-sm font-semibold">
       {children}
       <ChevronRight className="h-4 w-4" />
     </div>

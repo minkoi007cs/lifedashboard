@@ -13,6 +13,14 @@ This frontend now includes the following application areas:
 - Calories
 - Wishlist
 
+## Contextual help
+
+- Every page now has contextual English help content.
+- Help opens in a right-side panel from a small help icon placed next to the sidebar settings control.
+- The login page has its own help trigger in the auth card.
+- Help content is stored as separate HTML files inside `src/help/`.
+- The `/focus` route intentionally reuses dashboard help because it currently points to the dashboard page.
+
 ## Wishlist module
 
 The wishlist page provides:

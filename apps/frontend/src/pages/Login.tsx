@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Monitor, Moon, Sparkles, Sun } from 'lucide-react';
+import { CircleHelp, Monitor, Moon, Sparkles, Sun } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
 import { getApiBaseUrl } from '../lib/api-config';
 import { useTheme } from '../components/theme/theme-context';
 import { ActionButton, SoftButton, SurfaceCard } from '../components/ui/shell';
+import { HelpPanel } from '../components/help/HelpPanel';
 
 export const Login: React.FC = () => {
   const { login, user } = useAuthStore();
   const navigate = useNavigate();
   const [devLoading, setDevLoading] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const { mode, setMode } = useTheme();
 
   useEffect(() => {
@@ -101,6 +103,14 @@ export const Login: React.FC = () => {
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsHelpOpen(true)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-100 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-md dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label="Open login help"
+            >
+              <CircleHelp className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="mb-6 flex flex-wrap gap-2">
@@ -174,6 +184,11 @@ export const Login: React.FC = () => {
           </p>
         </SurfaceCard>
       </div>
+      <HelpPanel
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        pageKey="login"
+      />
     </div>
   );
 };
