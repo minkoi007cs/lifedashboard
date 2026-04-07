@@ -103,10 +103,10 @@ function SettingsPanel({
       onClick={onClose}
     >
       <div
-        className="absolute bottom-0 left-0 right-0 max-h-[88vh] rounded-t-[32px] border border-white/40 bg-[hsl(var(--background))] p-5 shadow-[0_-20px_80px_rgba(15,23,42,0.22)] sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:w-[430px] sm:rounded-[32px] dark:border-white/10"
+        className="absolute bottom-0 left-0 right-0 flex max-h-[88vh] flex-col rounded-t-[32px] border border-white/40 bg-[hsl(var(--background))] p-5 shadow-[0_-20px_80px_rgba(15,23,42,0.22)] sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:max-h-none sm:w-[430px] sm:rounded-[32px] dark:border-white/10"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
           <div>
             <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.24em]">
               Personalize
@@ -128,7 +128,7 @@ function SettingsPanel({
           </button>
         </div>
 
-        <div className="space-y-6 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pr-1">
           <section className="space-y-3">
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">
