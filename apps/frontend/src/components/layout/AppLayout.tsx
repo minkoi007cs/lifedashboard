@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -80,6 +81,188 @@ const presetIcons: Record<
   vintage: Gift,
   noir: Moon,
 };
+
+function SettingsPanel({
+  mode,
+  preset,
+  resolvedTheme,
+  onClose,
+  onModeChange,
+  onPresetChange,
+}: {
+  mode: ThemeMode;
+  preset: ThemePreset;
+  resolvedTheme: 'light' | 'dark';
+  onClose: () => void;
+  onModeChange: (mode: ThemeMode) => void;
+  onPresetChange: (preset: ThemePreset) => void;
+}) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] bg-slate-950/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="absolute bottom-0 left-0 right-0 max-h-[88vh] rounded-t-[32px] border border-white/40 bg-[hsl(var(--background))] p-5 shadow-[0_-20px_80px_rgba(15,23,42,0.22)] sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:w-[430px] sm:rounded-[32px] dark:border-white/10"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.24em]">
+              Personalize
+            </p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+              Appearance settings
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Choose how the whole app should feel: brightness mode,
+              typography, color story and frame language.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="theme-soft-button h-11 w-11 px-0"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-6 overflow-y-auto pr-1">
+          <section className="space-y-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Brightness mode
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Auto follows device preference. Current output: {resolvedTheme}.
+              </p>
+            </div>
+            <div className="grid gap-2">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                const isSelected = mode === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => onModeChange(option.value)}
+                    className={[
+                      'theme-mode-row flex w-full items-center gap-3 rounded-[24px] px-4 py-3 text-left transition',
+                      isSelected ? 'theme-mode-row-active' : '',
+                    ].join(' ')}
+                  >
+                    <div className="theme-icon-badge flex h-10 w-10 items-center justify-center text-white">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {option.label}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {option.description}
+                      </p>
+                    </div>
+                    {isSelected ? (
+                      <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
+                        Active
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Theme presets
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Each preset changes palette, heading voice, card feel and shell
+                attitude.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {themePresets.map((themePreset) => {
+                const Icon = presetIcons[themePreset.value];
+                const isSelected = preset === themePreset.value;
+
+                return (
+                  <button
+                    key={themePreset.value}
+                    type="button"
+                    onClick={() => onPresetChange(themePreset.value)}
+                    className={[
+                      'theme-preset-card w-full rounded-[26px] border p-4 text-left transition',
+                      isSelected ? 'theme-preset-card-active' : '',
+                    ].join(' ')}
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-11 w-11 items-center justify-center rounded-[18px] text-white shadow-lg"
+                          style={{
+                            background: `linear-gradient(135deg, ${themePreset.preview.from}, ${themePreset.preview.via}, ${themePreset.preview.to})`,
+                          }}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-base font-black text-slate-900 dark:text-white">
+                            {themePreset.label}
+                          </p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {themePreset.era}
+                          </p>
+                        </div>
+                      </div>
+                      {isSelected ? (
+                        <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
+                          Selected
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mb-3 flex items-center gap-2">
+                      {[
+                        themePreset.preview.from,
+                        themePreset.preview.via,
+                        themePreset.preview.to,
+                      ].map((swatch) => (
+                        <span
+                          key={swatch}
+                          className="h-3 w-10 rounded-full"
+                          style={{ backgroundColor: swatch }}
+                        />
+                      ))}
+                      <span
+                        className="ml-1 h-8 flex-1 rounded-[14px] border"
+                        style={{
+                          backgroundColor: themePreset.preview.surface,
+                          borderColor: `${themePreset.preview.ink}22`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {themePreset.description}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                      {themePreset.mood}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 function SidebarContent({
   onNavigate,
@@ -178,169 +361,14 @@ function SidebarContent({
           </button>
 
           {isSettingsOpen ? (
-            <div
-              className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm"
-              onClick={() => setIsSettingsOpen(false)}
-            >
-              <div
-                className="absolute bottom-0 left-0 right-0 max-h-[88vh] rounded-t-[32px] border border-white/40 bg-[hsl(var(--background))] p-5 shadow-[0_-20px_80px_rgba(15,23,42,0.22)] sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:w-[430px] sm:rounded-[32px] dark:border-white/10"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.24em]">
-                      Personalize
-                    </p>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                      Appearance settings
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                      Choose how the whole app should feel: brightness mode,
-                      typography, color story and frame language.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsSettingsOpen(false)}
-                    className="theme-soft-button h-11 w-11 px-0"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-6 overflow-y-auto pr-1">
-                  <section className="space-y-3">
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Brightness mode
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Auto follows device preference. Current output:{' '}
-                        {resolvedTheme}.
-                      </p>
-                    </div>
-                    <div className="grid gap-2">
-                      {themeOptions.map((option) => {
-                        const Icon = option.icon;
-                        const isSelected = mode === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setMode(option.value)}
-                            className={[
-                              'theme-mode-row flex w-full items-center gap-3 rounded-[24px] px-4 py-3 text-left transition',
-                              isSelected ? 'theme-mode-row-active' : '',
-                            ].join(' ')}
-                          >
-                            <div className="theme-icon-badge flex h-10 w-10 items-center justify-center text-white">
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {option.label}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {option.description}
-                              </p>
-                            </div>
-                            {isSelected ? (
-                              <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
-                                Active
-                              </span>
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section className="space-y-3">
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Theme presets
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Each preset changes palette, heading voice, card feel
-                        and shell attitude.
-                      </p>
-                    </div>
-                    <div className="grid gap-3">
-                      {themePresets.map((themePreset) => {
-                        const Icon = presetIcons[themePreset.value];
-                        const isSelected = preset === themePreset.value;
-
-                        return (
-                          <button
-                            key={themePreset.value}
-                            type="button"
-                            onClick={() => setPreset(themePreset.value)}
-                            className={[
-                              'theme-preset-card w-full rounded-[26px] border p-4 text-left transition',
-                              isSelected ? 'theme-preset-card-active' : '',
-                            ].join(' ')}
-                          >
-                            <div className="mb-3 flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="flex h-11 w-11 items-center justify-center rounded-[18px] text-white shadow-lg"
-                                  style={{
-                                    background: `linear-gradient(135deg, ${themePreset.preview.from}, ${themePreset.preview.via}, ${themePreset.preview.to})`,
-                                  }}
-                                >
-                                  <Icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="text-base font-black text-slate-900 dark:text-white">
-                                    {themePreset.label}
-                                  </p>
-                                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                    {themePreset.era}
-                                  </p>
-                                </div>
-                              </div>
-                              {isSelected ? (
-                                <span className="theme-selected-tag text-[11px] font-semibold uppercase tracking-wide">
-                                  Selected
-                                </span>
-                              ) : null}
-                            </div>
-
-                            <div className="mb-3 flex items-center gap-2">
-                              {[
-                                themePreset.preview.from,
-                                themePreset.preview.via,
-                                themePreset.preview.to,
-                              ].map((swatch) => (
-                                <span
-                                  key={swatch}
-                                  className="h-3 w-10 rounded-full"
-                                  style={{ backgroundColor: swatch }}
-                                />
-                              ))}
-                              <span
-                                className="ml-1 h-8 flex-1 rounded-[14px] border"
-                                style={{
-                                  backgroundColor: themePreset.preview.surface,
-                                  borderColor: `${themePreset.preview.ink}22`,
-                                }}
-                              />
-                            </div>
-
-                            <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                              {themePreset.description}
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                              {themePreset.mood}
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </div>
+            <SettingsPanel
+              mode={mode}
+              preset={preset}
+              resolvedTheme={resolvedTheme}
+              onClose={() => setIsSettingsOpen(false)}
+              onModeChange={setMode}
+              onPresetChange={setPreset}
+            />
           ) : null}
 
           <button
