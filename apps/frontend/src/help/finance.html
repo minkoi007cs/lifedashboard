@@ -1,11 +1,10 @@
 <article class="help-doc">
   <section class="help-hero">
     <div>
-      <p class="help-kicker">Finance guide</p>
-      <h1>Track income, expenses, and pay-period profit.</h1>
+      <p class="help-kicker">Finance Guide</p>
+      <h1>Track Income, Expenses, and Pay-Period Profit</h1>
       <p>
-        Finance Manager is designed for short-cycle money tracking, with fast
-        daily entry and a persistent side summary.
+        The Finance Manager is designed for short-cycle earnings tracking with automated commission splits, tax estimates, itemized expense management, and a persistent pay-period overview.
       </p>
     </div>
     <svg viewBox="0 0 320 180" role="img" aria-label="Finance overview illustration">
@@ -23,35 +22,79 @@
   </section>
 
   <section>
-    <h2>What this page is for</h2>
+    <h2>What This Page Is For</h2>
     <p>
-      Use this page to record daily financial activity and keep a simple view of
-      how the current pay period is performing.
+      Use this page to record your daily earnings, manage personal or business expenses, and keep an accurate, real-time track of your 14-day pay-period progress.
     </p>
   </section>
 
   <section>
-    <h2>Primary tabs</h2>
+    <h2>Understanding the Form Fields</h2>
     <ul>
-      <li><strong>Dashboard:</strong> shows the main financial summaries and trends.</li>
-      <li><strong>Daily Entry:</strong> captures new numbers for the day.</li>
+      <li><strong>Date:</strong> The day this entry corresponds to. You can backdate entries or edit existing ones easily by changing this date.</li>
+      <li><strong>Service Sales ($):</strong> Total basic sales generated from services. This forms the primary base of your commissions.</li>
+      <li><strong>Cash Tips ($):</strong> Tips received in physical cash. This is kept entirely by you and added directly to your Net Payout with 0% tax deducted here.</li>
+      <li><strong>CC Tips ($):</strong> Tips received through credit card payments. This is added to your Commission Base and paid out through commissions.</li>
+      <li><strong>Entry Description / Notes:</strong> Custom notes to document events of the day (e.g., weather conditions, holiday shift information, or customer patterns).</li>
+      <li><strong>Daily Expenses:</strong> Itemized costs incurred during the day (e.g., fuel, lunch, supplies). Click <em>+ Add Expense</em> to add a cost item.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Important layout behavior</h2>
-    <p>
-      The right column keeps the pay-period summary visible while the main
-      content changes. That makes it easy to enter numbers without losing context.
-    </p>
+    <h2>Financial Calculations & Commission Splits</h2>
+    <p>The app automatically applies a professional split and tax algorithm to all your entries:</p>
+    <ol>
+      <li>
+        <strong>Commission Base:</strong> The total amount eligible for commission payouts. Calculated as:
+        <code class="help-code">Commission Base = (Service Sales × 60%) + CC Tips</code>
+      </li>
+      <li>
+        <strong>Check Commission:</strong> The portion of commissions paid out via check or direct deposit. Set at 60% of the Commission Base:
+        <code class="help-code">Check Commission = Commission Base × 60%</code>
+      </li>
+      <li>
+        <strong>Cash Commission:</strong> The portion of commissions paid out directly in cash. Set at 40% of the Commission Base:
+        <code class="help-code">Cash Commission = Commission Base × 40%</code>
+      </li>
+      <li>
+        <strong>Tax Deductions (15%):</strong> Estimated income tax withheld automatically at 15% from the Check Commission:
+        <code class="help-code">Tax Amount = Check Commission × 15%</code>
+      </li>
+      <li>
+        <strong>Net Paycheck (Net Check):</strong> The actual check payout you take home after taxes have been deducted:
+        <code class="help-code">Net Paycheck = Check Commission - Tax Amount</code>
+      </li>
+    </ol>
   </section>
 
   <section>
-    <h2>Recommended workflow</h2>
-    <ol>
-      <li>Open <strong>Daily Entry</strong> and log the day's values.</li>
-      <li>Return to <strong>Dashboard</strong> to review impact.</li>
-      <li>Use the side summary as the quick truth for the current pay period.</li>
-    </ol>
+    <h2>Understanding the Side Summary (Pay-Period KPIs)</h2>
+    <p>The persistent right panel accumulates all entries made during your active 14-day cycle:</p>
+    <ul>
+      <li><strong>Period Progress:</strong> Shows the timeline elapsed in your standard 14-day pay period. Click <em>Start New Period</em> to close the current cycle and start fresh.</li>
+      <li><strong>Gross (Total Earnings):</strong> All money earned before taxes and expenses: <code class="help-code">Gross = Commission Base + Cash Tips</code>.</li>
+      <li><strong>Tax (15%):</strong> Total estimated taxes accumulated over the period.</li>
+      <li><strong>Net Payout:</strong> Your actual, real take-home payout in your hand: <code class="help-code">Net Payout = Cash Commission + Net Paycheck + Cash Tips</code>.</li>
+      <li><strong>Expenses:</strong> Total combined daily expenses recorded in this pay-period.</li>
+      <li><strong>Real Profit:</strong> The ultimate measure of your cycle's profitability: <code class="help-code">Real Profit = Net Payout - Expenses</code>. Dynamically changes to <strong>Green</strong> (profit) or <strong>Red</strong> (loss).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Editing & Searching History</h2>
+    <ul>
+      <li>
+        <strong>Collapsible History Drawer:</strong> Under the tab, click on any history row to expand detailed daily earnings, check payouts, and view itemized expenses.
+      </li>
+      <li>
+        <strong>Date & Note Editing:</strong> Expand a history drawer and click <em>✏️ Edit this Entry</em> to load all information back into the form. You can modify any number and even edit the entry date! The system automatically cleans up old entries on date changes.
+      </li>
+      <li>
+        <strong>Search Query Filter:</strong> Use the search box to find specific entries immediately. Type any description, category, specific day, or money amount to filter.
+      </li>
+      <li>
+        <strong>Monthly Filter:</strong> Choose a dynamic month option from the dropdown menu to isolate records for that month instantly.
+      </li>
+    </ul>
   </section>
 </article>
