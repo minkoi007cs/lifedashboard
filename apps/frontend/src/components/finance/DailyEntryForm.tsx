@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Plus, Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search, ArrowUpDown, Download } from 'lucide-react';
 import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
 
 interface Expense {
@@ -98,6 +98,73 @@ export const DailyEntryForm: React.FC = () => {
         setCcTips(0);
         setDescription('');
         setExpenses([]);
+    };
+
+    const handleDownloadCSV = () => {
+        if (!filteredSales || filteredSales.length === 0) {
+            alert('No history entries to export.');
+            return;
+        }
+
+        // CSV Headers
+        const headers = [
+            'Date',
+            'Service Sales ($)',
+            'Cash Tips ($)',
+            'CC Tips ($)',
+            'Gross Earnings ($)',
+            'Net Paycheck ($)',
+            'Total Expenses ($)',
+            'Net Profit ($)',
+            'Description',
+            'Expense Details'
+        ];
+
+        // Format rows
+        const rows = filteredSales.map(sale => {
+            const dayExpenses = stats?.expenses?.filter(e => e.date === sale.date) || [];
+            const totalDayExpenses = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const gross = sale.commissionBase + sale.cashTips;
+            const netPayout = sale.cashCommission + sale.netCheck + sale.cashTips;
+            const realProfit = netPayout - totalDayExpenses;
+            const expenseDetails = dayExpenses.map(e => `${e.description} ($${e.amount})`).join('; ');
+
+            return [
+                sale.date,
+                sale.serviceSales.toFixed(2),
+                sale.cashTips.toFixed(2),
+                sale.ccTips.toFixed(2),
+                gross.toFixed(2),
+                sale.netCheck.toFixed(2),
+                totalDayExpenses.toFixed(2),
+                realProfit.toFixed(2),
+                sale.description ? `"${sale.description.replace(/"/g, '""')}"` : '',
+                expenseDetails ? `"${expenseDetails.replace(/"/g, '""')}"` : ''
+            ];
+        });
+
+        // Construct CSV content with UTF-8 BOM
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        // Trigger file download
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        
+        // Construct filename: e.g. finance_history_all.csv or finance_history_2026-05.csv
+        const filename = selectedMonth === 'all' 
+            ? 'finance_history_all.csv' 
+            : `finance_history_${selectedMonth}.csv`;
+            
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const mutation = useMutation({
@@ -402,11 +469,17 @@ export const DailyEntryForm: React.FC = () => {
 
             {/* List of past daily detail entries and expenses */}
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                         <ClipboardList className="w-5 h-5 mr-2 text-blue-500" />
                         Daily Entry History & Expenses
                     </h3>
+                    <SoftButton
+                        onClick={handleDownloadCSV}
+                        className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs py-1.5 px-3 self-start sm:self-auto"
+                    >
+                        <Download className="w-4 h-4" /> Export CSV
+                    </SoftButton>
                 </div>
 
                 {/* Search and Filters Bar */}
