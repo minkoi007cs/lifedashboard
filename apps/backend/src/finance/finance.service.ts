@@ -187,4 +187,20 @@ export class FinanceService {
       expenses,
     };
   }
+
+  async deleteDailyEntry(date: string, userId: string) {
+    // 1. Delete Sale
+    await this.saleRepository.delete({ date, userId });
+
+    // 2. Delete Expenses
+    await this.expenseRepository.delete({ date, userId });
+
+    // 3. Update Active Pay Period if exists
+    const activePeriod = await this.getActivePayPeriod(userId);
+    if (activePeriod) {
+      await this.updatePayPeriodTotals(activePeriod.id, userId);
+    }
+
+    return { success: true };
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
@@ -49,5 +49,13 @@ export class FinanceController {
   @Get('statistics')
   getStatistics(@GetUser() user: AuthenticatedUser) {
     return this.financeService.getStatistics(user.userId);
+  }
+
+  @Delete('daily-entry/:date')
+  deleteDailyEntry(
+    @GetUser() user: AuthenticatedUser,
+    @Param('date') date: string,
+  ) {
+    return this.financeService.deleteDailyEntry(date, user.userId);
   }
 }
