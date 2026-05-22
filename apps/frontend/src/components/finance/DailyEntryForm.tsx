@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Plus, Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search } from 'lucide-react';
+import { Plus, Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search, ArrowUpDown } from 'lucide-react';
 import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
 
 interface Expense {
@@ -56,6 +56,8 @@ export const DailyEntryForm: React.FC = () => {
     const [originalDate, setOriginalDate] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('all');
+    const [sortBy, setSortBy] = useState<'date' | 'gross' | 'profit'>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     const toggleDayExpanded = (dayId: string) => {
         setExpandedDays(prev => ({
@@ -111,6 +113,24 @@ export const DailyEntryForm: React.FC = () => {
         },
         onError: (err: any) => {
             alert('Failed to save daily entry: ' + (err.response?.data?.message || err.message));
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (dateToDelete: string) => {
+            const res = await api.delete(`/api/v1/finance/daily-entry/${dateToDelete}`);
+            return res.data;
+        },
+        onSuccess: (_, deletedDate) => {
+            queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['active-pay-period'] });
+            alert('Daily entry deleted successfully!');
+            if (isEditing && originalDate === deletedDate) {
+                handleCancelEdit();
+            }
+        },
+        onError: (err: any) => {
+            alert('Failed to delete daily entry: ' + (err.response?.data?.message || err.message));
         }
     });
 
@@ -208,9 +228,33 @@ export const DailyEntryForm: React.FC = () => {
             });
         }
 
-        // Sort newest first
-        return list.sort((a, b) => b.date.localeCompare(a.date));
-    }, [stats?.sales, stats?.expenses, searchQuery, selectedMonth]);
+        // Apply custom sorting
+        list.sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === 'date') {
+                comparison = a.date.localeCompare(b.date);
+            } else if (sortBy === 'gross') {
+                const aGross = a.commissionBase + a.cashTips;
+                const bGross = b.commissionBase + b.cashTips;
+                comparison = aGross - bGross;
+                if (comparison === 0) {
+                    comparison = a.date.localeCompare(b.date);
+                }
+            } else if (sortBy === 'profit') {
+                const aExpenses = stats.expenses.filter(e => e.date === a.date).reduce((sum, e) => sum + e.amount, 0);
+                const bExpenses = stats.expenses.filter(e => e.date === b.date).reduce((sum, e) => sum + e.amount, 0);
+                const aProfit = (a.cashCommission + a.netCheck + a.cashTips) - aExpenses;
+                const bProfit = (b.cashCommission + b.netCheck + b.cashTips) - bExpenses;
+                comparison = aProfit - bProfit;
+                if (comparison === 0) {
+                    comparison = a.date.localeCompare(b.date);
+                }
+            }
+            return sortOrder === 'desc' ? -comparison : comparison;
+        });
+
+        return list;
+    }, [stats?.sales, stats?.expenses, searchQuery, selectedMonth, sortBy, sortOrder]);
 
     return (
         <div className="space-y-8">
@@ -366,7 +410,7 @@ export const DailyEntryForm: React.FC = () => {
                 </div>
 
                 {/* Search and Filters Bar */}
-                <div className="bg-white/80 dark:bg-slate-800/80 p-4 rounded-3xl border border-gray-100 dark:border-gray-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div className="bg-white/80 dark:bg-slate-800/80 p-4 rounded-3xl border border-gray-100 dark:border-gray-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
                     {/* Search Input */}
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -407,6 +451,36 @@ export const DailyEntryForm: React.FC = () => {
                             <ChevronDown className="h-4 w-4" />
                         </div>
                     </div>
+
+                    {/* Sort By Filter */}
+                    <div className="relative">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="w-full px-4 py-2 text-sm rounded-2xl border border-orange-100/80 bg-orange-50/20 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-300 dark:focus:border-slate-700 transition-colors appearance-none cursor-pointer"
+                        >
+                            <option value="date">📅 Sort by Date</option>
+                            <option value="gross">💰 Sort by Gross</option>
+                            <option value="profit">📈 Sort by Net Profit</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                            <ChevronDown className="h-4 w-4" />
+                        </div>
+                    </div>
+
+                    {/* Sort Order Toggle */}
+                    <SoftButton
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="w-full flex items-center justify-between px-4 py-2 text-sm rounded-2xl border border-orange-100/80 bg-orange-50/20 text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white hover:bg-orange-100/30 dark:hover:bg-slate-800/50 transition-all font-medium"
+                    >
+                        <span className="flex items-center gap-2">
+                            <ArrowUpDown className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                            Order:
+                        </span>
+                        <span className="font-bold text-pink-600 dark:text-pink-400">
+                            {sortOrder === 'desc' ? 'Desc ⬇️' : 'Asc ⬆️'}
+                        </span>
+                    </SoftButton>
                 </div>
 
                 {isStatsLoading ? (
@@ -523,7 +597,18 @@ export const DailyEntryForm: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/80 flex justify-end">
+                                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/80 flex justify-between items-center">
+                                                <SoftButton
+                                                    onClick={() => {
+                                                        if (window.confirm(`Are you sure you want to delete this entry and all expenses for ${sale.date}?`)) {
+                                                            deleteMutation.mutate(sale.date);
+                                                        }
+                                                    }}
+                                                    disabled={deleteMutation.isPending}
+                                                    className="flex items-center gap-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+                                                >
+                                                    <Trash2 className="w-4 h-4" /> Delete Entry
+                                                </SoftButton>
                                                 <SoftButton
                                                     onClick={() => handleEditClick(sale, dayExpenses)}
                                                     className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
