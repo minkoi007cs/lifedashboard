@@ -1,8 +1,8 @@
 import { ArrayNotEmpty, IsArray, IsUUID } from 'class-validator';
 
 export class ShareWishDto {
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsUUID('4', { each: true })
-    userIds: string[];
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsUUID('4', { each: true })
+  userIds: string[];
 }

@@ -8,14 +8,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([WishEntry, WishResponse, WishShare, WishComment]),
-        UsersModule,
-        NotificationsModule,
-        TasksModule,
-    ],
-    controllers: [WishesController],
-    providers: [WishesService],
-    exports: [WishesService],
+  imports: [
+    TypeOrmModule.forFeature([WishEntry, WishResponse, WishShare, WishComment]),
+    UsersModule,
+    NotificationsModule,
+    TasksModule,
+  ],
+  controllers: [WishesController],
+  providers: [WishesService],
+  exports: [WishesService],
 })
-export class WishesModule { }
+export class WishesModule {}

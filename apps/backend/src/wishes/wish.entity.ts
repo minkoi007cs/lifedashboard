@@ -3,119 +3,119 @@ import { BaseEntity } from '../common/entities/base.entity';
 import { User } from '../users/user.entity';
 
 export enum WishType {
-    ACTIVITY = 'activity',
-    ITEM = 'item',
+  ACTIVITY = 'activity',
+  ITEM = 'item',
 }
 
 export enum WishTimeTag {
-    TODAY = 'today',
-    THIS_WEEK = 'this_week',
-    SOON = 'soon',
+  TODAY = 'today',
+  THIS_WEEK = 'this_week',
+  SOON = 'soon',
 }
 
 export enum WishResponseStatus {
-    CONFIRMED = 'confirmed',
-    DECLINED = 'declined',
-    COMMENTED = 'commented',
+  CONFIRMED = 'confirmed',
+  DECLINED = 'declined',
+  COMMENTED = 'commented',
 }
 
 @Entity('wish_entries')
 export class WishEntry extends BaseEntity {
-    @ManyToOne(() => User, (user) => user.wishes, { onDelete: 'CASCADE' })
-    owner: User;
+  @ManyToOne(() => User, (user) => user.wishes, { onDelete: 'CASCADE' })
+  owner: User;
 
-    @Column()
-    ownerId: string;
+  @Column()
+  ownerId: string;
 
-    @Column()
-    type: string;
+  @Column()
+  type: WishType;
 
-    @Column()
-    title: string;
+  @Column()
+  title: string;
 
-    @Column({ type: 'text', nullable: true })
-    description?: string;
+  @Column({ type: 'text', nullable: true })
+  description?: string;
 
-    @Column()
-    timeTag: string;
+  @Column()
+  timeTag: WishTimeTag;
 
-    @Column({ default: false })
-    wasEdited: boolean;
+  @Column({ default: false })
+  wasEdited: boolean;
 
-    @Column({ nullable: true })
-    planTaskId?: string;
+  @Column({ nullable: true })
+  planTaskId?: string;
 
-    @Column({ nullable: true })
-    planCreatedAt?: Date;
+  @Column({ nullable: true })
+  planCreatedAt?: Date;
 
-    @OneToMany(() => WishShare, (share) => share.wish, { cascade: true })
-    shares: WishShare[];
+  @OneToMany(() => WishShare, (share) => share.wish, { cascade: true })
+  shares: WishShare[];
 
-    @OneToMany(() => WishResponse, (response) => response.wish, { cascade: true })
-    responses: WishResponse[];
+  @OneToMany(() => WishResponse, (response) => response.wish, { cascade: true })
+  responses: WishResponse[];
 
-    @OneToMany(() => WishComment, (comment) => comment.wish, { cascade: true })
-    comments: WishComment[];
+  @OneToMany(() => WishComment, (comment) => comment.wish, { cascade: true })
+  comments: WishComment[];
 }
 
 @Entity('wish_shares')
 @Unique(['wishId', 'recipientId'])
 export class WishShare extends BaseEntity {
-    @ManyToOne(() => WishEntry, (wish) => wish.shares, { onDelete: 'CASCADE' })
-    wish: WishEntry;
+  @ManyToOne(() => WishEntry, (wish) => wish.shares, { onDelete: 'CASCADE' })
+  wish: WishEntry;
 
-    @Column()
-    wishId: string;
+  @Column()
+  wishId: string;
 
-    @ManyToOne(() => User, (user) => user.wishShares, { onDelete: 'CASCADE' })
-    recipient: User;
+  @ManyToOne(() => User, (user) => user.wishShares, { onDelete: 'CASCADE' })
+  recipient: User;
 
-    @Column()
-    recipientId: string;
+  @Column()
+  recipientId: string;
 }
 
 @Entity('wish_responses')
 @Unique(['wishId', 'responderId'])
 export class WishResponse extends BaseEntity {
-    @ManyToOne(() => WishEntry, (wish) => wish.responses, { onDelete: 'CASCADE' })
-    wish: WishEntry;
+  @ManyToOne(() => WishEntry, (wish) => wish.responses, { onDelete: 'CASCADE' })
+  wish: WishEntry;
 
-    @Column()
-    wishId: string;
+  @Column()
+  wishId: string;
 
-    @ManyToOne(() => User, (user) => user.wishResponses, { onDelete: 'CASCADE' })
-    responder: User;
+  @ManyToOne(() => User, (user) => user.wishResponses, { onDelete: 'CASCADE' })
+  responder: User;
 
-    @Column()
-    responderId: string;
+  @Column()
+  responderId: string;
 
-    @Column()
-    status: string;
+  @Column()
+  status: WishResponseStatus;
 
-    @Column({ type: 'text', nullable: true })
-    comment?: string;
+  @Column({ type: 'text', nullable: true })
+  comment?: string;
 
-    @Column({ default: false })
-    addToPlan: boolean;
+  @Column({ default: false })
+  addToPlan: boolean;
 
-    @Column()
-    respondedAt: Date;
+  @Column()
+  respondedAt: Date;
 }
 
 @Entity('wish_comments')
 export class WishComment extends BaseEntity {
-    @ManyToOne(() => WishEntry, (wish) => wish.comments, { onDelete: 'CASCADE' })
-    wish: WishEntry;
+  @ManyToOne(() => WishEntry, (wish) => wish.comments, { onDelete: 'CASCADE' })
+  wish: WishEntry;
 
-    @Column()
-    wishId: string;
+  @Column()
+  wishId: string;
 
-    @ManyToOne(() => User, (user) => user.wishComments, { onDelete: 'CASCADE' })
-    author: User;
+  @ManyToOne(() => User, (user) => user.wishComments, { onDelete: 'CASCADE' })
+  author: User;
 
-    @Column()
-    authorId: string;
+  @Column()
+  authorId: string;
 
-    @Column({ type: 'text' })
-    comment: string;
+  @Column({ type: 'text' })
+  comment: string;
 }

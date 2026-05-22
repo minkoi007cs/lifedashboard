@@ -189,7 +189,9 @@ export class WishesService {
       (id) => id !== ownerId,
     );
     const existingShares = wish.shares ?? [];
-    const existingRecipientIds = existingShares.map((share) => share.recipientId);
+    const existingRecipientIds = existingShares.map(
+      (share) => share.recipientId,
+    );
     const respondedUserIds = new Set(
       (wish.responses ?? []).map((response) => response.responderId),
     );
@@ -294,9 +296,8 @@ export class WishesService {
       existingResponse.comment =
         respondToWishDto.comment ?? existingResponse.comment;
       existingResponse.respondedAt = new Date();
-      const savedResponse = await this.wishResponsesRepository.save(
-        existingResponse,
-      );
+      const savedResponse =
+        await this.wishResponsesRepository.save(existingResponse);
       return this.notifyWishResponse(wish, savedResponse);
     }
 
@@ -435,7 +436,8 @@ export class WishesService {
     const task = await this.tasksService.createSharedPlanFromWish(
       {
         title: createPlanDto.title?.trim() || wish.title,
-        description: createPlanDto.description?.trim() || wish.description || '',
+        description:
+          createPlanDto.description?.trim() || wish.description || '',
         dueDate: createPlanDto.startDate,
         startDate: createPlanDto.startDate,
         endDate: createPlanDto.endDate ?? undefined,

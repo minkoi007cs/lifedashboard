@@ -19,6 +19,7 @@ describe('buildDatabaseOptions', () => {
     expect(options).toMatchObject({
       type: 'postgres',
       url: 'postgres://user:pass@host:5432/db',
+      entityPrefix: 'ld_',
       synchronize: false,
       ssl: { rejectUnauthorized: false },
     });
@@ -43,21 +44,25 @@ describe('buildDatabaseOptions', () => {
       username: 'postgres',
       password: 'postgres',
       database: 'lifedashboard',
+      entityPrefix: 'ld_',
       synchronize: true,
     });
   });
 
-  it('uses in-memory sqlite only for tests', () => {
+  it('uses postgres test database only for tests', () => {
     const options = buildDatabaseOptions(
       createConfigService({
         NODE_ENV: 'test',
+        DATABASE_URL_TEST: 'postgres://user:pass@host:5432/db_test',
       }),
     );
 
     expect(options).toMatchObject({
-      type: 'better-sqlite3',
-      database: ':memory:',
+      type: 'postgres',
+      url: 'postgres://user:pass@host:5432/db_test',
+      entityPrefix: 'ld_',
       synchronize: true,
+      dropSchema: true,
     });
   });
 

@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             const response = await api.get('/api/v1/users/profile');
             set({ user: response.data, isLoading: false });
-        } catch (error) {
+        } catch {
             localStorage.removeItem('token');
             set({ user: null, token: null, isLoading: false });
         }

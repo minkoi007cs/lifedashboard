@@ -7,11 +7,27 @@ import {
 } from 'recharts';
 import { LayoutDashboard, PieChart as PieIcon, LineChart as LineIcon } from 'lucide-react';
 
+interface Sale {
+    id: string;
+    cashCommission: number;
+    netCheck: number;
+    cashTips: number;
+    date: string;
+}
+
+interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    category: string;
+    date: string;
+}
+
 interface StatsData {
     totalExpenses: number;
     totalRealProfit: number;
-    sales: any[];
-    expenses: any[];
+    sales: Sale[];
+    expenses: Expense[];
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
@@ -34,7 +50,12 @@ export const FinanceStatsDashboard: React.FC = () => {
         income: s.cashCommission + s.netCheck + s.cashTips
     }));
 
-    const expenseCategoryData = stats.expenses.reduce((acc: any[], curr) => {
+    interface ExpenseCategory {
+        name: string;
+        value: number;
+    }
+
+    const expenseCategoryData = stats.expenses.reduce<ExpenseCategory[]>((acc, curr) => {
         const existing = acc.find(a => a.name === curr.category);
         if (existing) {
             existing.value += curr.amount;

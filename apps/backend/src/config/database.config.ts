@@ -16,7 +16,12 @@ import { Habit, HabitLog } from '../habits/habit.entity';
 import { AppNotification } from '../notifications/notification.entity';
 import { Task, TaskParticipant } from '../tasks/task.entity';
 import { User } from '../users/user.entity';
-import { WishComment, WishEntry, WishResponse, WishShare } from '../wishes/wish.entity';
+import {
+  WishComment,
+  WishEntry,
+  WishResponse,
+  WishShare,
+} from '../wishes/wish.entity';
 
 export const typeOrmEntities = [
   User,
@@ -78,6 +83,7 @@ export function buildDatabaseOptions(
     return {
       type: 'postgres',
       url: databaseUrl,
+      entityPrefix: 'ld_',
       entities: typeOrmEntities,
       synchronize: shouldSynchronize,
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
@@ -95,6 +101,7 @@ export function buildDatabaseOptions(
       username: getRequiredConfig(configService, 'DB_USERNAME'),
       password: getRequiredConfig(configService, 'DB_PASSWORD'),
       database: getRequiredConfig(configService, 'DB_DATABASE'),
+      entityPrefix: 'ld_',
       entities: typeOrmEntities,
       synchronize: shouldSynchronize,
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
@@ -104,11 +111,20 @@ export function buildDatabaseOptions(
   }
 
   if (isTest) {
+    const testDbUrl =
+      configService.get<string>('DATABASE_URL_TEST') ??
+      configService.get<string>('DATABASE_URL') ??
+      'postgresql://postgres:postgres@localhost:5432/lifedashboard_test';
     return {
-      type: 'better-sqlite3',
-      database: ':memory:',
+      type: 'postgres',
+      url: testDbUrl,
+      entityPrefix: 'ld_',
       entities: typeOrmEntities,
       synchronize: true,
+      dropSchema: true,
+      ssl: getBooleanConfig(configService, 'DB_SSL', false)
+        ? { rejectUnauthorized: false }
+        : undefined,
     };
   }
 

@@ -11,8 +11,11 @@ describe('invokeExpressServer', () => {
       send,
     } as unknown as Response;
     const req = {} as Request;
-    const server = ((_: Request, __: Response, next: (error?: unknown) => void) =>
-      next(new Error('boom'))) as unknown as Express;
+    const server = ((
+      _: Request,
+      __: Response,
+      next: (error?: unknown) => void,
+    ) => next(new Error('boom'))) as unknown as Express;
 
     invokeExpressServer(server, req, res);
 
@@ -29,8 +32,11 @@ describe('invokeExpressServer', () => {
       send,
     } as unknown as Response;
     const req = {} as Request;
-    const server = ((_: Request, __: Response, next: (error?: unknown) => void) =>
-      next(new Error('boom'))) as unknown as Express;
+    const server = ((
+      _: Request,
+      __: Response,
+      next: (error?: unknown) => void,
+    ) => next(new Error('boom'))) as unknown as Express;
 
     invokeExpressServer(server, req, res);
 
