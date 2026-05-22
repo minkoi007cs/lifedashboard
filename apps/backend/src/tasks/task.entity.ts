@@ -34,17 +34,17 @@ export class Task extends BaseEntity {
   @Column({ nullable: true })
   reminderTime: Date;
 
-    @Column({ nullable: true })
-    startDate?: Date;
+  @Column({ nullable: true })
+  startDate?: Date;
 
-    @Column({ nullable: true })
-    endDate?: Date;
+  @Column({ nullable: true })
+  endDate?: Date;
 
   @Column({ default: false })
   isSharedPlan: boolean;
 
-    @Column({ nullable: true })
-    sourceWishId?: string;
+  @Column({ nullable: true })
+  sourceWishId?: string;
 
   @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
   user: User;

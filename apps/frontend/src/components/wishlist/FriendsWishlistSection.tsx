@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Loader2, MessageSquare, Send } from 'lucide-react';
 import type { FeedWish, WishResponseStatus } from '../../types/wishlist';
 import { ActionButton, SegmentedTabs, SurfaceCard } from '../ui/shell';
@@ -30,6 +31,8 @@ export function FriendsWishlistSection({
   onSubmitComment: (wishId: string) => void;
   commentPendingId: string | null;
 }) {
+  const [now] = useState(() => Date.now());
+
   return (
     <SurfaceCard className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -64,7 +67,7 @@ export function FriendsWishlistSection({
             <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{wish.owner.name || wish.owner.email}</p>
             <h3 className="mt-2 text-xl font-black text-slate-900 dark:text-white">{wish.title}</h3>
             {wish.description ? <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{wish.description}</p> : null}
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Updated {new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(Math.round((new Date(wish.updatedAt).getTime() - Date.now()) / 86400000), 'day')}</p>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Updated {new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(Math.round((new Date(wish.updatedAt).getTime() - now) / 86400000), 'day')}</p>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
               {(['confirmed', 'declined', 'commented'] as WishResponseStatus[]).map((status) => (

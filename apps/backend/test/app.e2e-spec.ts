@@ -4,29 +4,23 @@ import { DataSource, Repository } from 'typeorm';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
-import { AppNotification } from '../src/notifications/notification.entity';
-import { Task, TaskParticipant } from '../src/tasks/task.entity';
+import { Task } from '../src/tasks/task.entity';
 import { User } from '../src/users/user.entity';
-import { WishComment, WishEntry, WishResponse, WishShare } from '../src/wishes/wish.entity';
+import { WishComment, WishResponse } from '../src/wishes/wish.entity';
 
 describe('Wishlist module (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
-  let wishRepository: Repository<WishEntry>;
-  let wishShareRepository: Repository<WishShare>;
   let wishResponseRepository: Repository<WishResponse>;
   let wishCommentRepository: Repository<WishComment>;
-  let taskRepository: Repository<Task>;
-  let taskParticipantRepository: Repository<TaskParticipant>;
-  let notificationRepository: Repository<AppNotification>;
-  let userRepository: Repository<User>;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.JWT_SECRET = 'test-secret';
     process.env.GOOGLE_CLIENT_ID = 'google-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
-    process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/api/v1/auth/google/callback';
+    process.env.GOOGLE_CALLBACK_URL =
+      'http://localhost:3000/api/v1/auth/google/callback';
     process.env.FRONTEND_URL = 'http://localhost:5173';
     delete process.env.DATABASE_URL;
     delete process.env.DB_HOST;
@@ -44,14 +38,8 @@ describe('Wishlist module (e2e)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-    wishRepository = dataSource.getRepository(WishEntry);
-    wishShareRepository = dataSource.getRepository(WishShare);
     wishResponseRepository = dataSource.getRepository(WishResponse);
     wishCommentRepository = dataSource.getRepository(WishComment);
-    taskRepository = dataSource.getRepository(Task);
-    taskParticipantRepository = dataSource.getRepository(TaskParticipant);
-    notificationRepository = dataSource.getRepository(AppNotification);
-    userRepository = dataSource.getRepository(User);
   });
 
   afterAll(async () => {
@@ -87,13 +75,15 @@ describe('Wishlist module (e2e)', () => {
       })
       .expect(201);
 
+    const body = wishResponse.body as { id: string };
+
     await request(app.getHttpServer())
-      .post(`/api/v1/wishes/${wishResponse.body.id}/share`)
+      .post(`/api/v1/wishes/${body.id}/share`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ userIds: recipientIds })
       .expect(201);
 
-    return wishResponse.body.id as string;
+    return body.id;
   }
 
   it('prevents unsharing a user who already responded', async () => {
@@ -130,7 +120,10 @@ describe('Wishlist module (e2e)', () => {
     await request(app.getHttpServer())
       .post(`/api/v1/wishes/${wishId}/respond`)
       .set('Authorization', `Bearer ${friend.accessToken}`)
-      .send({ status: 'commented', comment: 'Actually let us keep it flexible' })
+      .send({
+        status: 'commented',
+        comment: 'Actually let us keep it flexible',
+      })
       .expect(201);
 
     const responses = await wishResponseRepository.find({ where: { wishId } });
@@ -153,14 +146,16 @@ describe('Wishlist module (e2e)', () => {
       })
       .expect(201);
 
+    const wishId = (createWishResponse.body as { id: string }).id;
+
     await request(app.getHttpServer())
-      .post(`/api/v1/wishes/${createWishResponse.body.id}/share`)
+      .post(`/api/v1/wishes/${wishId}/share`)
       .set('Authorization', `Bearer ${owner.accessToken}`)
       .send({ userIds: [friend.user.id] })
       .expect(201);
 
     await request(app.getHttpServer())
-      .post(`/api/v1/wishes/${createWishResponse.body.id}/respond`)
+      .post(`/api/v1/wishes/${wishId}/respond`)
       .set('Authorization', `Bearer ${friend.accessToken}`)
       .send({ status: 'confirmed', addToPlan: true })
       .expect(400);
@@ -171,7 +166,10 @@ describe('Wishlist module (e2e)', () => {
     const friend = await devLogin('friend-plan@test.local');
     const lateFriend = await devLogin('late-plan@test.local');
 
-    const wishId = await createSharedWish(owner.accessToken, [friend.user.id, lateFriend.user.id]);
+    const wishId = await createSharedWish(owner.accessToken, [
+      friend.user.id,
+      lateFriend.user.id,
+    ]);
 
     await request(app.getHttpServer())
       .post(`/api/v1/wishes/${wishId}/respond`)
@@ -182,7 +180,10 @@ describe('Wishlist module (e2e)', () => {
     await request(app.getHttpServer())
       .post(`/api/v1/wishes/${wishId}/create-plan`)
       .set('Authorization', `Bearer ${owner.accessToken}`)
-      .send({ startDate: '2026-04-06T18:00:00.000Z', endDate: '2026-04-06T20:00:00.000Z' })
+      .send({
+        startDate: '2026-04-06T18:00:00.000Z',
+        endDate: '2026-04-06T20:00:00.000Z',
+      })
       .expect(201);
 
     await request(app.getHttpServer())
@@ -216,7 +217,10 @@ describe('Wishlist module (e2e)', () => {
     const createPlanResponse = await request(app.getHttpServer())
       .post(`/api/v1/wishes/${wishId}/create-plan`)
       .set('Authorization', `Bearer ${owner.accessToken}`)
-      .send({ startDate: '2026-04-06T18:00:00.000Z', endDate: '2026-04-06T20:00:00.000Z' })
+      .send({
+        startDate: '2026-04-06T18:00:00.000Z',
+        endDate: '2026-04-06T20:00:00.000Z',
+      })
       .expect(201);
 
     const ownerTasksResponse = await request(app.getHttpServer())
@@ -229,8 +233,19 @@ describe('Wishlist module (e2e)', () => {
       .set('Authorization', `Bearer ${friend.accessToken}`)
       .expect(200);
 
-    expect(ownerTasksResponse.body.some((task: Task) => task.id === createPlanResponse.body.planTaskId)).toBe(true);
-    expect(friendTasksResponse.body.some((task: Task) => task.id === createPlanResponse.body.planTaskId)).toBe(true);
+    const planTaskId = (createPlanResponse.body as { planTaskId: string })
+      .planTaskId;
+
+    expect(
+      (ownerTasksResponse.body as Task[]).some(
+        (task: Task) => task.id === planTaskId,
+      ),
+    ).toBe(true);
+    expect(
+      (friendTasksResponse.body as Task[]).some(
+        (task: Task) => task.id === planTaskId,
+      ),
+    ).toBe(true);
   });
 
   it('returns unread notifications for share, response, comment, and plan creation', async () => {
@@ -254,7 +269,10 @@ describe('Wishlist module (e2e)', () => {
     await request(app.getHttpServer())
       .post(`/api/v1/wishes/${wishId}/create-plan`)
       .set('Authorization', `Bearer ${owner.accessToken}`)
-      .send({ startDate: '2026-04-06T18:00:00.000Z', endDate: '2026-04-06T20:00:00.000Z' })
+      .send({
+        startDate: '2026-04-06T18:00:00.000Z',
+        endDate: '2026-04-06T20:00:00.000Z',
+      })
       .expect(201);
 
     const ownerNotifications = await request(app.getHttpServer())
@@ -267,7 +285,11 @@ describe('Wishlist module (e2e)', () => {
       .set('Authorization', `Bearer ${friend.accessToken}`)
       .expect(200);
 
-    expect(ownerNotifications.body.unreadCount).toBeGreaterThanOrEqual(2);
-    expect(friendNotifications.body.unreadCount).toBeGreaterThanOrEqual(2);
+    expect(
+      (ownerNotifications.body as { unreadCount: number }).unreadCount,
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      (friendNotifications.body as { unreadCount: number }).unreadCount,
+    ).toBeGreaterThanOrEqual(2);
   });
 });

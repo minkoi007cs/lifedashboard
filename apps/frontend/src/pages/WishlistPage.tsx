@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Gift } from 'lucide-react';
 import api from '../lib/axios';
@@ -58,15 +58,17 @@ export const WishlistPage: React.FC = () => {
     queryFn: async () => (await api.get('/api/v1/users/search', { params: { q: searchTerm.trim() } })).data,
   });
 
-  useEffect(() => {
-    if (!activeShareWish) {
+  const handleToggleShare = (wishId: string | null) => {
+    setShareWishId(wishId);
+    if (!wishId) {
       setSelectedUsers([]);
       setSearchTerm('');
-      return;
+    } else {
+      const wish = myWishes.find((w) => w.id === wishId);
+      setSelectedUsers(wish ? wish.shares.map((share) => share.recipient) : []);
+      setSearchTerm('');
     }
-
-    setSelectedUsers(activeShareWish.shares.map((share) => share.recipient));
-  }, [activeShareWish]);
+  };
 
   const invalidateData = () => {
     queryClient.invalidateQueries({ queryKey: ['wishes'] });
@@ -104,7 +106,7 @@ export const WishlistPage: React.FC = () => {
   const shareWishMutation = useMutation({
     mutationFn: async () => api.post(`/api/v1/wishes/${shareWishId}/share`, { userIds: selectedUsers.map((user) => user.id) }),
     onSuccess: () => {
-      setShareWishId(null);
+      handleToggleShare(null);
       setFormFeedback({ success: 'Sharing updated.', error: null });
       invalidateData();
     },
@@ -198,7 +200,7 @@ export const WishlistPage: React.FC = () => {
             setFormFeedback({});
           }}
           onDelete={(wishId) => deleteWishMutation.mutate(wishId)}
-          onToggleShare={setShareWishId}
+          onToggleShare={handleToggleShare}
           onTogglePlan={setPlanWishId}
           shareWishId={shareWishId}
           planWishId={planWishId}
