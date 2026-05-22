@@ -522,9 +522,20 @@ export const DailyEntryForm: React.FC = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 italic max-w-lg truncate">
-                                                {sale.description ? `"${sale.description}"` : <span className="text-gray-400 dark:text-gray-500 text-xs">No notes for this entry</span>}
-                                            </p>
+                                            <div className="text-sm text-gray-600 dark:text-gray-300 max-w-lg">
+                                                {sale.description && (
+                                                    <p className="italic truncate">"{sale.description}"</p>
+                                                )}
+                                                {dayExpenses.length > 0 && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                                                        <span className="font-semibold text-pink-500">Expenses:</span>{' '}
+                                                        <span>{dayExpenses.map(e => `${e.description} ($${e.amount})`).join(', ')}</span>
+                                                    </p>
+                                                )}
+                                                {!sale.description && dayExpenses.length === 0 && (
+                                                    <span className="text-gray-400 dark:text-gray-500 text-xs">No notes or expenses for this entry</span>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="flex items-center justify-between md:justify-end gap-6">
