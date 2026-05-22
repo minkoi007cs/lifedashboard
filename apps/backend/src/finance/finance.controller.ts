@@ -15,6 +15,8 @@ interface DailyEntryDto {
   serviceSales: number;
   cashTips: number;
   ccTips: number;
+  description?: string;
+  originalDate?: string;
   expenses: DailyEntryExpenseDto[];
 }
 

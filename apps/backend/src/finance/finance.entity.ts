@@ -31,6 +31,9 @@ export class FinanceSale extends BaseEntity {
   @Column()
   date: string; // YYYY-MM-DD
 
+  @Column({ nullable: true })
+  description: string;
+
   @ManyToOne(() => User, (user) => user.financeSales, { onDelete: 'CASCADE' })
   user: User;
 
