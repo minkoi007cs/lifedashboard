@@ -20,10 +20,18 @@ export class FinanceService {
       serviceSales: number;
       cashTips: number;
       ccTips: number;
+      description?: string;
+      originalDate?: string;
       expenses: { description: string; amount: number; category?: string }[];
     },
     userId: string,
   ) {
+    // 0. Delete old records if date is being edited
+    if (data.originalDate && data.originalDate !== data.date) {
+      await this.saleRepository.delete({ date: data.originalDate, userId });
+      await this.expenseRepository.delete({ date: data.originalDate, userId });
+    }
+
     // 1. Calculate Commission
     const commissionBase = data.serviceSales * 0.6 + data.ccTips;
     const cashCommission = commissionBase * 0.4;
@@ -31,19 +39,42 @@ export class FinanceService {
     const taxAmount = checkCommission * 0.15;
     const netCheck = checkCommission - taxAmount;
 
-    // 2. Save Sale
-    const sale = this.saleRepository.create({
-      ...data,
-      commissionBase,
-      cashCommission,
-      checkCommission,
-      taxAmount,
-      netCheck,
-      userId,
+    // 2. Check if sale already exists for this date and user
+    let sale = await this.saleRepository.findOne({
+      where: { date: data.date, userId },
     });
+
+    if (sale) {
+      sale.serviceSales = data.serviceSales;
+      sale.cashTips = data.cashTips;
+      sale.ccTips = data.ccTips;
+      sale.description = data.description || '';
+      sale.commissionBase = commissionBase;
+      sale.cashCommission = cashCommission;
+      sale.checkCommission = checkCommission;
+      sale.taxAmount = taxAmount;
+      sale.netCheck = netCheck;
+    } else {
+      sale = this.saleRepository.create({
+        serviceSales: data.serviceSales,
+        cashTips: data.cashTips,
+        ccTips: data.ccTips,
+        date: data.date,
+        description: data.description || '',
+        commissionBase,
+        cashCommission,
+        checkCommission,
+        taxAmount,
+        netCheck,
+        userId,
+      });
+    }
     await this.saleRepository.save(sale);
 
-    // 3. Save Expenses
+    // 3. Clear existing expenses for this date and user to prevent duplicates
+    await this.expenseRepository.delete({ date: data.date, userId });
+
+    // 4. Save new Expenses
     const expenses = data.expenses.map((e) =>
       this.expenseRepository.create({
         ...e,
@@ -52,7 +83,9 @@ export class FinanceService {
         userId,
       }),
     );
-    await this.expenseRepository.save(expenses);
+    if (expenses.length > 0) {
+      await this.expenseRepository.save(expenses);
+    }
 
     // 4. Update Active Pay Period if exists
     const activePeriod = await this.getActivePayPeriod(userId);
