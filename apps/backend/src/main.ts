@@ -21,6 +21,10 @@ function configureSwagger(app: Awaited<ReturnType<typeof NestFactory.create>>) {
     'api/v1/docs',
     app,
     SwaggerModule.createDocument(app, config),
+    {
+      customfavIcon: '/favicon.ico',
+      customSiteTitle: 'LifeDashboard API Docs',
+    },
   );
 }
 
