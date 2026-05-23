@@ -2,6 +2,9 @@ import { Entity, Column, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../common/entities/base.entity';
 import { User } from '../users/user.entity';
 
+export type SharePermission = 'view' | 'edit';
+export type ShareStatus = 'pending' | 'accepted' | 'rejected';
+
 @Entity('finance_sales')
 export class FinanceSale extends BaseEntity {
   @Column({ type: 'float' })
@@ -95,4 +98,28 @@ export class PayPeriod extends BaseEntity {
 
   @Column()
   userId: string;
+}
+
+@Entity('finance_shares')
+export class FinanceShare extends BaseEntity {
+  @Column()
+  ownerId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  owner: User;
+
+  @Column()
+  sharedWithEmail: string;
+
+  @Column()
+  sharedWithId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  sharedWith: User;
+
+  @Column({ default: 'view' })
+  permission: SharePermission;
+
+  @Column({ default: 'pending' })
+  status: ShareStatus;
 }

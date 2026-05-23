@@ -354,14 +354,20 @@ function ReportChartCard({
     );
 }
 
-export const FinanceStatsDashboard: React.FC = () => {
+interface FinanceStatsDashboardProps {
+    targetUserId?: string;
+}
+
+export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ targetUserId }) => {
     const [periods, setPeriods] = React.useState<DashboardPeriods>(loadDashboardPeriods);
     const [chartPeriods, setChartPeriods] = React.useState<ChartPeriods>(loadChartPeriods);
 
     const { data: stats, isLoading } = useQuery<StatsData>({
-        queryKey: ['finance-stats'],
+        queryKey: ['finance-stats', targetUserId ?? 'self'],
         queryFn: async () => {
-            const res = await api.get('/api/v1/finance/statistics');
+            const res = await api.get('/api/v1/finance/statistics', {
+                params: targetUserId ? { targetUserId } : undefined,
+            });
             return res.data;
         },
     });

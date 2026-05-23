@@ -1,7 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { FinanceSale, FinanceExpense } from './finance.entity';
+import { In, Repository } from 'typeorm';
+import { FinanceSale, FinanceExpense, FinanceShare } from './finance.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class FinanceService {
@@ -10,8 +17,131 @@ export class FinanceService {
     private saleRepository: Repository<FinanceSale>,
     @InjectRepository(FinanceExpense)
     private expenseRepository: Repository<FinanceExpense>,
+    @InjectRepository(FinanceShare)
+    private shareRepository: Repository<FinanceShare>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
+  // ── Share access guard ───────────────────────────────────────────────────
+  private async checkShareAccess(
+    requestingUserId: string,
+    targetUserId: string,
+    requiredPermission: 'view' | 'edit',
+  ): Promise<void> {
+    if (requestingUserId === targetUserId) return;
+
+    const share = await this.shareRepository.findOne({
+      where: {
+        ownerId: targetUserId,
+        sharedWithId: requestingUserId,
+        status: 'accepted',
+      },
+    });
+
+    if (!share) {
+      throw new ForbiddenException(
+        "You do not have access to this user's finance data",
+      );
+    }
+    if (requiredPermission === 'edit' && share.permission !== 'edit') {
+      throw new ForbiddenException(
+        "You only have view access to this user's finance data",
+      );
+    }
+  }
+
+  // ── Finance share management ─────────────────────────────────────────────
+  async inviteUser(
+    ownerId: string,
+    ownerEmail: string,
+    targetEmail: string,
+    permission: 'view' | 'edit',
+  ) {
+    if (targetEmail.toLowerCase() === ownerEmail.toLowerCase()) {
+      throw new BadRequestException('You cannot share your finance with yourself');
+    }
+
+    const targetUser = await this.userRepository.findOne({
+      where: { email: targetEmail },
+    });
+    if (!targetUser) {
+      throw new NotFoundException('No user found with that email address');
+    }
+
+    const existing = await this.shareRepository.findOne({
+      where: {
+        ownerId,
+        sharedWithId: targetUser.id,
+        status: In(['pending', 'accepted']),
+      },
+    });
+
+    if (existing) {
+      existing.permission = permission;
+      return this.shareRepository.save(existing);
+    }
+
+    const share = this.shareRepository.create({
+      ownerId,
+      sharedWithEmail: targetEmail,
+      sharedWithId: targetUser.id,
+      permission,
+      status: 'pending',
+    });
+    return this.shareRepository.save(share);
+  }
+
+  async getSentShares(ownerId: string) {
+    return this.shareRepository.find({
+      where: { ownerId },
+      relations: ['sharedWith'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async getReceivedInvites(userId: string) {
+    return this.shareRepository.find({
+      where: { sharedWithId: userId },
+      relations: ['owner'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async acceptInvite(shareId: string, userId: string) {
+    const share = await this.shareRepository.findOne({
+      where: { id: shareId, sharedWithId: userId, status: 'pending' },
+    });
+    if (!share) throw new NotFoundException('Invite not found');
+    share.status = 'accepted';
+    return this.shareRepository.save(share);
+  }
+
+  async rejectInvite(shareId: string, userId: string) {
+    const share = await this.shareRepository.findOne({
+      where: { id: shareId, sharedWithId: userId, status: 'pending' },
+    });
+    if (!share) throw new NotFoundException('Invite not found');
+    share.status = 'rejected';
+    return this.shareRepository.save(share);
+  }
+
+  async revokeShare(shareId: string, requestingUserId: string) {
+    const share = await this.shareRepository.findOne({
+      where: { id: shareId },
+    });
+    if (!share) throw new NotFoundException('Share not found');
+    if (
+      share.ownerId !== requestingUserId &&
+      share.sharedWithId !== requestingUserId
+    ) {
+      throw new ForbiddenException('Cannot remove this share');
+    }
+    await this.shareRepository.remove(share);
+    return { success: true };
+  }
+
+  // ── Finance data operations ──────────────────────────────────────────────
   async createDailyEntry(
     data: {
       date: string;
@@ -22,24 +152,32 @@ export class FinanceService {
       expenses: { description: string; amount: number; category?: string }[];
     },
     userId: string,
+    targetUserId?: string,
   ) {
-    // 0. Delete old records if date is being edited
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
     if (data.originalDate && data.originalDate !== data.date) {
-      await this.saleRepository.delete({ date: data.originalDate, userId });
-      await this.expenseRepository.delete({ date: data.originalDate, userId });
+      await this.saleRepository.delete({
+        date: data.originalDate,
+        userId: effectiveUserId,
+      });
+      await this.expenseRepository.delete({
+        date: data.originalDate,
+        userId: effectiveUserId,
+      });
     }
 
-    // serviceSales is now check income before tax; cashTips is cash income.
-    // Keep legacy column names to avoid a breaking migration.
     const checkIncome = data.serviceSales;
     const cashIncome = data.cashTips;
     const taxAmount = checkIncome * 0.15;
     const netCheck = checkIncome - taxAmount;
     const grossIncome = checkIncome + cashIncome;
 
-    // 2. Check if sale already exists for this date and user
     let sale = await this.saleRepository.findOne({
-      where: { date: data.date, userId },
+      where: { date: data.date, userId: effectiveUserId },
     });
 
     if (sale) {
@@ -64,21 +202,22 @@ export class FinanceService {
         checkCommission: checkIncome,
         taxAmount,
         netCheck,
-        userId,
+        userId: effectiveUserId,
       });
     }
     await this.saleRepository.save(sale);
 
-    // 3. Clear existing expenses for this date and user to prevent duplicates
-    await this.expenseRepository.delete({ date: data.date, userId });
+    await this.expenseRepository.delete({
+      date: data.date,
+      userId: effectiveUserId,
+    });
 
-    // 4. Save new Expenses
     const expenses = data.expenses.map((e) =>
       this.expenseRepository.create({
         ...e,
         date: data.date,
         category: e.category || this.suggestCategory(e.description),
-        userId,
+        userId: effectiveUserId,
       }),
     );
     if (expenses.length > 0) {
@@ -115,13 +254,18 @@ export class FinanceService {
     return 'Other';
   }
 
-  async getStatistics(userId: string) {
+  async getStatistics(userId: string, targetUserId?: string) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'view');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
     const sales = await this.saleRepository.find({
-      where: { userId },
+      where: { userId: effectiveUserId },
       order: { date: 'ASC' },
     });
     const expenses = await this.expenseRepository.find({
-      where: { userId },
+      where: { userId: effectiveUserId },
       order: { date: 'ASC' },
     });
 
@@ -157,12 +301,14 @@ export class FinanceService {
     };
   }
 
-  async deleteDailyEntry(date: string, userId: string) {
-    // 1. Delete Sale
-    await this.saleRepository.delete({ date, userId });
+  async deleteDailyEntry(date: string, userId: string, targetUserId?: string) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
 
-    // 2. Delete Expenses
-    await this.expenseRepository.delete({ date, userId });
+    await this.saleRepository.delete({ date, userId: effectiveUserId });
+    await this.expenseRepository.delete({ date, userId: effectiveUserId });
 
     return { success: true };
   }

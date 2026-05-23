@@ -10,6 +10,7 @@ import { FocusSession } from '../focus/focus.entity';
 import {
   FinanceExpense,
   FinanceSale,
+  FinanceShare,
   PayPeriod,
 } from '../finance/finance.entity';
 import { Habit, HabitLog } from '../habits/habit.entity';
@@ -30,6 +31,7 @@ export const typeOrmEntities = [
   FinanceSale,
   FinanceExpense,
   PayPeriod,
+  FinanceShare,
   FocusSession,
   FoodEntry,
   WeightLog,

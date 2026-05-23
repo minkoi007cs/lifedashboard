@@ -61,7 +61,12 @@ const getErrorMessage = (err: unknown) => {
     return 'Unknown error';
 };
 
-export const DailyEntryForm: React.FC = () => {
+interface DailyEntryFormProps {
+    targetUserId?: string;
+    isReadOnly?: boolean;
+}
+
+export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, isReadOnly = false }) => {
     const queryClient = useQueryClient();
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [serviceSales, setServiceSales] = useState(0);
@@ -86,9 +91,11 @@ export const DailyEntryForm: React.FC = () => {
 
     // Query for recent entries
     const { data: stats, isLoading: isStatsLoading } = useQuery<StatsData>({
-        queryKey: ['finance-stats'],
+        queryKey: ['finance-stats', targetUserId ?? 'self'],
         queryFn: async () => {
-            const res = await api.get('/api/v1/finance/statistics');
+            const res = await api.get('/api/v1/finance/statistics', {
+                params: targetUserId ? { targetUserId } : undefined,
+            });
             return res.data;
         },
     });
@@ -173,11 +180,13 @@ export const DailyEntryForm: React.FC = () => {
 
     const mutation = useMutation({
         mutationFn: async (data: DailyEntryPayload) => {
-            const res = await api.post('/api/v1/finance/daily-entry', data);
+            const res = await api.post('/api/v1/finance/daily-entry', data, {
+                params: targetUserId ? { targetUserId } : undefined,
+            });
             return res.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
             alert(isEditing ? 'Daily entry updated successfully!' : 'Daily entry saved successfully!');
             handleCancelEdit();
         },
@@ -188,11 +197,13 @@ export const DailyEntryForm: React.FC = () => {
 
     const deleteMutation = useMutation({
         mutationFn: async (dateToDelete: string) => {
-            const res = await api.delete(`/api/v1/finance/daily-entry/${dateToDelete}`);
+            const res = await api.delete(`/api/v1/finance/daily-entry/${dateToDelete}`, {
+                params: targetUserId ? { targetUserId } : undefined,
+            });
             return res.data;
         },
         onSuccess: (_, deletedDate) => {
-            queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
             alert('Daily entry deleted successfully!');
             if (isEditing && originalDate === deletedDate) {
                 handleCancelEdit();
@@ -334,7 +345,7 @@ export const DailyEntryForm: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <SurfaceCard>
+            {!isReadOnly && <SurfaceCard>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {isEditing && (
                         <div className="mb-4 p-4 rounded-2xl bg-orange-100/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 flex items-center justify-between">
@@ -474,7 +485,7 @@ export const DailyEntryForm: React.FC = () => {
                         )}
                     </ActionButton>
                 </form>
-            </SurfaceCard>
+            </SurfaceCard>}
 
             {/* List of past daily detail entries and expenses */}
             <div className="space-y-4">
@@ -696,6 +707,7 @@ export const DailyEntryForm: React.FC = () => {
                                                 </div>
                                             )}
 
+                                            {!isReadOnly && (
                                             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/80 flex justify-between items-center">
                                                 <SoftButton
                                                     onClick={() => {
@@ -715,6 +727,7 @@ export const DailyEntryForm: React.FC = () => {
                                                     <Edit3 className="w-4 h-4" /> Edit this Entry
                                                 </SoftButton>
                                             </div>
+                                            )}
                                         </div>
                                     )}
                                 </SurfaceCard>
