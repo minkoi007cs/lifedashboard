@@ -91,6 +91,10 @@ export function buildDatabaseOptions(
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
         ? { rejectUnauthorized: false }
         : undefined,
+      extra: {
+        max: 3, // Avoid exceeding Supabase session pool limit (15)
+        idleTimeoutMillis: 3000,
+      },
     };
   }
 
@@ -109,6 +113,10 @@ export function buildDatabaseOptions(
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
         ? { rejectUnauthorized: false }
         : undefined,
+      extra: {
+        max: 3, // Avoid exceeding Supabase session pool limit (15)
+        idleTimeoutMillis: 3000,
+      },
     };
   }
 
