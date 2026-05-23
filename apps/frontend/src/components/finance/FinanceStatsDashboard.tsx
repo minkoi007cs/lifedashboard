@@ -721,7 +721,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                 </ResponsiveContainer>
             </ReportChartCard>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Records</p>
                     <p className="text-xl font-bold dark:text-white">{stats.sales.length} days</p>
@@ -741,6 +741,10 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                 <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Taxes</p>
                     <p className="text-xl font-bold text-amber-500">{formatMoney(allTax)}</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Expenses</p>
+                    <p className="text-xl font-bold text-red-500">{formatMoney(stats.totalExpenses)}</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Balance</p>
