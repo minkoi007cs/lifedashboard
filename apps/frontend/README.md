@@ -21,6 +21,21 @@ This frontend now includes the following application areas:
 - Help content is stored as separate HTML files inside `src/help/`.
 - The `/focus` route intentionally reuses dashboard help because it currently points to the dashboard page.
 
+## Finance module
+
+- Daily Entry uses one shared description for the whole day.
+- Money input is compacted into one area with `Income` and `Expense` tabs.
+- Income is tracked as two simple values: `Income Check` before tax and `Income Cash` already received.
+- The app no longer calculates commission or uses pay-period entry flows.
+- Previous `Service Sales` values are treated as `Income Check`; previous `Cash Tips` values are treated as `Income Cash`.
+- Tax is estimated only from check income at 15%.
+- Expense entries created from the Daily Entry form reuse the shared daily description.
+- Finance Dashboard has drill-down KPI boxes for check income, cash income, total income, expenses, taxes, and balance/shortfall.
+- Each dashboard KPI remembers its selected period in local browser storage.
+- Finance report charts support independent remembered periods for month, rolling duration, year, and all-time views.
+- Report charts show income, expenses, tax, and balance together instead of income-only snapshots.
+- Finance money display uses US-style grouping with two decimals and a trailing dollar sign, for example `1,000.00$`.
+
 ## Wishlist module
 
 The wishlist page provides:

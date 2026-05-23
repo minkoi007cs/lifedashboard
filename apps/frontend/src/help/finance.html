@@ -2,9 +2,9 @@
   <section class="help-hero">
     <div>
       <p class="help-kicker">Finance Guide</p>
-      <h1>Track Income, Expenses, and Pay-Period Profit</h1>
+      <h1>Track Income, Expenses, Taxes, and Balance</h1>
       <p>
-        The Finance Manager is designed for short-cycle earnings tracking with automated commission splits, tax estimates, itemized expense management, and a persistent pay-period overview.
+        The Finance Manager records the money you actually receive: check income before tax, cash income that is already yours, estimated tax on check income, and daily expenses. Money values are displayed with US-style grouping and two decimals, for example <code class="help-code">1,000.00$</code>.
       </p>
     </div>
     <svg viewBox="0 0 320 180" role="img" aria-label="Finance overview illustration">
@@ -24,77 +24,78 @@
   <section>
     <h2>What This Page Is For</h2>
     <p>
-      Use this page to record your daily earnings, manage personal or business expenses, and keep an accurate, real-time track of your 14-day pay-period progress.
+      Use this page to record daily income and expenses, then review check income, cash income, total income, taxes, expenses, and balance or shortfall by month, rolling period, year, or all time.
     </p>
   </section>
 
   <section>
-    <h2>Understanding the Form Fields</h2>
+    <h2>Daily Entry Form</h2>
     <ul>
-      <li><strong>Date:</strong> The day this entry corresponds to. You can backdate entries or edit existing ones easily by changing this date.</li>
-      <li><strong>Service Sales ($):</strong> Total basic sales generated from services. This forms the primary base of your commissions.</li>
-      <li><strong>Cash Tips ($):</strong> Tips received in physical cash. This is kept entirely by you and added directly to your Net Payout with 0% tax deducted here.</li>
-      <li><strong>CC Tips ($):</strong> Tips received through credit card payments. This is added to your Commission Base and paid out through commissions.</li>
-      <li><strong>Entry Description / Notes:</strong> Custom notes to document events of the day (e.g., weather conditions, holiday shift information, or customer patterns).</li>
-      <li><strong>Daily Expenses:</strong> Itemized costs incurred during the day (e.g., fuel, lunch, supplies). Click <em>+ Add Expense</em> to add a cost item.</li>
+      <li><strong>Date:</strong> The day this entry belongs to. You can backdate entries or edit existing ones.</li>
+      <li><strong>Description / Notes:</strong> One shared note for the whole daily entry. Income and expense no longer have separate descriptions.</li>
+      <li><strong>Income / Expense tabs:</strong> The money input area is compact. Use the Income tab for received money and the Expense tab for money spent.</li>
+      <li><strong>Income Check - Before Tax ($):</strong> Check-paid income after commission has already been applied, before tax. Previous Service Sales entries are treated as this value.</li>
+      <li><strong>Income Cash ($):</strong> Cash income already received after commission. It is not taxed in this tracker. Previous Cash Tips entries are treated as this value.</li>
+      <li><strong>Tips:</strong> Tips are not special fields anymore. Add them as normal check or cash income and write <em>Tip</em> in the description.</li>
+      <li><strong>Expense ($):</strong> Daily money spent. The expense reuses the shared description unless no description is entered.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Financial Calculations & Commission Splits</h2>
-    <p>The app automatically applies a professional split and tax algorithm to all your entries:</p>
+    <h2>Financial Calculations</h2>
+    <p>The app no longer calculates commission and no longer uses pay-period entry flows. It only estimates tax on check income:</p>
     <ol>
       <li>
-        <strong>Commission Base:</strong> The total amount eligible for commission payouts. Calculated as:
-        <code class="help-code">Commission Base = (Service Sales × 60%) + CC Tips</code>
+        <strong>Gross Income:</strong> Total income before tax and expenses:
+        <code class="help-code">Gross Income = Income Check + Income Cash</code>
       </li>
       <li>
-        <strong>Check Commission:</strong> The portion of commissions paid out via check or direct deposit. Set at 60% of the Commission Base:
-        <code class="help-code">Check Commission = Commission Base × 60%</code>
+        <strong>Tax Estimate:</strong> Estimated tax on check income only:
+        <code class="help-code">Tax = Income Check x 15%</code>
       </li>
       <li>
-        <strong>Cash Commission:</strong> The portion of commissions paid out directly in cash. Set at 40% of the Commission Base:
-        <code class="help-code">Cash Commission = Commission Base × 40%</code>
+        <strong>Net Income:</strong> Income after estimated tax:
+        <code class="help-code">Net Income = Income Check - Tax + Income Cash</code>
       </li>
       <li>
-        <strong>Tax Deductions (15%):</strong> Estimated income tax withheld automatically at 15% from the Check Commission:
-        <code class="help-code">Tax Amount = Check Commission × 15%</code>
-      </li>
-      <li>
-        <strong>Net Paycheck (Net Check):</strong> The actual check payout you take home after taxes have been deducted:
-        <code class="help-code">Net Paycheck = Check Commission - Tax Amount</code>
+        <strong>Balance:</strong> Net income after expenses:
+        <code class="help-code">Balance = Net Income - Expenses</code>
       </li>
     </ol>
   </section>
 
   <section>
-    <h2>Understanding the Side Summary (Pay-Period KPIs)</h2>
-    <p>The persistent right panel accumulates all entries made during your active 14-day cycle:</p>
+    <h2>Dashboard KPIs</h2>
     <ul>
-      <li><strong>Period Progress:</strong> Shows the timeline elapsed in your standard 14-day pay period. Click <em>Start New Period</em> to close the current cycle and start fresh.</li>
-      <li><strong>Gross (Total Earnings):</strong> All money earned before taxes and expenses: <code class="help-code">Gross = Commission Base + Cash Tips</code>.</li>
-      <li><strong>Tax (15%):</strong> Total estimated taxes accumulated over the period.</li>
-      <li><strong>Net Payout:</strong> Your actual, real take-home payout in your hand: <code class="help-code">Net Payout = Cash Commission + Net Paycheck + Cash Tips</code>.</li>
-      <li><strong>Expenses:</strong> Total combined daily expenses recorded in this pay-period.</li>
-      <li><strong>Real Profit:</strong> The ultimate measure of your cycle's profitability: <code class="help-code">Real Profit = Net Payout - Expenses</code>. Dynamically changes to <strong>Green</strong> (profit) or <strong>Red</strong> (loss).</li>
+      <li><strong>Check Income:</strong> Check-paid income before estimated tax.</li>
+      <li><strong>Cash Income:</strong> Cash received directly with no tax deducted by this tracker.</li>
+      <li><strong>Total Income:</strong> Check plus cash before tax.</li>
+      <li><strong>Expenses:</strong> Daily expenses for the selected period.</li>
+      <li><strong>Taxes:</strong> Estimated 15% tax on check income.</li>
+      <li><strong>Balance / Shortfall:</strong> Net income after tax minus expenses.</li>
+      <li><strong>Remembered selections:</strong> Each KPI remembers its selected period in the browser.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Editing & Searching History</h2>
+    <h2>Finance Report Charts</h2>
     <ul>
-      <li>
-        <strong>Collapsible History Drawer:</strong> Under the tab, click on any history row to expand detailed daily earnings, check payouts, and view itemized expenses.
-      </li>
-      <li>
-        <strong>Date & Note Editing:</strong> Expand a history drawer and click <em>✏️ Edit this Entry</em> to load all information back into the form. You can modify any number and even edit the entry date! The system automatically cleans up old entries on date changes.
-      </li>
-      <li>
-        <strong>Search Query Filter:</strong> Use the search box to find specific entries immediately. Type any description, category, specific day, or money amount to filter.
-      </li>
-      <li>
-        <strong>Monthly Filter:</strong> Choose a dynamic month option from the dropdown menu to isolate records for that month instantly.
-      </li>
+      <li><strong>Income, Expense &amp; Tax Report:</strong> Shows check income and cash income stacked together, with expense and tax beside income for comparison.</li>
+      <li><strong>Balance Trend:</strong> Shows total income, expense, tax, and balance as separate trend lines.</li>
+      <li><strong>Expense Breakdown:</strong> Shows expense distribution by category.</li>
+      <li><strong>Chart duration:</strong> Each report chart has its own period selector: this month, last month, last 30 days, last 90 days, this year, last year, or all time.</li>
+      <li><strong>Report grouping:</strong> Short periods group by day, yearly periods group by month, and all-time reports group by year.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>History, Search, and Export</h2>
+    <ul>
+      <li><strong>Collapsible History Drawer:</strong> Click any history row to review daily income, tax, net income, balance, and itemized expenses.</li>
+      <li><strong>Date &amp; Note Editing:</strong> Expand a history drawer and click <em>Edit this Entry</em> to load the data back into the form.</li>
+      <li><strong>Search Query Filter:</strong> Search by description, category, date, or money amount.</li>
+      <li><strong>Monthly Filter:</strong> Choose a month from the dropdown to isolate records for that month.</li>
+      <li><strong>CSV Export:</strong> Exports check income, cash income, tax, gross income, net income after tax, expenses, balance, description, and expense details.</li>
     </ul>
   </section>
 </article>

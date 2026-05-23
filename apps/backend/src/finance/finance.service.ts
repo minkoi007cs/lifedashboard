@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { FinanceSale, FinanceExpense, PayPeriod } from './finance.entity';
+import { Repository } from 'typeorm';
+import { FinanceSale, FinanceExpense } from './finance.entity';
 
 @Injectable()
 export class FinanceService {
@@ -10,8 +10,6 @@ export class FinanceService {
     private saleRepository: Repository<FinanceSale>,
     @InjectRepository(FinanceExpense)
     private expenseRepository: Repository<FinanceExpense>,
-    @InjectRepository(PayPeriod)
-    private payPeriodRepository: Repository<PayPeriod>,
   ) {}
 
   async createDailyEntry(
@@ -19,7 +17,6 @@ export class FinanceService {
       date: string;
       serviceSales: number;
       cashTips: number;
-      ccTips: number;
       description?: string;
       originalDate?: string;
       expenses: { description: string; amount: number; category?: string }[];
@@ -32,12 +29,13 @@ export class FinanceService {
       await this.expenseRepository.delete({ date: data.originalDate, userId });
     }
 
-    // 1. Calculate Commission
-    const commissionBase = data.serviceSales * 0.6 + data.ccTips;
-    const cashCommission = commissionBase * 0.4;
-    const checkCommission = commissionBase * 0.6;
-    const taxAmount = checkCommission * 0.15;
-    const netCheck = checkCommission - taxAmount;
+    // serviceSales is now check income before tax; cashTips is cash income.
+    // Keep legacy column names to avoid a breaking migration.
+    const checkIncome = data.serviceSales;
+    const cashIncome = data.cashTips;
+    const taxAmount = checkIncome * 0.15;
+    const netCheck = checkIncome - taxAmount;
+    const grossIncome = checkIncome + cashIncome;
 
     // 2. Check if sale already exists for this date and user
     let sale = await this.saleRepository.findOne({
@@ -47,23 +45,23 @@ export class FinanceService {
     if (sale) {
       sale.serviceSales = data.serviceSales;
       sale.cashTips = data.cashTips;
-      sale.ccTips = data.ccTips;
+      sale.ccTips = 0;
       sale.description = data.description || '';
-      sale.commissionBase = commissionBase;
-      sale.cashCommission = cashCommission;
-      sale.checkCommission = checkCommission;
+      sale.commissionBase = grossIncome;
+      sale.cashCommission = cashIncome;
+      sale.checkCommission = checkIncome;
       sale.taxAmount = taxAmount;
       sale.netCheck = netCheck;
     } else {
       sale = this.saleRepository.create({
         serviceSales: data.serviceSales,
         cashTips: data.cashTips,
-        ccTips: data.ccTips,
+        ccTips: 0,
         date: data.date,
         description: data.description || '',
-        commissionBase,
-        cashCommission,
-        checkCommission,
+        commissionBase: grossIncome,
+        cashCommission: cashIncome,
+        checkCommission: checkIncome,
         taxAmount,
         netCheck,
         userId,
@@ -87,13 +85,23 @@ export class FinanceService {
       await this.expenseRepository.save(expenses);
     }
 
-    // 4. Update Active Pay Period if exists
-    const activePeriod = await this.getActivePayPeriod(userId);
-    if (activePeriod) {
-      await this.updatePayPeriodTotals(activePeriod.id, userId);
-    }
-
     return { sale, expenses };
+  }
+
+  private normalizeSale(sale: FinanceSale) {
+    const checkIncome = sale.serviceSales || 0;
+    const cashIncome = sale.cashTips || 0;
+    const taxAmount = checkIncome * 0.15;
+
+    return {
+      ...sale,
+      ccTips: 0,
+      commissionBase: checkIncome + cashIncome,
+      cashCommission: cashIncome,
+      checkCommission: checkIncome,
+      taxAmount,
+      netCheck: checkIncome - taxAmount,
+    };
   }
 
   private suggestCategory(description: string): string {
@@ -107,63 +115,6 @@ export class FinanceService {
     return 'Other';
   }
 
-  async getActivePayPeriod(userId: string): Promise<PayPeriod | null> {
-    return this.payPeriodRepository.findOne({
-      where: { userId, isClosed: false },
-      order: { startDate: 'DESC' },
-    });
-  }
-
-  async startPayPeriod(userId: string, startDate: string): Promise<PayPeriod> {
-    // Close previous period if any
-    const active = await this.getActivePayPeriod(userId);
-    if (active) {
-      active.isClosed = true;
-      await this.payPeriodRepository.save(active);
-    }
-
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 13); // 14 days total
-
-    const period = this.payPeriodRepository.create({
-      userId,
-      startDate,
-      endDate: endDate.toISOString().split('T')[0],
-    });
-    const saved = await this.payPeriodRepository.save(period);
-    await this.updatePayPeriodTotals(saved.id, userId);
-    return saved;
-  }
-
-  async updatePayPeriodTotals(periodId: string, userId: string): Promise<void> {
-    const period = await this.payPeriodRepository.findOne({
-      where: { id: periodId, userId },
-    });
-    if (!period) return;
-
-    const sales = await this.saleRepository.find({
-      where: { userId, date: Between(period.startDate, period.endDate) },
-    });
-
-    const expenses = await this.expenseRepository.find({
-      where: { userId, date: Between(period.startDate, period.endDate) },
-    });
-
-    period.grossEarnings = sales.reduce(
-      (sum, s) => sum + s.commissionBase + s.cashTips,
-      0,
-    );
-    period.taxesPaid = sales.reduce((sum, s) => sum + s.taxAmount, 0);
-    period.netPayout = sales.reduce(
-      (sum, s) => sum + (s.cashCommission + s.netCheck + s.cashTips),
-      0,
-    );
-    period.totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-    period.realProfit = period.netPayout - period.totalExpenses;
-
-    await this.payPeriodRepository.save(period);
-  }
-
   async getStatistics(userId: string) {
     const sales = await this.saleRepository.find({
       where: { userId },
@@ -174,16 +125,34 @@ export class FinanceService {
       order: { date: 'ASC' },
     });
 
-    const totalProfitSinceDay1 =
-      sales.reduce(
-        (sum, s) => sum + (s.cashCommission + s.netCheck + s.cashTips),
-        0,
-      ) - expenses.reduce((sum, e) => sum + e.amount, 0);
+    const normalizedSales = sales.map((sale) => this.normalizeSale(sale));
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalTaxAmount = normalizedSales.reduce(
+      (sum, s) => sum + s.taxAmount,
+      0,
+    );
+    const totalCheckIncome = normalizedSales.reduce(
+      (sum, s) => sum + s.serviceSales,
+      0,
+    );
+    const totalCashIncome = normalizedSales.reduce(
+      (sum, s) => sum + s.cashTips,
+      0,
+    );
+    const totalNetIncome = normalizedSales.reduce(
+      (sum, s) => sum + s.serviceSales - s.taxAmount + s.cashTips,
+      0,
+    );
 
     return {
-      totalExpenses: expenses.reduce((sum, e) => sum + e.amount, 0),
-      totalRealProfit: totalProfitSinceDay1,
-      sales,
+      totalExpenses,
+      totalRealProfit: totalNetIncome - totalExpenses,
+      totalCheckIncome,
+      totalCashIncome,
+      totalGrossIncome: totalCheckIncome + totalCashIncome,
+      totalTaxAmount,
+      totalNetIncome,
+      sales: normalizedSales,
       expenses,
     };
   }
@@ -194,12 +163,6 @@ export class FinanceService {
 
     // 2. Delete Expenses
     await this.expenseRepository.delete({ date, userId });
-
-    // 3. Update Active Pay Period if exists
-    const activePeriod = await this.getActivePayPeriod(userId);
-    if (activePeriod) {
-      await this.updatePayPeriodTotals(activePeriod.id, userId);
-    }
 
     return { success: true };
   }
