@@ -45,7 +45,11 @@ export class FinanceController {
     @Body() data: DailyEntryDto,
     @Query('targetUserId') targetUserId?: string,
   ) {
-    return this.financeService.createDailyEntry(data, user.userId, targetUserId);
+    return this.financeService.createDailyEntry(
+      data,
+      user.userId,
+      targetUserId,
+    );
   }
 
   @Get('statistics')
@@ -62,16 +66,17 @@ export class FinanceController {
     @Param('date') date: string,
     @Query('targetUserId') targetUserId?: string,
   ) {
-    return this.financeService.deleteDailyEntry(date, user.userId, targetUserId);
+    return this.financeService.deleteDailyEntry(
+      date,
+      user.userId,
+      targetUserId,
+    );
   }
 
   // ── Share endpoints ──────────────────────────────────────────────────────
 
   @Post('share')
-  inviteUser(
-    @GetUser() user: AuthenticatedUser,
-    @Body() body: InviteDto,
-  ) {
+  inviteUser(@GetUser() user: AuthenticatedUser, @Body() body: InviteDto) {
     return this.financeService.inviteUser(
       user.userId,
       user.email,

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -59,7 +58,9 @@ export class FinanceService {
     permission: 'view' | 'edit',
   ) {
     if (targetEmail.toLowerCase() === ownerEmail.toLowerCase()) {
-      throw new BadRequestException('You cannot share your finance with yourself');
+      throw new BadRequestException(
+        'You cannot share your finance with yourself',
+      );
     }
 
     const targetUser = await this.userRepository.findOne({

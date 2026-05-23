@@ -34,6 +34,7 @@ This frontend now includes the following application areas:
 - Each dashboard KPI remembers its selected period in local browser storage.
 - Finance report charts support independent remembered periods for month, rolling duration, year, and all-time views.
 - Report charts show income, expenses, tax, and balance together instead of income-only snapshots.
+- Finance report charts show day-by-day rows for shorter periods and week-by-week rows for yearly/all-time periods.
 - Finance money display uses US-style grouping with two decimals and a trailing dollar sign, for example `1,000.00$`.
 
 ## Wishlist module
