@@ -49,14 +49,21 @@ interface ReportRow {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
 const DASHBOARD_PREF_KEY = 'finance-dashboard-periods:v3';
 const CHART_PREF_KEY = 'finance-dashboard-chart-periods:v1';
+const CHART_VISIBILITY_PREF_KEY = 'finance-dashboard-chart-series:v1';
 const TAX_RATE = 0.15;
 
 type PeriodKey = 'thisMonth' | 'lastMonth' | 'last30Days' | 'last90Days' | 'thisYear' | 'lastYear' | 'allTime';
 type KpiSection = 'checkIncome' | 'cashIncome' | 'totalIncome' | 'expenses' | 'taxes' | 'balance';
 type ChartSection = 'incomeExpense' | 'balanceTrend';
+type IncomeExpenseSeries = 'checkIncome' | 'cashIncome' | 'expenses' | 'tax';
+type BalanceTrendSeries = 'totalIncome' | 'expenses' | 'tax' | 'balance';
 
 type DashboardPeriods = Record<KpiSection, PeriodKey>;
 type ChartPeriods = Record<ChartSection, PeriodKey>;
+type ChartSeriesVisibility = {
+    incomeExpense: Record<IncomeExpenseSeries, boolean>;
+    balanceTrend: Record<BalanceTrendSeries, boolean>;
+};
 
 const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
     { value: 'thisMonth', label: 'This month' },
@@ -81,6 +88,35 @@ const DEFAULT_CHART_PERIODS: ChartPeriods = {
     incomeExpense: 'last30Days',
     balanceTrend: 'last90Days',
 };
+
+const DEFAULT_CHART_VISIBILITY: ChartSeriesVisibility = {
+    incomeExpense: {
+        checkIncome: true,
+        cashIncome: true,
+        expenses: true,
+        tax: true,
+    },
+    balanceTrend: {
+        totalIncome: true,
+        expenses: true,
+        tax: true,
+        balance: true,
+    },
+};
+
+const INCOME_EXPENSE_SERIES: { key: IncomeExpenseSeries; label: string; color: string }[] = [
+    { key: 'checkIncome', label: 'Check income', color: '#3b82f6' },
+    { key: 'cashIncome', label: 'Cash income', color: '#10b981' },
+    { key: 'expenses', label: 'Expense', color: '#ef4444' },
+    { key: 'tax', label: 'Tax', color: '#f59e0b' },
+];
+
+const BALANCE_TREND_SERIES: { key: BalanceTrendSeries; label: string; color: string }[] = [
+    { key: 'totalIncome', label: 'Total income', color: '#3b82f6' },
+    { key: 'expenses', label: 'Expense', color: '#ef4444' },
+    { key: 'tax', label: 'Tax', color: '#f59e0b' },
+    { key: 'balance', label: 'Balance', color: '#10b981' },
+];
 
 const isPeriodKey = (value: string): value is PeriodKey =>
     PERIOD_OPTIONS.some(option => option.value === value);
@@ -116,6 +152,31 @@ const loadChartPeriods = (): ChartPeriods => {
         ) as ChartPeriods;
     } catch {
         return DEFAULT_CHART_PERIODS;
+    }
+};
+
+const loadChartVisibility = (): ChartSeriesVisibility => {
+    try {
+        const raw = localStorage.getItem(CHART_VISIBILITY_PREF_KEY);
+        if (!raw) return DEFAULT_CHART_VISIBILITY;
+
+        const parsed = JSON.parse(raw) as Partial<{
+            incomeExpense: Partial<Record<IncomeExpenseSeries, boolean>>;
+            balanceTrend: Partial<Record<BalanceTrendSeries, boolean>>;
+        }>;
+
+        return {
+            incomeExpense: {
+                ...DEFAULT_CHART_VISIBILITY.incomeExpense,
+                ...parsed.incomeExpense,
+            },
+            balanceTrend: {
+                ...DEFAULT_CHART_VISIBILITY.balanceTrend,
+                ...parsed.balanceTrend,
+            },
+        };
+    } catch {
+        return DEFAULT_CHART_VISIBILITY;
     }
 };
 
@@ -336,6 +397,7 @@ function ReportChartCard({
     icon,
     period,
     onPeriodChange,
+    controls,
     children,
 }: {
     title: string;
@@ -343,6 +405,7 @@ function ReportChartCard({
     icon: React.ReactNode;
     period: PeriodKey;
     onPeriodChange: (period: PeriodKey) => void;
+    controls?: React.ReactNode;
     children: React.ReactNode;
 }) {
     return (
@@ -357,10 +420,42 @@ function ReportChartCard({
                 </div>
                 <PeriodSelect value={period} onChange={onPeriodChange} />
             </div>
+            {controls && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                    {controls}
+                </div>
+            )}
             <div className="h-72 w-full">
                 {children}
             </div>
         </div>
+    );
+}
+
+function SeriesToggle({
+    label,
+    color,
+    active,
+    onToggle,
+}: {
+    label: string;
+    color: string;
+    active: boolean;
+    onToggle: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                active
+                    ? 'border-transparent bg-gray-900 text-white dark:bg-white dark:text-slate-950'
+                    : 'border-gray-200 bg-white text-gray-400 dark:border-white/10 dark:bg-slate-900 dark:text-gray-500'
+            }`}
+        >
+            <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: active ? color : '#9ca3af' }} />
+            {label}
+        </button>
     );
 }
 
@@ -371,6 +466,7 @@ interface FinanceStatsDashboardProps {
 export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ targetUserId }) => {
     const [periods, setPeriods] = React.useState<DashboardPeriods>(loadDashboardPeriods);
     const [chartPeriods, setChartPeriods] = React.useState<ChartPeriods>(loadChartPeriods);
+    const [chartVisibility, setChartVisibility] = React.useState<ChartSeriesVisibility>(loadChartVisibility);
 
     const { data: stats, isLoading } = useQuery<StatsData>({
         queryKey: ['finance-stats', targetUserId ?? 'self'],
@@ -390,12 +486,36 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
         localStorage.setItem(CHART_PREF_KEY, JSON.stringify(chartPeriods));
     }, [chartPeriods]);
 
+    React.useEffect(() => {
+        localStorage.setItem(CHART_VISIBILITY_PREF_KEY, JSON.stringify(chartVisibility));
+    }, [chartVisibility]);
+
     const updatePeriod = (section: KpiSection, value: PeriodKey) => {
         setPeriods(prev => ({ ...prev, [section]: value }));
     };
 
     const updateChartPeriod = (section: ChartSection, value: PeriodKey) => {
         setChartPeriods(prev => ({ ...prev, [section]: value }));
+    };
+
+    const toggleIncomeExpenseSeries = (series: IncomeExpenseSeries) => {
+        setChartVisibility(prev => ({
+            ...prev,
+            incomeExpense: {
+                ...prev.incomeExpense,
+                [series]: !prev.incomeExpense[series],
+            },
+        }));
+    };
+
+    const toggleBalanceTrendSeries = (series: BalanceTrendSeries) => {
+        setChartVisibility(prev => ({
+            ...prev,
+            balanceTrend: {
+                ...prev.balanceTrend,
+                [series]: !prev.balanceTrend[series],
+            },
+        }));
     };
 
     if (isLoading) return <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-96 rounded-xl"></div>;
@@ -522,6 +642,15 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                     icon={<LayoutDashboard className="w-4 h-4 mr-2 text-blue-500" />}
                     period={chartPeriods.incomeExpense}
                     onPeriodChange={(period) => updateChartPeriod('incomeExpense', period)}
+                    controls={INCOME_EXPENSE_SERIES.map(series => (
+                        <SeriesToggle
+                            key={series.key}
+                            label={series.label}
+                            color={series.color}
+                            active={chartVisibility.incomeExpense[series.key]}
+                            onToggle={() => toggleIncomeExpenseSeries(series.key)}
+                        />
+                    ))}
                 >
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={incomeExpenseData}>
@@ -530,10 +659,10 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                             <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={getMoneyValue} />
                             <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                             <Legend />
-                            <Bar dataKey="checkIncome" stackId="income" name="Check income" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="cashIncome" stackId="income" name="Cash income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="expenses" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="tax" name="Tax" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                            {chartVisibility.incomeExpense.checkIncome && <Bar dataKey="checkIncome" stackId="income" name="Check income" fill="#3b82f6" radius={[4, 4, 0, 0]} />}
+                            {chartVisibility.incomeExpense.cashIncome && <Bar dataKey="cashIncome" stackId="income" name="Cash income" fill="#10b981" radius={[4, 4, 0, 0]} />}
+                            {chartVisibility.incomeExpense.expenses && <Bar dataKey="expenses" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />}
+                            {chartVisibility.incomeExpense.tax && <Bar dataKey="tax" name="Tax" fill="#f59e0b" radius={[4, 4, 0, 0]} />}
                         </BarChart>
                     </ResponsiveContainer>
                 </ReportChartCard>
@@ -565,6 +694,15 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                 icon={<LineIcon className="w-4 h-4 mr-2 text-purple-500" />}
                 period={chartPeriods.balanceTrend}
                 onPeriodChange={(period) => updateChartPeriod('balanceTrend', period)}
+                controls={BALANCE_TREND_SERIES.map(series => (
+                    <SeriesToggle
+                        key={series.key}
+                        label={series.label}
+                        color={series.color}
+                        active={chartVisibility.balanceTrend[series.key]}
+                        onToggle={() => toggleBalanceTrendSeries(series.key)}
+                    />
+                ))}
             >
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={balanceTrendData}>
@@ -573,10 +711,10 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                         <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={getMoneyValue} />
                         <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                         <Legend />
-                        <Line type="monotone" dataKey="totalIncome" name="Total income" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
-                        <Line type="monotone" dataKey="expenses" name="Expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
-                        <Line type="monotone" dataKey="tax" name="Tax" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
-                        <Line type="monotone" dataKey="balance" name="Balance" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                        {chartVisibility.balanceTrend.totalIncome && <Line type="monotone" dataKey="totalIncome" name="Total income" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
+                        {chartVisibility.balanceTrend.expenses && <Line type="monotone" dataKey="expenses" name="Expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
+                        {chartVisibility.balanceTrend.tax && <Line type="monotone" dataKey="tax" name="Tax" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
+                        {chartVisibility.balanceTrend.balance && <Line type="monotone" dataKey="balance" name="Balance" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
                     </LineChart>
                 </ResponsiveContainer>
             </ReportChartCard>
