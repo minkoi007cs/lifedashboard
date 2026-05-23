@@ -467,6 +467,8 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     const [periods, setPeriods] = React.useState<DashboardPeriods>(loadDashboardPeriods);
     const [chartPeriods, setChartPeriods] = React.useState<ChartPeriods>(loadChartPeriods);
     const [chartVisibility, setChartVisibility] = React.useState<ChartSeriesVisibility>(loadChartVisibility);
+    const [isExpensesExpanded, setIsExpensesExpanded] = useState(false);
+    const [isIncomeExpanded, setIsIncomeExpanded] = useState(false);
 
     const { data: stats, isLoading } = useQuery<StatsData>({
         queryKey: ['finance-stats', targetUserId ?? 'self'],
@@ -520,9 +522,6 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
     if (isLoading) return <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-96 rounded-xl"></div>;
     if (!stats) return null;
-
-    const [isExpensesExpanded, setIsExpensesExpanded] = useState(false);
-    const [isIncomeExpanded, setIsIncomeExpanded] = useState(false);
 
     const salesFor = (period: PeriodKey) => stats.sales.filter(sale => isInPeriod(sale.date, period));
     const expensesFor = (period: PeriodKey) => stats.expenses.filter(expense => isInPeriod(expense.date, period));
