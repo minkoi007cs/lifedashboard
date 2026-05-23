@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { formatMoney } from '../../lib/format-money';
@@ -6,7 +6,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { ArrowDown, ArrowUp, LayoutDashboard, LineChart as LineIcon, PieChart as PieIcon, ReceiptText, Wallet } from 'lucide-react';
+import { ArrowDown, ArrowUp, LayoutDashboard, LineChart as LineIcon, PieChart as PieIcon, ReceiptText, Wallet, Coins, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Sale {
     id: string;
@@ -521,6 +521,9 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     if (isLoading) return <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-96 rounded-xl"></div>;
     if (!stats) return null;
 
+    const [isExpensesExpanded, setIsExpensesExpanded] = useState(false);
+    const [isIncomeExpanded, setIsIncomeExpanded] = useState(false);
+
     const salesFor = (period: PeriodKey) => stats.sales.filter(sale => isInPeriod(sale.date, period));
     const expensesFor = (period: PeriodKey) => stats.expenses.filter(expense => isInPeriod(expense.date, period));
     const sumCheck = (sales: Sale[]) => sales.reduce((sum, sale) => sum + getCheckIncome(sale), 0);
@@ -754,50 +757,121 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                 </div>
             </div>
 
-            {/* Detailed Expense Card */}
+            {/* Collapsible Income Card */}
             <div className="bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ReceiptText className="w-5 h-5 text-red-500" />
-                        Expense Details Log
-                    </h4>
-                    <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full">
-                        {stats.expenses.length} item{stats.expenses.length !== 1 ? 's' : ''}
-                    </span>
-                </div>
-                {stats.expenses.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No expenses recorded yet.</p>
-                ) : (
-                    <div className="max-h-[350px] overflow-y-auto pr-1">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
-                                <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
-                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
-                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Description</th>
-                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Category</th>
-                                    <th className="pb-3 font-semibold text-right bg-white dark:bg-slate-800">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
-                                {[...stats.expenses]
-                                    .sort((a, b) => b.date.localeCompare(a.date))
-                                    .map((exp) => (
-                                        <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                            <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{exp.date}</td>
-                                            <td className="py-3 text-gray-600 dark:text-gray-300">{exp.description}</td>
-                                            <td className="py-3">
-                                                <span className="text-[10px] font-bold px-2.5 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-full">
-                                                    {exp.category}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 text-right font-extrabold text-red-500 whitespace-nowrap">
-                                                {formatMoney(exp.amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                            </tbody>
-                        </table>
+                <div 
+                    onClick={() => setIsIncomeExpanded(prev => !prev)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                >
+                    <div className="flex items-center gap-2">
+                        <Coins className="w-5 h-5 text-emerald-500" />
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                            Income Details Log
+                        </h4>
+                        <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full">
+                            {stats.sales.length} record{stats.sales.length !== 1 ? 's' : ''}
+                        </span>
                     </div>
+                    <div className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        {isIncomeExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                </div>
+
+                {isIncomeExpanded && (
+                    <>
+                        {stats.sales.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No income records logged yet.</p>
+                        ) : (
+                            <div className="max-h-[350px] overflow-y-auto pr-1">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Service Sales</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Cash Tips</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Taxes (15%)</th>
+                                            <th className="pb-3 font-semibold text-right bg-white dark:bg-slate-800">Net Income</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
+                                        {[...stats.sales]
+                                            .sort((a, b) => b.date.localeCompare(a.date))
+                                            .map((sale) => (
+                                                <tr key={sale.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                                    <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{sale.date}</td>
+                                                    <td className="py-3 text-gray-600 dark:text-gray-300">{formatMoney(getCheckIncome(sale))}</td>
+                                                    <td className="py-3 text-gray-600 dark:text-gray-300">{formatMoney(getCashIncome(sale))}</td>
+                                                    <td className="py-3 text-amber-500 font-medium">{formatMoney(getTax(sale))}</td>
+                                                    <td className="py-3 text-right font-extrabold text-green-500 whitespace-nowrap">
+                                                        {formatMoney(getNetIncome(sale))}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {/* Collapsible Expense Card */}
+            <div className="bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                <div 
+                    onClick={() => setIsExpensesExpanded(prev => !prev)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                >
+                    <div className="flex items-center gap-2">
+                        <ReceiptText className="w-5 h-5 text-red-500" />
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                            Expense Details Log
+                        </h4>
+                        <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full">
+                            {stats.expenses.length} item{stats.expenses.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    <div className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        {isExpensesExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                </div>
+
+                {isExpensesExpanded && (
+                    <>
+                        {stats.expenses.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No expenses recorded yet.</p>
+                        ) : (
+                            <div className="max-h-[350px] overflow-y-auto pr-1">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                        <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Description</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Category</th>
+                                            <th className="pb-3 font-semibold text-right bg-white dark:bg-slate-800">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
+                                        {[...stats.expenses]
+                                            .sort((a, b) => b.date.localeCompare(a.date))
+                                            .map((exp) => (
+                                                <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                                    <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{exp.date}</td>
+                                                    <td className="py-3 text-gray-600 dark:text-gray-300">{exp.description}</td>
+                                                    <td className="py-3">
+                                                        <span className="text-[10px] font-bold px-2.5 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-full">
+                                                            {exp.category}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 text-right font-extrabold text-red-500 whitespace-nowrap">
+                                                        {formatMoney(exp.amount)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
