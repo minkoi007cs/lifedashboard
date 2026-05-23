@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
@@ -14,7 +22,6 @@ interface DailyEntryDto {
   date: string;
   serviceSales: number;
   cashTips: number;
-  ccTips: number;
   description?: string;
   originalDate?: string;
   expenses: DailyEntryExpenseDto[];
@@ -31,19 +38,6 @@ export class FinanceController {
     @Body() data: DailyEntryDto,
   ) {
     return this.financeService.createDailyEntry(data, user.userId);
-  }
-
-  @Get('pay-period/active')
-  getActivePayPeriod(@GetUser() user: AuthenticatedUser) {
-    return this.financeService.getActivePayPeriod(user.userId);
-  }
-
-  @Post('pay-period/start')
-  startPayPeriod(
-    @GetUser() user: AuthenticatedUser,
-    @Body('startDate') startDate: string,
-  ) {
-    return this.financeService.startPayPeriod(user.userId, startDate);
   }
 
   @Get('statistics')

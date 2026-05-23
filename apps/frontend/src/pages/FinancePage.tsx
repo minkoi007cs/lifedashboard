@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
 import { DailyEntryForm } from '../components/finance/DailyEntryForm';
-import { PayPeriodSummary } from '../components/finance/PayPeriodSummary';
 import { FinanceStatsDashboard } from '../components/finance/FinanceStatsDashboard';
 import { Wallet, Calculator, ChartBar } from 'lucide-react';
 import { PageHeader, SegmentedTabs } from '../components/ui/shell';
 
 export const FinancePage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'entry' | 'history'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'entry'>('dashboard');
 
     return (
         <div className="space-y-6">
             <PageHeader
                 eyebrow="Money flow"
                 title="Finance Manager"
-                description="Track daily service income, tips, expenses and your current pay-period profit in one place."
+                description="Track check income, cash income, taxes, expenses, and monthly balance in one place."
                 icon={<Wallet className="h-6 w-6" />}
                 actions={
                     <SegmentedTabs
@@ -28,15 +27,9 @@ export const FinancePage: React.FC = () => {
                 }
             />
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-8">
-                    {activeTab === 'dashboard' && <FinanceStatsDashboard />}
-                    {activeTab === 'entry' && <DailyEntryForm />}
-                </div>
-
-                <div className="lg:col-span-4">
-                    <PayPeriodSummary />
-                </div>
+            <div className="space-y-8">
+                {activeTab === 'dashboard' && <FinanceStatsDashboard />}
+                {activeTab === 'entry' && <DailyEntryForm />}
             </div>
         </div>
     );

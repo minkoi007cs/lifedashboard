@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Plus, Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search, ArrowUpDown, Download } from 'lucide-react';
+import { formatMoney } from '../../lib/format-money';
+import { Trash2, Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Edit3, Search, ArrowUpDown, Download } from 'lucide-react';
 import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
 
 interface Expense {
@@ -16,12 +17,6 @@ interface Sale {
     id: string;
     serviceSales: number;
     cashTips: number;
-    ccTips: number;
-    commissionBase: number;
-    cashCommission: number;
-    checkCommission: number;
-    taxAmount: number;
-    netCheck: number;
     date: string;
     description?: string;
 }
@@ -37,10 +32,33 @@ type DailyEntryPayload = {
     date: string;
     serviceSales: number;
     cashTips: number;
-    ccTips: number;
     description?: string;
     originalDate?: string;
     expenses: Expense[];
+};
+
+type MoneyEntryType = 'income' | 'expense';
+type SortBy = 'date' | 'income' | 'balance';
+
+const TAX_RATE = 0.15;
+const getCheckIncome = (sale: Sale) => sale.serviceSales || 0;
+const getCashIncome = (sale: Sale) => sale.cashTips || 0;
+const getTaxAmount = (sale: Sale) => getCheckIncome(sale) * TAX_RATE;
+const getNetIncome = (sale: Sale) => getCheckIncome(sale) - getTaxAmount(sale) + getCashIncome(sale);
+const getGrossIncome = (sale: Sale) => getCheckIncome(sale) + getCashIncome(sale);
+
+const getErrorMessage = (err: unknown) => {
+    if (typeof err === 'object' && err !== null) {
+        const response = 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response
+            : undefined;
+        if (response?.data?.message) return response.data.message;
+
+        const message = 'message' in err ? (err as { message?: string }).message : undefined;
+        if (message) return message;
+    }
+
+    return 'Unknown error';
 };
 
 export const DailyEntryForm: React.FC = () => {
@@ -48,15 +66,15 @@ export const DailyEntryForm: React.FC = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [serviceSales, setServiceSales] = useState(0);
     const [cashTips, setCashTips] = useState(0);
-    const [ccTips, setCcTips] = useState(0);
+    const [expenseAmount, setExpenseAmount] = useState(0);
     const [description, setDescription] = useState('');
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [activeMoneyTab, setActiveMoneyTab] = useState<MoneyEntryType>('income');
     const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
     const [isEditing, setIsEditing] = useState(false);
     const [originalDate, setOriginalDate] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('all');
-    const [sortBy, setSortBy] = useState<'date' | 'gross' | 'profit'>('date');
+    const [sortBy, setSortBy] = useState<SortBy>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     const toggleDayExpanded = (dayId: string) => {
@@ -75,29 +93,15 @@ export const DailyEntryForm: React.FC = () => {
         },
     });
 
-    const addExpense = () => {
-        setExpenses([...expenses, { description: '', amount: 0 }]);
-    };
-
-    const removeExpense = (index: number) => {
-        setExpenses(expenses.filter((_, i) => i !== index));
-    };
-
-    const updateExpense = (index: number, field: keyof Expense, value: string | number) => {
-        const newExpenses = [...expenses];
-        newExpenses[index] = { ...newExpenses[index], [field]: value };
-        setExpenses(newExpenses);
-    };
-
     const handleCancelEdit = () => {
         setIsEditing(false);
         setOriginalDate('');
         setDate(new Date().toISOString().split('T')[0]);
         setServiceSales(0);
         setCashTips(0);
-        setCcTips(0);
+        setExpenseAmount(0);
         setDescription('');
-        setExpenses([]);
+        setActiveMoneyTab('income');
     };
 
     const handleDownloadCSV = () => {
@@ -109,13 +113,13 @@ export const DailyEntryForm: React.FC = () => {
         // CSV Headers
         const headers = [
             'Date',
-            'Service Sales ($)',
-            'Cash Tips ($)',
-            'CC Tips ($)',
-            'Gross Earnings ($)',
-            'Net Paycheck ($)',
+            'Income Check Before Tax ($)',
+            'Income Cash ($)',
+            'Tax ($)',
+            'Gross Income ($)',
+            'Net Income After Tax ($)',
             'Total Expenses ($)',
-            'Net Profit ($)',
+            'Balance ($)',
             'Description',
             'Expense Details'
         ];
@@ -124,20 +128,20 @@ export const DailyEntryForm: React.FC = () => {
         const rows = filteredSales.map(sale => {
             const dayExpenses = stats?.expenses?.filter(e => e.date === sale.date) || [];
             const totalDayExpenses = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
-            const gross = sale.commissionBase + sale.cashTips;
-            const netPayout = sale.cashCommission + sale.netCheck + sale.cashTips;
-            const realProfit = netPayout - totalDayExpenses;
-            const expenseDetails = dayExpenses.map(e => `${e.description} ($${e.amount})`).join('; ');
+            const grossIncome = getGrossIncome(sale);
+            const netIncome = getNetIncome(sale);
+            const balance = netIncome - totalDayExpenses;
+            const expenseDetails = dayExpenses.map(e => `${e.description} (${formatMoney(e.amount)})`).join('; ');
 
             return [
                 sale.date,
                 sale.serviceSales.toFixed(2),
                 sale.cashTips.toFixed(2),
-                sale.ccTips.toFixed(2),
-                gross.toFixed(2),
-                sale.netCheck.toFixed(2),
+                getTaxAmount(sale).toFixed(2),
+                grossIncome.toFixed(2),
+                netIncome.toFixed(2),
                 totalDayExpenses.toFixed(2),
-                realProfit.toFixed(2),
+                balance.toFixed(2),
                 sale.description ? `"${sale.description.replace(/"/g, '""')}"` : '',
                 expenseDetails ? `"${expenseDetails.replace(/"/g, '""')}"` : ''
             ];
@@ -174,12 +178,11 @@ export const DailyEntryForm: React.FC = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
-            queryClient.invalidateQueries({ queryKey: ['active-pay-period'] });
             alert(isEditing ? 'Daily entry updated successfully!' : 'Daily entry saved successfully!');
             handleCancelEdit();
         },
-        onError: (err: any) => {
-            alert('Failed to save daily entry: ' + (err.response?.data?.message || err.message));
+        onError: (err) => {
+            alert('Failed to save daily entry: ' + getErrorMessage(err));
         }
     });
 
@@ -190,25 +193,28 @@ export const DailyEntryForm: React.FC = () => {
         },
         onSuccess: (_, deletedDate) => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
-            queryClient.invalidateQueries({ queryKey: ['active-pay-period'] });
             alert('Daily entry deleted successfully!');
             if (isEditing && originalDate === deletedDate) {
                 handleCancelEdit();
             }
         },
-        onError: (err: any) => {
-            alert('Failed to delete daily entry: ' + (err.response?.data?.message || err.message));
+        onError: (err) => {
+            alert('Failed to delete daily entry: ' + getErrorMessage(err));
         }
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const trimmedDescription = description.trim();
+        const expenses = expenseAmount > 0
+            ? [{ description: trimmedDescription || 'Daily expense', amount: expenseAmount }]
+            : [];
+
         mutation.mutate({
             date,
             serviceSales,
             cashTips,
-            ccTips,
-            description,
+            description: trimmedDescription,
             originalDate: isEditing ? originalDate : undefined,
             expenses,
         });
@@ -218,9 +224,9 @@ export const DailyEntryForm: React.FC = () => {
         setDate(sale.date);
         setServiceSales(sale.serviceSales);
         setCashTips(sale.cashTips);
-        setCcTips(sale.ccTips);
         setDescription(sale.description || '');
-        setExpenses(dayExpenses.map(e => ({ description: e.description, amount: e.amount, category: e.category })));
+        setExpenseAmount(dayExpenses.reduce((sum, expense) => sum + expense.amount, 0));
+        setActiveMoneyTab(dayExpenses.length > 0 && sale.serviceSales === 0 && sale.cashTips === 0 ? 'expense' : 'income');
         setIsEditing(true);
         setOriginalDate(sale.date);
 
@@ -233,10 +239,13 @@ export const DailyEntryForm: React.FC = () => {
         }
     };
 
+    const sales = stats?.sales ?? [];
+    const statExpenses = stats?.expenses ?? [];
+
     // Extract unique YYYY-MM from sales
-    const uniqueMonths = React.useMemo(() => {
-        if (!stats?.sales) return [];
-        const months = stats.sales.map(s => s.date.substring(0, 7)); // e.g. "2026-05"
+    const uniqueMonths = (() => {
+        if (sales.length === 0) return [];
+        const months = sales.map(s => s.date.substring(0, 7)); // e.g. "2026-05"
         const unique = Array.from(new Set(months)).sort((a, b) => b.localeCompare(a));
         return unique.map(m => {
             const [year, month] = m.split('-');
@@ -244,13 +253,13 @@ export const DailyEntryForm: React.FC = () => {
             const label = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             return { value: m, label };
         });
-    }, [stats?.sales]);
+    })();
 
     // Apply Filter & Search Logic
-    const filteredSales = React.useMemo(() => {
-        if (!stats?.sales) return [];
-        
-        let list = [...stats.sales];
+    const filteredSales = (() => {
+        if (sales.length === 0) return [];
+
+        let list = [...sales];
 
         // Filter by Month (YYYY-MM)
         if (selectedMonth !== 'all') {
@@ -268,20 +277,20 @@ export const DailyEntryForm: React.FC = () => {
                 if (sale.date.includes(query)) return true;
 
                 // Match money amounts
-                const gross = sale.commissionBase + sale.cashTips;
-                const net = sale.cashCommission + sale.netCheck + sale.cashTips;
+                const grossIncome = getGrossIncome(sale);
+                const netIncome = getNetIncome(sale);
                 
-                const dayExpenses = stats.expenses.filter(e => e.date === sale.date);
+                const dayExpenses = statExpenses.filter(e => e.date === sale.date);
                 const totalDayExpenses = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
-                const profit = net - totalDayExpenses;
+                const balance = netIncome - totalDayExpenses;
 
                 if (
                     sale.serviceSales.toString().includes(query) ||
                     sale.cashTips.toString().includes(query) ||
-                    sale.ccTips.toString().includes(query) ||
-                    gross.toFixed(2).includes(query) ||
-                    net.toFixed(2).includes(query) ||
-                    profit.toFixed(2).includes(query)
+                    getTaxAmount(sale).toFixed(2).includes(query) ||
+                    grossIncome.toFixed(2).includes(query) ||
+                    netIncome.toFixed(2).includes(query) ||
+                    balance.toFixed(2).includes(query)
                 ) return true;
 
                 // Match associated expenses
@@ -300,19 +309,19 @@ export const DailyEntryForm: React.FC = () => {
             let comparison = 0;
             if (sortBy === 'date') {
                 comparison = a.date.localeCompare(b.date);
-            } else if (sortBy === 'gross') {
-                const aGross = a.commissionBase + a.cashTips;
-                const bGross = b.commissionBase + b.cashTips;
-                comparison = aGross - bGross;
+            } else if (sortBy === 'income') {
+                const aIncome = getGrossIncome(a);
+                const bIncome = getGrossIncome(b);
+                comparison = aIncome - bIncome;
                 if (comparison === 0) {
                     comparison = a.date.localeCompare(b.date);
                 }
-            } else if (sortBy === 'profit') {
-                const aExpenses = stats.expenses.filter(e => e.date === a.date).reduce((sum, e) => sum + e.amount, 0);
-                const bExpenses = stats.expenses.filter(e => e.date === b.date).reduce((sum, e) => sum + e.amount, 0);
-                const aProfit = (a.cashCommission + a.netCheck + a.cashTips) - aExpenses;
-                const bProfit = (b.cashCommission + b.netCheck + b.cashTips) - bExpenses;
-                comparison = aProfit - bProfit;
+            } else if (sortBy === 'balance') {
+                const aExpenses = statExpenses.filter(e => e.date === a.date).reduce((sum, e) => sum + e.amount, 0);
+                const bExpenses = statExpenses.filter(e => e.date === b.date).reduce((sum, e) => sum + e.amount, 0);
+                const aBalance = getNetIncome(a) - aExpenses;
+                const bBalance = getNetIncome(b) - bExpenses;
+                comparison = aBalance - bBalance;
                 if (comparison === 0) {
                     comparison = a.date.localeCompare(b.date);
                 }
@@ -321,7 +330,7 @@ export const DailyEntryForm: React.FC = () => {
         });
 
         return list;
-    }, [stats?.sales, stats?.expenses, searchQuery, selectedMonth, sortBy, sortOrder]);
+    })();
 
     return (
         <div className="space-y-8">
@@ -357,101 +366,101 @@ export const DailyEntryForm: React.FC = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Service Sales ($)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={serviceSales || ''}
-                                onChange={(e) => setServiceSales(Number(e.target.value))}
-                                className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white focus:border-orange-300 dark:focus:border-slate-600 transition-colors"
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cash Tips ($)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={cashTips || ''}
-                                onChange={(e) => setCashTips(Number(e.target.value))}
-                                className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white focus:border-orange-300 dark:focus:border-slate-600 transition-colors"
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC Tips ($)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={ccTips || ''}
-                                onChange={(e) => setCcTips(Number(e.target.value))}
-                                className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white focus:border-orange-300 dark:focus:border-slate-600 transition-colors"
-                                placeholder="0.00"
-                            />
-                        </div>
-                    </div>
-
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Entry Description / Notes</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description / Notes</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={2}
                             className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white placeholder-gray-400 focus:border-orange-300 dark:focus:border-slate-600 transition-colors"
-                            placeholder="Add a description or note for today's entry (e.g., Weather, special events, busy shift info)..."
+                            placeholder="One shared note for this daily entry, income, and expense..."
                         />
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h4 className="text-md font-semibold text-gray-900 dark:text-white">Expenses</h4>
-                            <SoftButton
+                    <div className="rounded-[28px] border border-orange-100 bg-orange-50/40 p-3 dark:border-white/10 dark:bg-slate-800/50">
+                        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-1 dark:bg-slate-900/60">
+                            <button
                                 type="button"
-                                onClick={addExpense}
-                                className="text-pink-600 dark:text-pink-300"
+                                onClick={() => setActiveMoneyTab('income')}
+                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                                    activeMoneyTab === 'income'
+                                        ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-slate-950'
+                                        : 'text-gray-500 hover:bg-white dark:text-gray-300 dark:hover:bg-slate-800'
+                                }`}
                             >
-                                <Plus className="w-4 h-4 mr-1" /> Add Expense
-                            </SoftButton>
+                                Income
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveMoneyTab('expense')}
+                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                                    activeMoneyTab === 'expense'
+                                        ? 'bg-red-500 text-white shadow-sm'
+                                        : 'text-gray-500 hover:bg-white dark:text-gray-300 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                                Expense
+                            </button>
                         </div>
 
-                        {expenses.map((expense, index) => (
-                            <div key={index} className="grid grid-cols-1 items-end gap-4 rounded-[24px] border border-orange-100 bg-orange-50/60 p-4 dark:border-white/10 dark:bg-slate-800/70 md:grid-cols-3">
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                                    <input
-                                        type="text"
-                                        value={expense.description}
-                                        onChange={(e) => updateExpense(index, 'description', e.target.value)}
-                                        className="w-full rounded-2xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-200 dark:focus:border-slate-700 transition-colors"
-                                        placeholder="e.g., Gas, Food, Supplies"
-                                    />
+                        <div className="mt-4">
+                            {activeMoneyTab === 'income' ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Income Check - Before Tax ($)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={serviceSales || ''}
+                                            onChange={(e) => setServiceSales(Number(e.target.value))}
+                                            className="w-full rounded-2xl border border-white bg-white/90 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-200 dark:focus:border-slate-700 transition-colors"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Income Cash ($)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={cashTips || ''}
+                                            onChange={(e) => setCashTips(Number(e.target.value))}
+                                            className="w-full rounded-2xl border border-white bg-white/90 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-200 dark:focus:border-slate-700 transition-colors"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Amount ($)</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        value={expense.amount || ''}
-                                        onChange={(e) => updateExpense(index, 'amount', Number(e.target.value))}
-                                        className="w-full rounded-2xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-200 dark:focus:border-slate-700 transition-colors"
-                                        placeholder="0.00"
-                                    />
+                            ) : (
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expense Amount ($)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={expenseAmount || ''}
+                                            onChange={(e) => setExpenseAmount(Number(e.target.value))}
+                                            className="w-full rounded-2xl border border-white bg-white/90 px-4 py-3 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-red-200 dark:focus:border-slate-700 transition-colors"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div className="rounded-2xl bg-white/70 px-4 py-3 text-sm text-gray-500 dark:bg-slate-900/60 dark:text-gray-300">
+                                        Uses the shared description above.
+                                    </div>
                                 </div>
-                                <div className="flex items-center justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={() => removeExpense(index)}
-                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            )}
+                        </div>
 
+                        <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-gray-500 dark:text-gray-400 sm:grid-cols-2">
+                            <div className="rounded-2xl bg-white/60 px-3 py-2 dark:bg-slate-900/50">
+                                Gross income: <span className="font-bold text-gray-900 dark:text-white">{formatMoney(serviceSales + cashTips)}</span>
+                            </div>
+                            <div className="rounded-2xl bg-white/60 px-3 py-2 dark:bg-slate-900/50">
+                                Tax estimate: <span className="font-bold text-amber-500">{formatMoney(serviceSales * TAX_RATE)}</span>
+                            </div>
+                        </div>
+                        <div className="mt-2 rounded-2xl bg-white/60 px-3 py-2 text-xs text-gray-500 dark:bg-slate-900/50 dark:text-gray-400">
+                            Net after tax and expenses: <span className="font-bold text-gray-900 dark:text-white">{formatMoney(serviceSales - serviceSales * TAX_RATE + cashTips - expenseAmount)}</span>
+                        </div>
+                    </div>
                     <ActionButton
                         type="submit"
                         disabled={mutation.isPending}
@@ -529,12 +538,17 @@ export const DailyEntryForm: React.FC = () => {
                     <div className="relative">
                         <select
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as any)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === 'date' || value === 'income' || value === 'balance') {
+                                    setSortBy(value);
+                                }
+                            }}
                             className="w-full px-4 py-2 text-sm rounded-2xl border border-orange-100/80 bg-orange-50/20 text-gray-900 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-white focus:border-orange-300 dark:focus:border-slate-700 transition-colors appearance-none cursor-pointer"
                         >
                             <option value="date">📅 Sort by Date</option>
-                            <option value="gross">💰 Sort by Gross</option>
-                            <option value="profit">📈 Sort by Net Profit</option>
+                            <option value="income">💰 Sort by Income</option>
+                            <option value="balance">📈 Sort by Balance</option>
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                             <ChevronDown className="h-4 w-4" />
@@ -574,8 +588,9 @@ export const DailyEntryForm: React.FC = () => {
                             // Find matching expenses
                             const dayExpenses = stats?.expenses?.filter(e => e.date === sale.date) || [];
                             const totalDayExpenses = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
-                            const netPayout = sale.cashCommission + sale.netCheck + sale.cashTips;
-                            const realProfit = netPayout - totalDayExpenses;
+                            const grossIncome = getGrossIncome(sale);
+                            const netIncome = getNetIncome(sale);
+                            const balance = netIncome - totalDayExpenses;
                             const isExpanded = !!expandedDays[sale.id];
 
                             return (
@@ -602,7 +617,7 @@ export const DailyEntryForm: React.FC = () => {
                                                 {dayExpenses.length > 0 && (
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
                                                         <span className="font-semibold text-pink-500">Expenses:</span>{' '}
-                                                        <span>{dayExpenses.map(e => `${e.description} ($${e.amount})`).join(', ')}</span>
+                                                        <span>{dayExpenses.map(e => `${e.description} (${formatMoney(e.amount)})`).join(', ')}</span>
                                                     </p>
                                                 )}
                                                 {!sale.description && dayExpenses.length === 0 && (
@@ -614,17 +629,17 @@ export const DailyEntryForm: React.FC = () => {
                                         <div className="flex items-center justify-between md:justify-end gap-6">
                                             <div className="grid grid-cols-3 gap-6 text-right">
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Gross</p>
-                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">${(sale.commissionBase + sale.cashTips).toFixed(0)}</p>
+                                                    <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Income</p>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{formatMoney(grossIncome)}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Expenses</p>
-                                                    <p className="text-sm font-bold text-red-500">${totalDayExpenses.toFixed(0)}</p>
+                                                    <p className="text-sm font-bold text-red-500">{formatMoney(totalDayExpenses)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Net Profit</p>
-                                                    <p className={`text-sm font-extrabold ${realProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                                        ${realProfit.toFixed(0)}
+                                                    <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Balance</p>
+                                                    <p className={`text-sm font-extrabold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                        {formatMoney(balance)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -640,20 +655,20 @@ export const DailyEntryForm: React.FC = () => {
                                         <div className="border-t border-gray-100 dark:border-gray-700/80 bg-gray-50/50 dark:bg-slate-900/10 p-5 space-y-4">
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="p-3 bg-white dark:bg-slate-800/40 rounded-2xl border border-gray-50 dark:border-slate-800">
-                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Service Sales</span>
-                                                    <span className="text-base font-bold text-gray-900 dark:text-white">${sale.serviceSales.toFixed(2)}</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Income Check</span>
+                                                    <span className="text-base font-bold text-gray-900 dark:text-white">{formatMoney(sale.serviceSales)}</span>
                                                 </div>
                                                 <div className="p-3 bg-white dark:bg-slate-800/40 rounded-2xl border border-gray-50 dark:border-slate-800">
-                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Cash Tips</span>
-                                                    <span className="text-base font-bold text-gray-900 dark:text-white">${sale.cashTips.toFixed(2)}</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Income Cash</span>
+                                                    <span className="text-base font-bold text-gray-900 dark:text-white">{formatMoney(sale.cashTips)}</span>
                                                 </div>
                                                 <div className="p-3 bg-white dark:bg-slate-800/40 rounded-2xl border border-gray-50 dark:border-slate-800">
-                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">CC Tips</span>
-                                                    <span className="text-base font-bold text-gray-900 dark:text-white">${sale.ccTips.toFixed(2)}</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Tax</span>
+                                                    <span className="text-base font-bold text-amber-500">{formatMoney(getTaxAmount(sale))}</span>
                                                 </div>
                                                 <div className="p-3 bg-white dark:bg-slate-800/40 rounded-2xl border border-gray-50 dark:border-slate-800">
-                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Net Paycheck</span>
-                                                    <span className="text-base font-bold text-blue-500">${sale.netCheck.toFixed(2)}</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1">Net Income</span>
+                                                    <span className="text-base font-bold text-blue-500">{formatMoney(netIncome)}</span>
                                                 </div>
                                             </div>
 
@@ -674,7 +689,7 @@ export const DailyEntryForm: React.FC = () => {
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <span className="text-sm font-bold text-red-500">${exp.amount.toFixed(2)}</span>
+                                                                <span className="text-sm font-bold text-red-500">{formatMoney(exp.amount)}</span>
                                                             </div>
                                                         ))}
                                                     </div>
