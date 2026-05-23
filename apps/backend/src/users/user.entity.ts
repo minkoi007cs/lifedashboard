@@ -6,6 +6,7 @@ import {
   FinanceSale,
   FinanceExpense,
   PayPeriod,
+  FinanceShare,
 } from '../finance/finance.entity';
 import { FocusSession } from '../focus/focus.entity';
 import { FoodEntry, WeightLog, DietPlan } from '../calories/calories.entity';
@@ -54,6 +55,12 @@ export class User extends BaseEntity {
 
   @OneToMany(() => PayPeriod, (period) => period.user)
   payPeriods: PayPeriod[];
+
+  @OneToMany(() => FinanceShare, (share) => share.owner)
+  financeSharesOwned: FinanceShare[];
+
+  @OneToMany(() => FinanceShare, (share) => share.sharedWith)
+  financeSharesReceived: FinanceShare[];
 
   @OneToMany(() => FocusSession, (session) => session.user)
   focusSessions: FocusSession[];
