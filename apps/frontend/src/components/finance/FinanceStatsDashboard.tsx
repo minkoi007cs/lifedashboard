@@ -179,26 +179,36 @@ const isInPeriod = (date: string, period: PeriodKey) => {
     return entryDate >= start && entryDate <= end;
 };
 
-const getGroupingMode = (period: PeriodKey): 'day' | 'month' | 'year' => {
-    if (period === 'allTime') return 'year';
-    if (period === 'thisYear' || period === 'lastYear' || period === 'last90Days') return 'month';
+type ReportGroupingMode = 'day' | 'week';
+
+const toDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getWeekStartKey = (date: string) => {
+    const entryDate = parseEntryDate(date);
+    const day = entryDate.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    entryDate.setDate(entryDate.getDate() + diffToMonday);
+    return toDateKey(entryDate);
+};
+
+const getGroupingMode = (period: PeriodKey): ReportGroupingMode => {
+    if (period === 'thisYear' || period === 'lastYear' || period === 'allTime') return 'week';
     return 'day';
 };
 
-const getReportKey = (date: string, mode: 'day' | 'month' | 'year') => {
-    if (mode === 'year') return date.slice(0, 4);
-    if (mode === 'month') return date.slice(0, 7);
+const getReportKey = (date: string, mode: ReportGroupingMode) => {
+    if (mode === 'week') return getWeekStartKey(date);
     return date;
 };
 
-const getReportLabel = (key: string, mode: 'day' | 'month' | 'year') => {
-    if (mode === 'year') return key;
-    if (mode === 'month') {
-        const [year, month] = key.split('-').map(Number);
-        return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-    }
+const getReportLabel = (key: string, mode: ReportGroupingMode) => {
     const [, month, day] = key.split('-');
-    return `${month}/${day}`;
+    return mode === 'week' ? `W ${month}/${day}` : `${month}/${day}`;
 };
 
 const getCheckIncome = (sale: Sale) => sale.serviceSales || 0;
