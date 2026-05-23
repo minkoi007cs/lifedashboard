@@ -3,36 +3,36 @@ import type { Habit, HabitLog, HabitStatistics, CreateHabitDto, UpdateHabitDto }
 
 export const habitService = {
     getAll: async () => {
-        const response = await api.get<Habit[]>('/habits');
+        const response = await api.get<Habit[]>('/api/v1/habits');
         return response.data;
     },
 
     getById: async (id: string) => {
-        const response = await api.get<Habit>(`/habits/${id}`);
+        const response = await api.get<Habit>(`/api/v1/habits/${id}`);
         return response.data;
     },
 
     getStatistics: async () => {
-        const response = await api.get<HabitStatistics>('/habits/statistics');
+        const response = await api.get<HabitStatistics>('/api/v1/habits/statistics');
         return response.data;
     },
 
     create: async (data: CreateHabitDto) => {
-        const response = await api.post<Habit>('/habits', data);
+        const response = await api.post<Habit>('/api/v1/habits', data);
         return response.data;
     },
 
     update: async (id: string, data: UpdateHabitDto) => {
-        const response = await api.put<Habit>(`/habits/${id}`, data);
+        const response = await api.put<Habit>(`/api/v1/habits/${id}`, data);
         return response.data;
     },
 
     log: async (id: string, date: string, count: number = 1) => {
-        const response = await api.post<HabitLog>(`/habits/${id}/log`, { date, count });
+        const response = await api.post<HabitLog>(`/api/v1/habits/${id}/log`, { date, count });
         return response.data;
     },
 
     delete: async (id: string) => {
-        await api.delete(`/habits/${id}`);
+        await api.delete(`/api/v1/habits/${id}`);
     }
 };

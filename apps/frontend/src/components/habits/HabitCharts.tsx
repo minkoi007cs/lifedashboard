@@ -42,7 +42,7 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
             <SurfaceCard className="p-6">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-6">Weekly Activity</h3>
                 <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={completionData}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                             <XAxis
@@ -67,7 +67,7 @@ export const HabitCharts: React.FC<HabitChartsProps> = ({ habits, stats, isLoadi
             <SurfaceCard className="p-6">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-6">Top Streaks</h3>
                 <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={streakData} layout="vertical" margin={{ left: 40 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
                             <XAxis type="number" hide />
