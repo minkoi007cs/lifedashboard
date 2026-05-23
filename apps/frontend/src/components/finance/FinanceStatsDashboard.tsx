@@ -9,9 +9,11 @@ import { LayoutDashboard, PieChart as PieIcon, LineChart as LineIcon } from 'luc
 
 interface Sale {
     id: string;
+    serviceSales: number;
+    cashTips: number;
+    ccTips: number;
     cashCommission: number;
     netCheck: number;
-    cashTips: number;
     date: string;
 }
 
@@ -43,6 +45,9 @@ export const FinanceStatsDashboard: React.FC = () => {
 
     if (isLoading) return <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-96 rounded-xl"></div>;
     if (!stats) return null;
+
+    const totalServiceSales = stats.sales.reduce((sum, s) => sum + (s.serviceSales || 0), 0);
+    const totalTips = stats.sales.reduce((sum, s) => sum + (s.cashTips || 0) + (s.ccTips || 0), 0);
 
     // Process data for charts
     const dailyIncomeData = stats.sales.slice(-7).map(s => ({
@@ -156,10 +161,18 @@ export const FinanceStatsDashboard: React.FC = () => {
             </div>
 
             {/* All-time Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Total Sales Record</p>
                     <p className="text-xl font-bold dark:text-white">{stats.sales.length} days</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Total Service Sales</p>
+                    <p className="text-xl font-bold dark:text-white text-blue-500">${totalServiceSales.toFixed(0)}</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Total Tips</p>
+                    <p className="text-xl font-bold dark:text-white text-orange-500">${totalTips.toFixed(0)}</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Total Expenses</p>
