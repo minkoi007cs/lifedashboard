@@ -749,6 +749,53 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                     </p>
                 </div>
             </div>
+
+            {/* Detailed Expense Card */}
+            <div className="bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <ReceiptText className="w-5 h-5 text-red-500" />
+                        Expense Details Log
+                    </h4>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full">
+                        {stats.expenses.length} item{stats.expenses.length !== 1 ? 's' : ''}
+                    </span>
+                </div>
+                {stats.expenses.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No expenses recorded yet.</p>
+                ) : (
+                    <div className="max-h-[350px] overflow-y-auto pr-1">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
+                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
+                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Description</th>
+                                    <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Category</th>
+                                    <th className="pb-3 font-semibold text-right bg-white dark:bg-slate-800">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
+                                {[...stats.expenses]
+                                    .sort((a, b) => b.date.localeCompare(a.date))
+                                    .map((exp) => (
+                                        <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                            <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{exp.date}</td>
+                                            <td className="py-3 text-gray-600 dark:text-gray-300">{exp.description}</td>
+                                            <td className="py-3">
+                                                <span className="text-[10px] font-bold px-2.5 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-full">
+                                                    {exp.category}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 text-right font-extrabold text-red-500 whitespace-nowrap">
+                                                {formatMoney(exp.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
