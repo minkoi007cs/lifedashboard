@@ -531,7 +531,9 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
     const checkSales = salesFor(periods.checkIncome);
     const cashSales = salesFor(periods.cashIncome);
+    const cashExpenses = expensesFor(periods.cashIncome);
     const totalSales = salesFor(periods.totalIncome);
+    const totalExpenseRows = expensesFor(periods.totalIncome);
     const taxSales = salesFor(periods.taxes);
     const expenseRows = expensesFor(periods.expenses);
     const balanceSales = salesFor(periods.balance);
@@ -582,7 +584,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                     period={periods.cashIncome}
                     onPeriodChange={(period) => updatePeriod('cashIncome', period)}
                     detailLeft={`Days: ${cashSales.length}`}
-                    detailRight={`Tax: ${formatMoney(0)}`}
+                    detailRight={`Expenses: ${formatMoney(sumExpenses(cashExpenses))}`}
                     footer={getPeriodRange(periods.cashIncome).label}
                 />
                 <FinanceKpiCard
@@ -593,8 +595,8 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                     icon={<LayoutDashboard className="h-8 w-8" />}
                     period={periods.totalIncome}
                     onPeriodChange={(period) => updatePeriod('totalIncome', period)}
-                    detailLeft={`Check: ${formatMoney(sumCheck(totalSales))}`}
-                    detailRight={`Cash: ${formatMoney(sumCash(totalSales))}`}
+                    detailLeft={`Net after tax: ${formatMoney(sumNet(totalSales))}`}
+                    detailRight={`Expenses: ${formatMoney(sumExpenses(totalExpenseRows))}`}
                     footer={getPeriodRange(periods.totalIncome).label}
                 />
                 <FinanceKpiCard
