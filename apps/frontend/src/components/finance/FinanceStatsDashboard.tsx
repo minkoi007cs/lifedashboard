@@ -561,6 +561,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     const allTax = stats.totalTaxAmount ?? sumTax(stats.sales);
     const allNetIncome = stats.totalNetIncome ?? sumNet(stats.sales);
     const allBalance = allNetIncome - stats.totalExpenses;
+    const activeSales = stats.sales.filter(sale => getCheckIncome(sale) > 0 || getCashIncome(sale) > 0);
 
     return (
         <div className="space-y-6">
@@ -768,7 +769,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                             Income Details Log
                         </h4>
                         <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full">
-                            {stats.sales.length} record{stats.sales.length !== 1 ? 's' : ''}
+                            {activeSales.length} record{activeSales.length !== 1 ? 's' : ''}
                         </span>
                     </div>
                     <div className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -778,7 +779,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
                 {isIncomeExpanded && (
                     <>
-                        {stats.sales.length === 0 ? (
+                        {activeSales.length === 0 ? (
                             <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No income records logged yet.</p>
                         ) : (
                             <div className="max-h-[350px] overflow-y-auto pr-1">
@@ -786,14 +787,14 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                                     <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
                                         <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
-                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Service Sales</th>
-                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Cash Tips</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Check Income</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Cash Income</th>
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Taxes (15%)</th>
                                             <th className="pb-3 font-semibold text-right bg-white dark:bg-slate-800">Net Income</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
-                                        {[...stats.sales]
+                                        {[...activeSales]
                                             .sort((a, b) => b.date.localeCompare(a.date))
                                             .map((sale) => (
                                                 <tr key={sale.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
