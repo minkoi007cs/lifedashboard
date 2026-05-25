@@ -278,6 +278,31 @@ const getTax = (sale: Sale) => getCheckIncome(sale) * TAX_RATE;
 const getNetIncome = (sale: Sale) => getCheckIncome(sale) - getTax(sale) + getCashIncome(sale);
 const getMoneyValue = (value: unknown) => formatMoney(Number(value) || 0);
 
+const CustomChartLabel = (props: any) => {
+    const { x, y, width, value, maxVal, color, minRatio } = props;
+    if (value === undefined || value === null) return null;
+    const numericValue = Number(value) || 0;
+    const ratio = minRatio !== undefined ? minRatio : 0.45; // Default to 45% of peak
+    const threshold = (maxVal || 0) * ratio;
+    if (Math.abs(numericValue) < threshold || numericValue === 0) return null;
+    
+    // For bars, x needs to be in the middle of the bar
+    const labelX = width !== undefined ? x + width / 2 : x;
+    const labelY = y - 8;
+    
+    return (
+        <text 
+            x={labelX} 
+            y={labelY} 
+            fill={color || "#6b7280"} 
+            className="text-[9px] font-extrabold dark:fill-gray-300"
+            textAnchor="middle"
+        >
+            {formatMoney(numericValue)}
+        </text>
+    );
+};
+
 const buildReportRows = (sales: Sale[], expenses: Expense[], period: PeriodKey): ReportRow[] => {
     const mode = getGroupingMode(period);
     const rows = new Map<string, ReportRow>();
@@ -573,6 +598,19 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     const accumulationDataRaw = buildReportRows(stats.sales, stats.expenses, accumulationPeriod);
     const accumulationData = buildAccumulationData(accumulationDataRaw);
 
+    // Peak max values for significant label highlights
+    const maxCheck = Math.max(...incomeExpenseData.map(d => d.checkIncome), 0);
+    const maxCash = Math.max(...incomeExpenseData.map(d => d.cashIncome), 0);
+    const maxExpenses = Math.max(...incomeExpenseData.map(d => d.expenses), 0);
+
+    const maxTrendIncome = Math.max(...balanceTrendData.map(d => d.totalIncome), 0);
+    const maxTrendExpenses = Math.max(...balanceTrendData.map(d => d.expenses), 0);
+    const maxTrendBalance = Math.max(...balanceTrendData.map(d => Math.abs(d.balance)), 0);
+
+    const maxAccIncome = Math.max(...accumulationData.map(d => d.accumulatedIncome), 0);
+    const maxAccExpenses = Math.max(...accumulationData.map(d => d.accumulatedExpenses), 0);
+    const maxAccBalance = Math.max(...accumulationData.map(d => Math.abs(d.accumulatedBalance)), 0);
+
     const expenseCategoryData = stats.expenses.reduce<{ name: string; value: number }[]>((acc, curr) => {
         const existing = acc.find(a => a.name === curr.category);
         if (existing) {
@@ -693,9 +731,9 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                             <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={getMoneyValue} />
                             <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                             <Legend />
-                            {chartVisibility.incomeExpense.checkIncome && <Bar dataKey="checkIncome" stackId="income" name="Check income" fill="#3b82f6" radius={[4, 4, 0, 0]} />}
-                            {chartVisibility.incomeExpense.cashIncome && <Bar dataKey="cashIncome" stackId="income" name="Cash income" fill="#10b981" radius={[4, 4, 0, 0]} />}
-                            {chartVisibility.incomeExpense.expenses && <Bar dataKey="expenses" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />}
+                            {chartVisibility.incomeExpense.checkIncome && <Bar dataKey="checkIncome" stackId="income" name="Check income" fill="#3b82f6" radius={[4, 4, 0, 0]} label={<CustomChartLabel maxVal={maxCheck} color="#3b82f6" />} />}
+                            {chartVisibility.incomeExpense.cashIncome && <Bar dataKey="cashIncome" stackId="income" name="Cash income" fill="#10b981" radius={[4, 4, 0, 0]} label={<CustomChartLabel maxVal={maxCash} color="#10b981" />} />}
+                            {chartVisibility.incomeExpense.expenses && <Bar dataKey="expenses" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} label={<CustomChartLabel maxVal={maxExpenses} color="#ef4444" />} />}
                             {chartVisibility.incomeExpense.tax && <Bar dataKey="tax" name="Tax" fill="#f59e0b" radius={[4, 4, 0, 0]} />}
                         </BarChart>
                     </ResponsiveContainer>
@@ -745,10 +783,10 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                         <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={getMoneyValue} />
                         <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                         <Legend />
-                        {chartVisibility.balanceTrend.totalIncome && <Line type="monotone" dataKey="totalIncome" name="Total income" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
-                        {chartVisibility.balanceTrend.expenses && <Line type="monotone" dataKey="expenses" name="Expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
+                        {chartVisibility.balanceTrend.totalIncome && <Line type="monotone" dataKey="totalIncome" name="Total income" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} label={<CustomChartLabel maxVal={maxTrendIncome} color="#3b82f6" />} />}
+                        {chartVisibility.balanceTrend.expenses && <Line type="monotone" dataKey="expenses" name="Expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} label={<CustomChartLabel maxVal={maxTrendExpenses} color="#ef4444" />} />}
                         {chartVisibility.balanceTrend.tax && <Line type="monotone" dataKey="tax" name="Tax" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
-                        {chartVisibility.balanceTrend.balance && <Line type="monotone" dataKey="balance" name="Balance" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
+                        {chartVisibility.balanceTrend.balance && <Line type="monotone" dataKey="balance" name="Balance" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} label={<CustomChartLabel maxVal={maxTrendBalance} color="#10b981" />} />}
                     </LineChart>
                 </ResponsiveContainer>
             </ReportChartCard>
@@ -804,13 +842,13 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                         <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                         <Legend />
                         {accumulationVisibility.accumulatedIncome && (
-                            <Area type="monotone" dataKey="accumulatedIncome" name="Accumulated Income" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAccIncome)" />
+                            <Area type="monotone" dataKey="accumulatedIncome" name="Accumulated Income" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAccIncome)" label={<CustomChartLabel maxVal={maxAccIncome} color="#3b82f6" minRatio={0.9} />} />
                         )}
                         {accumulationVisibility.accumulatedExpenses && (
-                            <Area type="monotone" dataKey="accumulatedExpenses" name="Accumulated Expense" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorAccExpenses)" />
+                            <Area type="monotone" dataKey="accumulatedExpenses" name="Accumulated Expense" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorAccExpenses)" label={<CustomChartLabel maxVal={maxAccExpenses} color="#ef4444" minRatio={0.9} />} />
                         )}
                         {accumulationVisibility.accumulatedBalance && (
-                            <Area type="monotone" dataKey="accumulatedBalance" name="Accumulated Balance" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAccBalance)" />
+                            <Area type="monotone" dataKey="accumulatedBalance" name="Accumulated Balance" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAccBalance)" label={<CustomChartLabel maxVal={maxAccBalance} color="#10b981" minRatio={0.9} />} />
                         )}
                     </AreaChart>
                 </ResponsiveContainer>
