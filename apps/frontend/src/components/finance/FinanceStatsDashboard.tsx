@@ -562,6 +562,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     const allNetIncome = stats.totalNetIncome ?? sumNet(stats.sales);
     const allBalance = allNetIncome - stats.totalExpenses;
     const activeSales = stats.sales.filter(sale => getCheckIncome(sale) > 0 || getCashIncome(sale) > 0);
+    const activeExpenses = stats.expenses.filter(expense => expense.amount > 0);
 
     return (
         <div className="space-y-6">
@@ -827,7 +828,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                             Expense Details Log
                         </h4>
                         <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full">
-                            {stats.expenses.length} item{stats.expenses.length !== 1 ? 's' : ''}
+                            {activeExpenses.length} item{activeExpenses.length !== 1 ? 's' : ''}
                         </span>
                     </div>
                     <div className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -837,7 +838,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
                 {isExpensesExpanded && (
                     <>
-                        {stats.expenses.length === 0 ? (
+                        {activeExpenses.length === 0 ? (
                             <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No expenses recorded yet.</p>
                         ) : (
                             <div className="max-h-[350px] overflow-y-auto pr-1">
@@ -851,7 +852,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50 text-sm">
-                                        {[...stats.expenses]
+                                        {[...activeExpenses]
                                             .sort((a, b) => b.date.localeCompare(a.date))
                                             .map((exp) => (
                                                 <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
