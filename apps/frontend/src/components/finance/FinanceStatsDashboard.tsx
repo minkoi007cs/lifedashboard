@@ -4,7 +4,7 @@ import api from '../../lib/axios';
 import { formatMoney } from '../../lib/format-money';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, Legend, LineChart, Line
+    PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import { ArrowDown, ArrowUp, LayoutDashboard, LineChart as LineIcon, PieChart as PieIcon, ReceiptText, Wallet, Coins, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -320,6 +320,26 @@ const buildReportRows = (sales: Sale[], expenses: Expense[], period: PeriodKey):
         .map(row => ({ ...row, balance: row.totalIncome - row.tax - row.expenses }));
 };
 
+const buildAccumulationData = (rows: ReportRow[]) => {
+    let accIncome = 0;
+    let accExpenses = 0;
+    let accTax = 0;
+    let accBalance = 0;
+    return rows.map(row => {
+        accIncome += row.totalIncome;
+        accExpenses += row.expenses;
+        accTax += row.tax;
+        accBalance = accIncome - accTax - accExpenses;
+        return {
+            ...row,
+            accumulatedIncome: accIncome,
+            accumulatedExpenses: accExpenses,
+            accumulatedTax: accTax,
+            accumulatedBalance: accBalance,
+        };
+    });
+};
+
 function PeriodSelect({ value, onChange }: { value: PeriodKey; onChange: (period: PeriodKey) => void }) {
     return (
         <select
@@ -469,6 +489,12 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
     const [chartVisibility, setChartVisibility] = React.useState<ChartSeriesVisibility>(loadChartVisibility);
     const [isExpensesExpanded, setIsExpensesExpanded] = useState(false);
     const [isIncomeExpanded, setIsIncomeExpanded] = useState(false);
+    const [accumulationPeriod, setAccumulationPeriod] = React.useState<PeriodKey>('last90Days');
+    const [accumulationVisibility, setAccumulationVisibility] = React.useState({
+        accumulatedIncome: true,
+        accumulatedExpenses: true,
+        accumulatedBalance: true,
+    });
 
     const { data: stats, isLoading } = useQuery<StatsData>({
         queryKey: ['finance-stats', targetUserId ?? 'self'],
@@ -544,6 +570,8 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
     const incomeExpenseData = buildReportRows(stats.sales, stats.expenses, chartPeriods.incomeExpense);
     const balanceTrendData = buildReportRows(stats.sales, stats.expenses, chartPeriods.balanceTrend);
+    const accumulationDataRaw = buildReportRows(stats.sales, stats.expenses, accumulationPeriod);
+    const accumulationData = buildAccumulationData(accumulationDataRaw);
 
     const expenseCategoryData = stats.expenses.reduce<{ name: string; value: number }[]>((acc, curr) => {
         const existing = acc.find(a => a.name === curr.category);
@@ -722,6 +750,69 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                         {chartVisibility.balanceTrend.tax && <Line type="monotone" dataKey="tax" name="Tax" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
                         {chartVisibility.balanceTrend.balance && <Line type="monotone" dataKey="balance" name="Balance" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />}
                     </LineChart>
+                </ResponsiveContainer>
+            </ReportChartCard>
+
+            <ReportChartCard
+                title="Income & Expense Accumulation"
+                subtitle="Visualizes the cumulative (running total) growth of check+cash income, expenses, and resulting balance over time."
+                icon={<LineIcon className="w-4 h-4 mr-2 text-indigo-500" />}
+                period={accumulationPeriod}
+                onPeriodChange={setAccumulationPeriod}
+                controls={
+                    <>
+                        <SeriesToggle
+                            label="Accumulated Income"
+                            color="#3b82f6"
+                            active={accumulationVisibility.accumulatedIncome}
+                            onToggle={() => setAccumulationVisibility(prev => ({ ...prev, accumulatedIncome: !prev.accumulatedIncome }))}
+                        />
+                        <SeriesToggle
+                            label="Accumulated Expense"
+                            color="#ef4444"
+                            active={accumulationVisibility.accumulatedExpenses}
+                            onToggle={() => setAccumulationVisibility(prev => ({ ...prev, accumulatedExpenses: !prev.accumulatedExpenses }))}
+                        />
+                        <SeriesToggle
+                            label="Accumulated Balance"
+                            color="#10b981"
+                            active={accumulationVisibility.accumulatedBalance}
+                            onToggle={() => setAccumulationVisibility(prev => ({ ...prev, accumulatedBalance: !prev.accumulatedBalance }))}
+                        />
+                    </>
+                }
+            >
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <AreaChart data={accumulationData}>
+                        <defs>
+                            <linearGradient id="colorAccIncome" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0}/>
+                            </linearGradient>
+                            <linearGradient id="colorAccExpenses" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
+                            </linearGradient>
+                            <linearGradient id="colorAccBalance" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
+                        <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={getMoneyValue} />
+                        <Tooltip formatter={getMoneyValue} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
+                        <Legend />
+                        {accumulationVisibility.accumulatedIncome && (
+                            <Area type="monotone" dataKey="accumulatedIncome" name="Accumulated Income" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAccIncome)" />
+                        )}
+                        {accumulationVisibility.accumulatedExpenses && (
+                            <Area type="monotone" dataKey="accumulatedExpenses" name="Accumulated Expense" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorAccExpenses)" />
+                        )}
+                        {accumulationVisibility.accumulatedBalance && (
+                            <Area type="monotone" dataKey="accumulatedBalance" name="Accumulated Balance" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAccBalance)" />
+                        )}
+                    </AreaChart>
                 </ResponsiveContainer>
             </ReportChartCard>
 
