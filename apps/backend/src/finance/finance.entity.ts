@@ -37,6 +37,9 @@ export class FinanceSale extends BaseEntity {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ type: 'text', nullable: true })
+  receiptImage?: string;
+
   @ManyToOne(() => User, (user) => user.financeSales, { onDelete: 'CASCADE' })
   user: User;
 
@@ -57,6 +60,9 @@ export class FinanceExpense extends BaseEntity {
 
   @Column()
   date: string; // YYYY-MM-DD
+
+  @Column({ type: 'text', nullable: true })
+  receiptImage?: string;
 
   @ManyToOne(() => User, (user) => user.financeExpenses, {
     onDelete: 'CASCADE',

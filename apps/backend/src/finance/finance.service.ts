@@ -313,4 +313,150 @@ export class FinanceService {
 
     return { success: true };
   }
+
+  // ── Granular transaction operations ──────────────────────────────────────
+
+  async saveExpense(
+    data: {
+      id?: string;
+      date: string;
+      amount: number;
+      description: string;
+      category?: string;
+      receiptImage?: string;
+    },
+    userId: string,
+    targetUserId?: string,
+  ) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
+    let expense: FinanceExpense;
+
+    if (data.id) {
+      const existing = await this.expenseRepository.findOne({
+        where: { id: data.id, userId: effectiveUserId },
+      });
+      if (!existing) {
+        throw new NotFoundException('Expense not found');
+      }
+      expense = existing;
+      expense.date = data.date;
+      expense.amount = data.amount;
+      expense.description = data.description;
+      expense.category = data.category || this.suggestCategory(data.description);
+      expense.receiptImage = data.receiptImage || undefined;
+    } else {
+      expense = this.expenseRepository.create({
+        date: data.date,
+        amount: data.amount,
+        description: data.description,
+        category: data.category || this.suggestCategory(data.description),
+        receiptImage: data.receiptImage || undefined,
+        userId: effectiveUserId,
+      });
+    }
+
+    return this.expenseRepository.save(expense);
+  }
+
+  async deleteExpense(id: string, userId: string, targetUserId?: string) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
+    const expense = await this.expenseRepository.findOne({
+      where: { id, userId: effectiveUserId },
+    });
+    if (!expense) {
+      throw new NotFoundException('Expense not found');
+    }
+
+    await this.expenseRepository.remove(expense);
+    return { success: true };
+  }
+
+  async saveIncome(
+    data: {
+      id?: string;
+      date: string;
+      serviceSales: number;
+      cashTips: number;
+      description?: string;
+      receiptImage?: string;
+    },
+    userId: string,
+    targetUserId?: string,
+  ) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
+    const checkIncome = data.serviceSales;
+    const cashIncome = data.cashTips;
+    const taxAmount = checkIncome * 0.15;
+    const netCheck = checkIncome - taxAmount;
+    const grossIncome = checkIncome + cashIncome;
+
+    let sale: FinanceSale;
+
+    if (data.id) {
+      const existing = await this.saleRepository.findOne({
+        where: { id: data.id, userId: effectiveUserId },
+      });
+      if (!existing) {
+        throw new NotFoundException('Income not found');
+      }
+      sale = existing;
+      sale.date = data.date;
+      sale.serviceSales = data.serviceSales;
+      sale.cashTips = data.cashTips;
+      sale.ccTips = 0;
+      sale.description = data.description || '';
+      sale.receiptImage = data.receiptImage || undefined;
+      sale.commissionBase = grossIncome;
+      sale.cashCommission = cashIncome;
+      sale.checkCommission = checkIncome;
+      sale.taxAmount = taxAmount;
+      sale.netCheck = netCheck;
+    } else {
+      sale = this.saleRepository.create({
+        date: data.date,
+        serviceSales: data.serviceSales,
+        cashTips: data.cashTips,
+        ccTips: 0,
+        description: data.description || '',
+        receiptImage: data.receiptImage || undefined,
+        commissionBase: grossIncome,
+        cashCommission: cashIncome,
+        checkCommission: checkIncome,
+        taxAmount,
+        netCheck,
+        userId: effectiveUserId,
+      });
+    }
+
+    return this.saleRepository.save(sale);
+  }
+
+  async deleteIncome(id: string, userId: string, targetUserId?: string) {
+    if (targetUserId) {
+      await this.checkShareAccess(userId, targetUserId, 'edit');
+    }
+    const effectiveUserId = targetUserId ?? userId;
+
+    const sale = await this.saleRepository.findOne({
+      where: { id, userId: effectiveUserId },
+    });
+    if (!sale) {
+      throw new NotFoundException('Income not found');
+    }
+
+    await this.saleRepository.remove(sale);
+    return { success: true };
+  }
 }

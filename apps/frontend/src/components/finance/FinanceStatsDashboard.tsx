@@ -13,6 +13,7 @@ interface Sale {
     serviceSales: number;
     cashTips: number;
     date: string;
+    description?: string;
 }
 
 interface Expense {
@@ -917,6 +918,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                                     <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
                                         <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold uppercase tracking-wider text-gray-400">
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Date</th>
+                                            <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Notes</th>
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Check Income</th>
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Cash Income</th>
                                             <th className="pb-3 font-semibold bg-white dark:bg-slate-800">Taxes (15%)</th>
@@ -929,6 +931,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                                             .map((sale) => (
                                                 <tr key={sale.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
                                                     <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{sale.date}</td>
+                                                    <td className="py-3 text-gray-500 dark:text-gray-400 max-w-[180px] truncate whitespace-nowrap" title={sale.description || ''}>{sale.description || '-'}</td>
                                                     <td className="py-3 text-gray-600 dark:text-gray-300">{formatMoney(getCheckIncome(sale))}</td>
                                                     <td className="py-3 text-gray-600 dark:text-gray-300">{formatMoney(getCashIncome(sale))}</td>
                                                     <td className="py-3 text-amber-500 font-medium">{formatMoney(getTax(sale))}</td>
@@ -986,7 +989,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
                                             .map((exp) => (
                                                 <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
                                                     <td className="py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{exp.date}</td>
-                                                    <td className="py-3 text-gray-600 dark:text-gray-300">{exp.description}</td>
+                                                    <td className="py-3 text-gray-600 dark:text-gray-300 max-w-[200px] truncate whitespace-nowrap" title={exp.description}>{exp.description}</td>
                                                     <td className="py-3">
                                                         <span className="text-[10px] font-bold px-2.5 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-full">
                                                             {exp.category}
