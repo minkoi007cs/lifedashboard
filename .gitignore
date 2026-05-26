@@ -8,3 +8,10 @@ dist
 .DS_Store
 coverage
 .turbo
+
+# Vercel serverless sources live in apps/backend/api/*.ts.
+# Do not commit TypeScript build artifacts beside them because Vercel treats
+# api/index.js and api/index.ts as conflicting functions.
+apps/backend/api/*.js
+apps/backend/api/*.js.map
+apps/backend/api/*.d.ts

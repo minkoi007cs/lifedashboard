@@ -31,10 +31,19 @@ Biáº¿n Ä‘Æ°á»£c há»— trá»£:
 This backend now includes additional product modules beyond the Nest starter template:
 
 - `tasks`: supports personal tasks and shared plan participants.
+- `finance`: daily finance entries, granular income/expense transactions, receipt images, and finance sharing.
 - `wishes`: personal wishlist entries, sharing, responses, and plan creation from confirmed activity wishes.
 - `notifications`: lightweight unread notification feed for social wishlist actions.
 - `users/search`: name and email search for sharing wishes with registered users.
 - `wishes/comments`: persistent comment thread on each shared wish.
+
+## Finance flow
+
+- `POST /api/v1/finance/daily-entry` saves the legacy day-level income and expense payload.
+- `POST /api/v1/finance/income` and `POST /api/v1/finance/expense` save granular transactions from the current frontend, including optional `receiptImage` data.
+- `DELETE /api/v1/finance/income/:id` and `DELETE /api/v1/finance/expense/:id` remove individual transactions.
+- Shared finance views pass `targetUserId` and require accepted edit permission for writes.
+- Deploy backend and frontend from the same `main` revision so receipt-enabled frontend builds do not call stale backend routes.
 
 ## Wishlist flow
 
