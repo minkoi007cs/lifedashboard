@@ -4,6 +4,7 @@ import api from '../../lib/axios';
 import { formatMoney } from '../../lib/format-money';
 import { Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Search, ArrowUpDown, Download, Upload, X } from 'lucide-react';
 import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 interface Expense {
     id?: string;
@@ -56,6 +57,7 @@ interface DailyEntryFormProps {
 
 export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, isReadOnly = false }) => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     
     // Income fields
@@ -177,11 +179,11 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
-            alert(isEditing ? 'Income transaction updated!' : 'Income transaction saved!');
+            showToast(isEditing ? 'Income transaction updated!' : 'Income transaction saved!', 'success');
             handleCancelEdit();
         },
         onError: (err) => {
-            alert('Failed to save income: ' + getErrorMessage(err));
+            showToast('Failed to save income: ' + getErrorMessage(err), 'error');
         }
     });
 
@@ -194,11 +196,11 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
-            alert(isEditing ? 'Expense transaction updated!' : 'Expense transaction saved!');
+            showToast(isEditing ? 'Expense transaction updated!' : 'Expense transaction saved!', 'success');
             handleCancelEdit();
         },
         onError: (err) => {
-            alert('Failed to save expense: ' + getErrorMessage(err));
+            showToast('Failed to save expense: ' + getErrorMessage(err), 'error');
         }
     });
 
@@ -211,10 +213,10 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
-            alert('Income transaction deleted successfully!');
+            showToast('Income transaction deleted successfully!', 'success');
         },
         onError: (err) => {
-            alert('Failed to delete income: ' + getErrorMessage(err));
+            showToast('Failed to delete income: ' + getErrorMessage(err), 'error');
         }
     });
 
@@ -227,10 +229,10 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance-stats', targetUserId ?? 'self'] });
-            alert('Expense transaction deleted successfully!');
+            showToast('Expense transaction deleted successfully!', 'success');
         },
         onError: (err) => {
-            alert('Failed to delete expense: ' + getErrorMessage(err));
+            showToast('Failed to delete expense: ' + getErrorMessage(err), 'error');
         }
     });
 
@@ -239,7 +241,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('File is too large. Please select an image under 5MB.');
+            showToast('File is too large. Please select an image under 5MB.', 'warning');
             return;
         }
 
@@ -296,7 +298,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
             });
         } else {
             if (expenseAmount <= 0) {
-                alert('Expense amount must be greater than 0.');
+                showToast('Expense amount must be greater than 0.', 'warning');
                 return;
             }
             saveExpenseMutation.mutate({
