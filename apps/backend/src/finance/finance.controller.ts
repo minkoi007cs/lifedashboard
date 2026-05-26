@@ -73,6 +73,56 @@ export class FinanceController {
     );
   }
 
+  @Post('expense')
+  saveExpense(
+    @GetUser() user: AuthenticatedUser,
+    @Body() data: {
+      id?: string;
+      date: string;
+      amount: number;
+      description: string;
+      category?: string;
+      receiptImage?: string;
+    },
+    @Query('targetUserId') targetUserId?: string,
+  ) {
+    return this.financeService.saveExpense(data, user.userId, targetUserId);
+  }
+
+  @Delete('expense/:id')
+  deleteExpense(
+    @GetUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('targetUserId') targetUserId?: string,
+  ) {
+    return this.financeService.deleteExpense(id, user.userId, targetUserId);
+  }
+
+  @Post('income')
+  saveIncome(
+    @GetUser() user: AuthenticatedUser,
+    @Body() data: {
+      id?: string;
+      date: string;
+      serviceSales: number;
+      cashTips: number;
+      description?: string;
+      receiptImage?: string;
+    },
+    @Query('targetUserId') targetUserId?: string,
+  ) {
+    return this.financeService.saveIncome(data, user.userId, targetUserId);
+  }
+
+  @Delete('income/:id')
+  deleteIncome(
+    @GetUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('targetUserId') targetUserId?: string,
+  ) {
+    return this.financeService.deleteIncome(id, user.userId, targetUserId);
+  }
+
   // ── Share endpoints ──────────────────────────────────────────────────────
 
   @Post('share')

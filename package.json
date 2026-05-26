@@ -8,8 +8,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
-    "turbo": "^2.4.2"
+    "prettier": "^3.8.3",
+    "turbo": "^2.9.14"
   },
   "packageManager": "npm@10.2.4",
   "workspaces": [
@@ -17,6 +17,7 @@
     "packages/*"
   ],
   "dependencies": {
-    "@supabase/supabase-js": "^2.101.1"
+    "@supabase/supabase-js": "^2.106.2",
+    "date-fns": "^4.3.0"
   }
 }
