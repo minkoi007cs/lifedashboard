@@ -52,7 +52,7 @@ export const FinancePage: React.FC = () => {
                 actions={
                     <div className="flex flex-wrap items-center gap-2">
                         {/* Context switcher */}
-                        <div className="relative">
+                        <div className="relative z-30">
                             <button
                                 onClick={() => setShowContextMenu(prev => !prev)}
                                 onBlur={() => setTimeout(() => setShowContextMenu(false), 150)}

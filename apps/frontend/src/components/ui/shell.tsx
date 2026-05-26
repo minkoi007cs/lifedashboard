@@ -35,7 +35,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="themed-panel flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between">
+    <div className="themed-panel relative z-20 flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between">
       <div className="min-w-0">
         {eyebrow ? (
           <p className="theme-eyebrow mb-2 text-xs font-semibold uppercase tracking-[0.3em]">
