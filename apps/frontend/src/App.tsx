@@ -9,6 +9,7 @@ import { TasksPage } from './pages/TasksPage';
 import { CaloriesPage } from './pages/CaloriesPage';
 import { HabitsPage } from './pages/HabitsPage';
 import { WishlistPage } from './pages/WishlistPage';
+import { FocusPage } from './pages/FocusPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -82,7 +83,7 @@ function App() {
             <Route path="tasks" element={<TasksPage />} />
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="habits" element={<HabitsPage />} />
-            <Route path="focus" element={<Dashboard />} />
+            <Route path="focus" element={<FocusPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="calories" element={<CaloriesPage />} />
           </Route>

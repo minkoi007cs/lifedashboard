@@ -10,8 +10,8 @@ import {
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
-import type { FocusSession } from './focus.entity';
 import { FocusService } from './focus.service';
+import { CreateFocusSessionDto } from './dto/create-focus-session.dto';
 
 @Controller('focus')
 @UseGuards(JwtAuthGuard)
@@ -21,7 +21,7 @@ export class FocusController {
   @Post()
   create(
     @GetUser() user: AuthenticatedUser,
-    @Body() createDto: Partial<FocusSession>,
+    @Body() createDto: CreateFocusSessionDto,
   ) {
     return this.focusService.create(createDto, user.userId);
   }

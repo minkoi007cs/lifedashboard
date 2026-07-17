@@ -4,6 +4,7 @@ import { habitService } from '../../services/habitService';
 import { X, Bell, Target, Sparkles } from 'lucide-react';
 import type { FrequencyType, Habit } from '../../types/habit';
 import { ActionButton, SoftButton } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 type HabitFormValues = {
   name: string;
@@ -20,6 +21,7 @@ interface HabitModalProps {
 
 export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
   const queryClient = useQueryClient();
+  const showToast = useToastStore((state) => state.showToast);
   const [formData, setFormData] = useState({
     name: habit?.name ?? '',
     description: habit?.description ?? '',
@@ -35,6 +37,9 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
       queryClient.invalidateQueries({ queryKey: ['habits', 'stats'] });
       onClose();
+    },
+    onError: () => {
+      showToast(`Failed to ${habit ? 'update' : 'create'} habit. Please try again.`, 'error');
     },
   });
 

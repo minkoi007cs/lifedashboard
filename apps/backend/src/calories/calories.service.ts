@@ -7,6 +7,8 @@ import {
   DietPlan,
   FoodDatabase,
 } from './calories.entity';
+import { LogFoodDto } from './dto/log-food.dto';
+import { CreateDietPlanDto } from './dto/create-diet-plan.dto';
 
 @Injectable()
 export class CaloriesService {
@@ -21,7 +23,7 @@ export class CaloriesService {
     private foodDatabaseRepository: Repository<FoodDatabase>,
   ) {}
 
-  async logFood(data: Partial<FoodEntry>, userId: string) {
+  async logFood(data: LogFoodDto, userId: string) {
     // Automatic calculation if nutrition is missing but exists in database
     if (!data.calories && data.name) {
       const suggest = await this.foodDatabaseRepository.findOne({
@@ -45,7 +47,7 @@ export class CaloriesService {
     return this.weightLogRepository.save(log);
   }
 
-  async createDietPlan(data: Partial<DietPlan>, userId: string) {
+  async createDietPlan(data: CreateDietPlanDto, userId: string) {
     // Deactivate previous active plans
     await this.dietPlanRepository.update(
       { userId, isActive: true },

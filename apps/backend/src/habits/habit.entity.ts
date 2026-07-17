@@ -18,7 +18,7 @@ export class Habit extends BaseEntity {
   @Column({ type: 'simple-json', nullable: true })
   frequency_days: number[]; // 0-6 for Sun-Sat
 
-  @Column({ default: 0 })
+  @Column({ default: 1 })
   target_count: number;
 
   @Column({ nullable: true })

@@ -346,7 +346,8 @@ export class FinanceService {
       expense.date = data.date;
       expense.amount = data.amount;
       expense.description = data.description;
-      expense.category = data.category || this.suggestCategory(data.description);
+      expense.category =
+        data.category || this.suggestCategory(data.description);
       expense.receiptImage = data.receiptImage || undefined;
     } else {
       expense = this.expenseRepository.create({

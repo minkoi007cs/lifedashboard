@@ -11,13 +11,9 @@ import {
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
-import type { DietPlan, FoodEntry } from './calories.entity';
 import { CaloriesService } from './calories.service';
-
-interface WeightLogDto {
-  weight: number;
-  date: string;
-}
+import { LogFoodDto } from './dto/log-food.dto';
+import { CreateDietPlanDto } from './dto/create-diet-plan.dto';
 
 @Controller('calories')
 @UseGuards(JwtAuthGuard)
@@ -25,10 +21,7 @@ export class CaloriesController {
   constructor(private readonly caloriesService: CaloriesService) {}
 
   @Post('food')
-  logFood(
-    @Body() data: Partial<FoodEntry>,
-    @GetUser() user: AuthenticatedUser,
-  ) {
+  logFood(@Body() data: LogFoodDto, @GetUser() user: AuthenticatedUser) {
     return this.caloriesService.logFood(data, user.userId);
   }
 
@@ -38,13 +31,17 @@ export class CaloriesController {
   }
 
   @Post('weight')
-  logWeight(@Body() data: WeightLogDto, @GetUser() user: AuthenticatedUser) {
-    return this.caloriesService.logWeight(data.weight, data.date, user.userId);
+  logWeight(
+    @Body('weight') weight: number,
+    @Body('date') date: string,
+    @GetUser() user: AuthenticatedUser,
+  ) {
+    return this.caloriesService.logWeight(weight, date, user.userId);
   }
 
   @Post('plan')
   createDietPlan(
-    @Body() data: Partial<DietPlan>,
+    @Body() data: CreateDietPlanDto,
     @GetUser() user: AuthenticatedUser,
   ) {
     return this.caloriesService.createDietPlan(data, user.userId);
