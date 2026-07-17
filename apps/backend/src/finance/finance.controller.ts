@@ -13,26 +13,10 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
 import { FinanceService } from './finance.service';
-
-interface DailyEntryExpenseDto {
-  description: string;
-  amount: number;
-  category?: string;
-}
-
-interface DailyEntryDto {
-  date: string;
-  serviceSales: number;
-  cashTips: number;
-  description?: string;
-  originalDate?: string;
-  expenses: DailyEntryExpenseDto[];
-}
-
-interface InviteDto {
-  email: string;
-  permission: 'view' | 'edit';
-}
+import { CreateDailyEntryDto } from './dto/daily-entry.dto';
+import { SaveExpenseDto } from './dto/save-expense.dto';
+import { SaveIncomeDto } from './dto/save-income.dto';
+import { InviteShareDto } from './dto/invite-share.dto';
 
 @Controller('finance')
 @UseGuards(JwtAuthGuard)
@@ -42,7 +26,7 @@ export class FinanceController {
   @Post('daily-entry')
   createDailyEntry(
     @GetUser() user: AuthenticatedUser,
-    @Body() data: DailyEntryDto,
+    @Body() data: CreateDailyEntryDto,
     @Query('targetUserId') targetUserId?: string,
   ) {
     return this.financeService.createDailyEntry(
@@ -76,14 +60,7 @@ export class FinanceController {
   @Post('expense')
   saveExpense(
     @GetUser() user: AuthenticatedUser,
-    @Body() data: {
-      id?: string;
-      date: string;
-      amount: number;
-      description: string;
-      category?: string;
-      receiptImage?: string;
-    },
+    @Body() data: SaveExpenseDto,
     @Query('targetUserId') targetUserId?: string,
   ) {
     return this.financeService.saveExpense(data, user.userId, targetUserId);
@@ -101,14 +78,7 @@ export class FinanceController {
   @Post('income')
   saveIncome(
     @GetUser() user: AuthenticatedUser,
-    @Body() data: {
-      id?: string;
-      date: string;
-      serviceSales: number;
-      cashTips: number;
-      description?: string;
-      receiptImage?: string;
-    },
+    @Body() data: SaveIncomeDto,
     @Query('targetUserId') targetUserId?: string,
   ) {
     return this.financeService.saveIncome(data, user.userId, targetUserId);
@@ -126,7 +96,7 @@ export class FinanceController {
   // ── Share endpoints ──────────────────────────────────────────────────────
 
   @Post('share')
-  inviteUser(@GetUser() user: AuthenticatedUser, @Body() body: InviteDto) {
+  inviteUser(@GetUser() user: AuthenticatedUser, @Body() body: InviteShareDto) {
     return this.financeService.inviteUser(
       user.userId,
       user.email,

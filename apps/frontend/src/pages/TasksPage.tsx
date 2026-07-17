@@ -8,9 +8,11 @@ import { WeeklyScheduler } from '../components/tasks/WeeklyScheduler.tsx';
 import { MonthlyList } from '../components/tasks/MonthlyList.tsx';
 import { TaskStats as TaskStatsView } from '../components/tasks/TaskStats.tsx';
 import { ActionButton, PageHeader, SegmentedTabs, SoftButton, SurfaceCard } from '../components/ui/shell';
+import { useToastStore } from '../store/toastStore';
 
 export const TasksPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [view, setView] = useState<'weekly' | 'monthly' | 'stats'>('weekly');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -43,6 +45,9 @@ export const TasksPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setIsFormOpen(false);
             showNotification('Task Created', `"${res.data.title}" has been added to your list.`);
+        },
+        onError: () => {
+            showToast('Failed to create task. Please try again.', 'error');
         },
     });
 

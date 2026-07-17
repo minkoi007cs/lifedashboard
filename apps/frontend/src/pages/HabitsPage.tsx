@@ -38,6 +38,14 @@ export const HabitsPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
+    const completionRate = (() => {
+        if (!stats?.weeklySummary?.length) return null;
+        const totalTarget = stats.weeklySummary.reduce((s, d) => s + d.target, 0);
+        if (totalTarget === 0) return null;
+        const totalCompleted = stats.weeklySummary.reduce((s, d) => s + d.completed, 0);
+        return Math.round((totalCompleted / totalTarget) * 100);
+    })();
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -90,10 +98,12 @@ export const HabitsPage: React.FC = () => {
                             ))}
                         </div>
                     </SurfaceCard>
-                    <SurfaceCard className="p-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Completion rate</p>
-                        <p className="text-2xl font-bold text-green-500">84%</p>
-                    </SurfaceCard>
+                    {completionRate !== null && (
+                        <SurfaceCard className="p-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Completion rate</p>
+                            <p className="text-2xl font-bold text-green-500">{completionRate}%</p>
+                        </SurfaceCard>
+                    )}
                 </div>
             )}
 

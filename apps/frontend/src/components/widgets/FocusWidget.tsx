@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import clsx from 'clsx';
 import { WidgetFrame } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 type FocusSessionPayload = {
   startTime: Date;
@@ -19,6 +20,7 @@ export const FocusWidget: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(SESSION_SECONDS);
   const [isActive, setIsActive] = useState(false);
   const queryClient = useQueryClient();
+  const showToast = useToastStore((state) => state.showToast);
 
   const saveSessionMutation = useMutation({
     mutationFn: (data: FocusSessionPayload) => api.post('/api/v1/focus', data),
@@ -45,7 +47,7 @@ export const FocusWidget: React.FC = () => {
             label: 'Pomodoro',
           });
 
-          window.alert('Focus session complete!');
+          showToast('Focus session complete! Great work.', 'success', 5000);
           return SESSION_SECONDS;
         }
 
@@ -56,7 +58,7 @@ export const FocusWidget: React.FC = () => {
     return () => {
       window.clearInterval(interval);
     };
-  }, [isActive, saveSessionMutation]);
+  }, [isActive, saveSessionMutation, showToast]);
 
   const toggleTimer = () => setIsActive((value) => !value);
   const resetTimer = () => {

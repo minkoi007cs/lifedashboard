@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FocusSession } from './focus.entity';
+import { CreateFocusSessionDto } from './dto/create-focus-session.dto';
 
 @Injectable()
 export class FocusService {
@@ -18,7 +19,7 @@ export class FocusService {
   }
 
   async create(
-    createDto: Partial<FocusSession>,
+    createDto: CreateFocusSessionDto,
     userId: string,
   ): Promise<FocusSession> {
     const session = this.focusRepository.create({ ...createDto, userId });

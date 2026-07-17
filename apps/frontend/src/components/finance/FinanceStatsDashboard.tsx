@@ -279,23 +279,32 @@ const getTax = (sale: Sale) => getCheckIncome(sale) * TAX_RATE;
 const getNetIncome = (sale: Sale) => getCheckIncome(sale) - getTax(sale) + getCashIncome(sale);
 const getMoneyValue = (value: unknown) => formatMoney(Number(value) || 0);
 
-const CustomChartLabel = (props: any) => {
-    const { x, y, width, value, maxVal, color, minRatio } = props;
+interface ChartLabelProps {
+    x?: number;
+    y?: number;
+    width?: number;
+    value?: number | string | null;
+    maxVal?: number;
+    color?: string;
+    minRatio?: number;
+}
+
+const CustomChartLabel = (props: ChartLabelProps) => {
+    const { x = 0, y = 0, width = 0, value, maxVal, color, minRatio } = props;
     if (value === undefined || value === null) return null;
     const numericValue = Number(value) || 0;
-    const ratio = minRatio !== undefined ? minRatio : 0.45; // Default to 45% of peak
+    const ratio = minRatio !== undefined ? minRatio : 0.45;
     const threshold = (maxVal || 0) * ratio;
     if (Math.abs(numericValue) < threshold || numericValue === 0) return null;
-    
-    // For bars, x needs to be in the middle of the bar
-    const labelX = width !== undefined ? x + width / 2 : x;
+
+    const labelX = x + width / 2;
     const labelY = y - 8;
-    
+
     return (
-        <text 
-            x={labelX} 
-            y={labelY} 
-            fill={color || "#6b7280"} 
+        <text
+            x={labelX}
+            y={labelY}
+            fill={color || "#6b7280"}
             className="text-[9px] font-extrabold dark:fill-gray-300"
             textAnchor="middle"
         >
