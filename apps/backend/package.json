@@ -22,6 +22,7 @@
     "schema:sync": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/schema-sync.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.3",
     "@nestjs/common": "^11.1.24",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.24",

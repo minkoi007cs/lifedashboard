@@ -32,6 +32,7 @@ import type { NotificationPayload } from '../../types/notification';
 import { HelpPanel } from '../help/HelpPanel';
 import { getHelpPageKey } from '../../help/help-content';
 import { ToastContainer } from '../ui/ToastContainer';
+import { AssistantWidget } from '../assistant/AssistantWidget';
 
 type NavItem = {
   to: string;
@@ -599,6 +600,7 @@ export const AppLayout: React.FC = () => {
         onClose={() => setIsHelpOpen(false)}
         pageKey={helpPageKey}
       />
+      <AssistantWidget />
       <ToastContainer />
     </div>
   );
