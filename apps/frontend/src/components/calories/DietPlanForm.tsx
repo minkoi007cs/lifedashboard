@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Calculator, Loader2, Target } from 'lucide-react';
 import { ActionButton, SurfaceCard } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 interface DietPlanFormProps {
     initialData?: {
@@ -15,6 +16,7 @@ interface DietPlanFormProps {
 
 export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [formData, setFormData] = useState({
         targetCalories: initialData?.targetCalories || 2000,
         proteinRatio: initialData?.proteinRatio || 30,
@@ -27,11 +29,19 @@ export const DietPlanForm: React.FC<DietPlanFormProps> = ({ initialData }) => {
         mutationFn: (data: typeof formData) => api.post('/api/v1/calories/plan', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['calories-statistics'] });
+            showToast('Diet plan saved successfully.', 'success');
+        },
+        onError: () => {
+            showToast('Failed to save diet plan. Please try again.', 'error');
         },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.targetCalories <= 0) {
+            showToast('Calorie target must be greater than 0.', 'error');
+            return;
+        }
         mutation.mutate(formData);
     };
 

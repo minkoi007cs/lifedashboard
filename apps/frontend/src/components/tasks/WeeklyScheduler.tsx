@@ -16,7 +16,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
-    const { data: tasks, isLoading } = useQuery<Task[]>({
+    const { data: tasks, isLoading, isError } = useQuery<Task[]>({
         queryKey: ['tasks', 'week', format(weekStart, 'yyyy-MM-dd')],
         queryFn: async () => {
             const res = await api.get(`/api/v1/tasks/week/${format(weekStart, 'yyyy-MM-dd')}`);
@@ -25,6 +25,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
     });
 
     if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
+    if (isError) return <div className="rounded-[28px] border border-dashed border-red-200 py-12 text-center text-sm text-red-500 dark:border-red-900/30 dark:text-red-400">Failed to load weekly tasks. Please refresh.</div>;
 
     const getTasksForSlot = (day: Date, hour: number) => {
         return tasks?.filter(task => {

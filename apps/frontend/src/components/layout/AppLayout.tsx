@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+const AVATAR_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23e2e8f0'/%3E%3Ccircle cx='20' cy='15' r='7' fill='%2394a3b8'/%3E%3Cellipse cx='20' cy='35' rx='13' ry='9' fill='%2394a3b8'/%3E%3C/svg%3E";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -333,7 +336,7 @@ function SidebarContent({
         <div className="themed-surface p-4">
           <div className="mb-3 flex items-center gap-3">
             <img
-              src={user?.avatarUrl || 'https://via.placeholder.com/40'}
+              src={user?.avatarUrl || AVATAR_PLACEHOLDER}
               alt="Avatar"
               className="h-11 w-11 rounded-2xl object-cover ring-2 ring-white dark:ring-slate-700"
             />
@@ -414,12 +417,16 @@ export const AppLayout: React.FC = () => {
     mutationFn: async () => api.patch('/api/v1/notifications/read-all'),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onError: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
   const markReadMutation = useMutation({
     mutationFn: async (notificationId: string) =>
       api.patch(`/api/v1/notifications/${notificationId}/read`),
     onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onError: () =>
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
@@ -573,7 +580,7 @@ export const AppLayout: React.FC = () => {
                     </p>
                   </div>
                   <img
-                    src={user?.avatarUrl || 'https://via.placeholder.com/40'}
+                    src={user?.avatarUrl || AVATAR_PLACEHOLDER}
                     alt="Avatar"
                     className="h-10 w-10 rounded-2xl object-cover ring-2 ring-white dark:ring-slate-700"
                   />

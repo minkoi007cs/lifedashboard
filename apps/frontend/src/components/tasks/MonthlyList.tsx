@@ -14,7 +14,7 @@ interface MonthlyListProps {
 export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
     const monthStr = format(month, 'yyyy-MM');
 
-    const { data: tasks, isLoading } = useQuery<Task[]>({
+    const { data: tasks, isLoading, isError } = useQuery<Task[]>({
         queryKey: ['tasks', 'month', monthStr],
         queryFn: async () => {
             const res = await api.get(`/api/v1/tasks/month/${monthStr}`);
@@ -23,6 +23,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
     });
 
     if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
+    if (isError) return <div className="rounded-[28px] border border-dashed border-red-200 py-12 text-center text-sm text-red-500 dark:border-red-900/30 dark:text-red-400">Failed to load monthly tasks. Please refresh.</div>;
 
     // Group tasks by day
     const groupedTasks = tasks?.reduce((acc, task) => {

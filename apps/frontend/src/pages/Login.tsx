@@ -163,25 +163,29 @@ export const Login: React.FC = () => {
             Sign in with Google
           </ActionButton>
 
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-orange-100 dark:border-white/10"></div>
-            </div>
-            <div className="relative flex justify-center text-xs text-slate-400">
-              <span className="bg-[hsl(var(--background))] px-3">or</span>
-            </div>
-          </div>
+          {import.meta.env.DEV && (
+            <>
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-orange-100 dark:border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs text-slate-400">
+                  <span className="bg-[hsl(var(--background))] px-3">or</span>
+                </div>
+              </div>
 
-          <SoftButton
-            onClick={handleDevLogin}
-            disabled={devLoading}
-            className="w-full border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
-          >
-            {devLoading ? 'Logging in...' : 'Dev Login (skip OAuth)'}
-          </SoftButton>
-          <p className="mt-3 text-center text-xs text-slate-400">
-            Dev mode only, not available in production.
-          </p>
+              <SoftButton
+                onClick={handleDevLogin}
+                disabled={devLoading}
+                className="w-full border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+              >
+                {devLoading ? 'Logging in...' : 'Dev Login (skip OAuth)'}
+              </SoftButton>
+              <p className="mt-3 text-center text-xs text-slate-400">
+                Dev mode only — not available in production.
+              </p>
+            </>
+          )}
         </SurfaceCard>
       </div>
       <HelpPanel

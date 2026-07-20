@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Scale, Loader2, Check } from 'lucide-react';
+import { Scale, Loader2 } from 'lucide-react';
 import { ActionButton, SurfaceCard } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 export const WeightLogForm: React.FC = () => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [weight, setWeight] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -14,6 +16,10 @@ export const WeightLogForm: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['calories-statistics'] });
             setWeight('');
+            showToast('Weight logged successfully.', 'success');
+        },
+        onError: () => {
+            showToast('Failed to log weight. Please try again.', 'error');
         },
     });
 
@@ -61,8 +67,8 @@ export const WeightLogForm: React.FC = () => {
                     disabled={mutation.isPending}
                     className="w-full"
                 >
-                    {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : (mutation.isSuccess ? <Check className="w-5 h-5 mr-2" /> : <Scale className="w-5 h-5 mr-2" />)}
-                    {mutation.isSuccess ? 'Logged!' : 'Log Weight'}
+                    {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <Scale className="w-5 h-5 mr-2" />}
+                    {mutation.isPending ? 'Saving...' : 'Log Weight'}
                 </ActionButton>
             </form>
         </SurfaceCard>

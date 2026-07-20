@@ -5,6 +5,7 @@ import type { Habit, HabitLog } from '../../types/habit';
 import clsx from 'clsx';
 import { format } from 'date-fns';
 import { SoftButton, SurfaceCard } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 interface HabitListProps {
     habits: Habit[];
@@ -14,6 +15,7 @@ interface HabitListProps {
 
 export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit }) => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const logMutation = useMutation({
@@ -22,6 +24,7 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
             queryClient.invalidateQueries({ queryKey: ['habits'] });
             queryClient.invalidateQueries({ queryKey: ['habits', 'stats'] });
         },
+        onError: () => showToast('Failed to log habit. Please try again.', 'error'),
     });
 
     const archiveMutation = useMutation({
@@ -29,6 +32,7 @@ export const HabitList: React.FC<HabitListProps> = ({ habits, isLoading, onEdit 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['habits'] });
         },
+        onError: () => showToast('Failed to update habit. Please try again.', 'error'),
     });
 
     if (isLoading) {
