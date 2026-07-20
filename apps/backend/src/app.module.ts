@@ -15,6 +15,7 @@ import { HabitsModule } from './habits/habits.module';
 import { buildDatabaseOptions } from './config/database.config';
 import { WishesModule } from './wishes/wishes.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AssistantModule } from './assistant/assistant.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     HabitsModule,
     WishesModule,
     NotificationsModule,
+    AssistantModule,
   ],
   controllers: [AppController],
   providers: [AppService],
