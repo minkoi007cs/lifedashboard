@@ -68,6 +68,25 @@ function getBooleanConfig(
   return value.toLowerCase() === 'true';
 }
 
+// Pool config for Supabase/serverless (DATABASE_URL path).
+// max:1 — one connection per warm serverless instance is sufficient.
+// connectionTimeoutMillis — fail fast at 5 s instead of hanging to Vercel's 10 s hard limit.
+// idleTimeoutMillis — release the connection after 10 s of inactivity between requests.
+// allowExitOnIdle — lets the Node.js process exit cleanly when idle (important for serverless).
+const SERVERLESS_POOL = {
+  max: 1,
+  connectionTimeoutMillis: 5_000,
+  idleTimeoutMillis: 10_000,
+  allowExitOnIdle: true,
+};
+
+// Pool config for local / DB_HOST path.
+const LOCAL_POOL = {
+  max: 10,
+  connectionTimeoutMillis: 5_000,
+  idleTimeoutMillis: 30_000,
+};
+
 export function buildDatabaseOptions(
   configService: ConfigService,
 ): TypeOrmModuleOptions {
@@ -81,6 +100,16 @@ export function buildDatabaseOptions(
     !isProduction,
   );
 
+  // Hard guard — synchronize on production runs dozens of information_schema queries
+  // on every cold start, causing 504 FUNCTION_INVOCATION_TIMEOUT on Vercel.
+  if (shouldSynchronize && isProduction) {
+    throw new Error(
+      'DB_SYNCHRONIZE=true is forbidden in production. ' +
+        'Schema sync on cold start causes 504 timeouts and can alter/drop live columns. ' +
+        'Set DB_SYNCHRONIZE=false in your Vercel environment variables.',
+    );
+  }
+
   if (databaseUrl) {
     return {
       type: 'postgres',
@@ -91,10 +120,16 @@ export function buildDatabaseOptions(
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
         ? { rejectUnauthorized: false }
         : undefined,
-      extra: {
-        max: 3, // Avoid exceeding Supabase session pool limit (15)
-        idleTimeoutMillis: 3000,
-      },
+      extra: SERVERLESS_POOL,
+      // Serverless retry budget: 2 retries × (5 s connect + 1 s delay) = 12 s worst-case,
+      // well within the 20 s maxDuration. Default is 10 retries × 3 s = 30 s → 504.
+      retryAttempts: 2,
+      retryDelay: 1_000,
+      verboseRetryLog: true,
+      // ENOTFOUND = wrong hostname in DATABASE_URL — retrying is pointless, fail immediately.
+      toRetry: (err: Error) =>
+        !err.message?.includes('ENOTFOUND') &&
+        !err.message?.includes('password authentication failed'),
     };
   }
 
@@ -113,10 +148,9 @@ export function buildDatabaseOptions(
       ssl: getBooleanConfig(configService, 'DB_SSL', isProduction)
         ? { rejectUnauthorized: false }
         : undefined,
-      extra: {
-        max: 3, // Avoid exceeding Supabase session pool limit (15)
-        idleTimeoutMillis: 3000,
-      },
+      extra: LOCAL_POOL,
+      retryAttempts: 5,
+      retryDelay: 2_000,
     };
   }
 

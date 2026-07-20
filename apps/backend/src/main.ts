@@ -3,11 +3,23 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Express } from 'express';
 import { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import 'pg';
 import { AppModule } from './app.module';
 import { getRequiredEnv } from './config/env.config';
 
 let cachedServer: Express | null = null;
+
+function getAllowedOrigins(): string | string[] {
+  const primary = getRequiredEnv('FRONTEND_URL');
+  const extra = process.env.ALLOWED_ORIGINS?.trim();
+  if (!extra) return primary;
+  const extras = extra
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  return extras.length ? [primary, ...extras] : primary;
+}
 
 function configureSwagger(app: Awaited<ReturnType<typeof NestFactory.create>>) {
   const config = new DocumentBuilder()
@@ -29,9 +41,17 @@ function configureSwagger(app: Awaited<ReturnType<typeof NestFactory.create>>) {
 }
 
 function configureApp(app: Awaited<ReturnType<typeof NestFactory.create>>) {
+  // Security headers — CSP disabled so Swagger UI (inline scripts) still works
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   app.setGlobalPrefix('api/v1');
   app.enableCors({
-    origin: getRequiredEnv('FRONTEND_URL'),
+    origin: getAllowedOrigins(),
     credentials: true,
   });
   app.useGlobalPipes(
@@ -52,9 +72,26 @@ async function createNestApp() {
   return app;
 }
 
+// 15 s — gives the DB connection room to complete on cold start while still
+// returning a descriptive 500 before Vercel's 20 s hard limit kills the function.
+const BOOTSTRAP_TIMEOUT_MS = 15_000;
+
 async function bootstrapServerless(): Promise<Express> {
   if (!cachedServer) {
-    const app = await createNestApp();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutGuard = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(
+            `Bootstrap timed out after ${BOOTSTRAP_TIMEOUT_MS / 1000}s. ` +
+              'Ensure DB_SYNCHRONIZE=false and verify Supabase pooler connectivity.',
+          ),
+        );
+      }, BOOTSTRAP_TIMEOUT_MS);
+    });
+
+    const app = await Promise.race([createNestApp(), timeoutGuard]);
+    clearTimeout(timer);
     await app.init();
     cachedServer = app.getHttpAdapter().getInstance() as Express;
   }

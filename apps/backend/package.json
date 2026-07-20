@@ -18,7 +18,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "schema:sync": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/schema-sync.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.24",
@@ -29,12 +30,14 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.24",
     "@nestjs/swagger": "^11.4.4",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-jwt": "^4.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "date-fns": "^4.3.0",
+    "helmet": "^8.3.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
