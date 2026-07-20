@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
@@ -9,16 +9,16 @@ describe('AuthService', () => {
   } as unknown as JwtService;
 
   afterEach(() => {
-    delete process.env.NODE_ENV;
+    delete process.env.DEV_LOGIN_ENABLED;
   });
 
-  it('blocks dev login in production', async () => {
-    process.env.NODE_ENV = 'production';
+  it('blocks dev login when DEV_LOGIN_ENABLED is not set', async () => {
+    delete process.env.DEV_LOGIN_ENABLED;
     const usersService = {} as UsersService;
     const service = new AuthService(usersService, jwtService);
 
     await expect(service.devLogin('dev@example.com')).rejects.toBeInstanceOf(
-      ForbiddenException,
+      NotFoundException,
     );
   });
 

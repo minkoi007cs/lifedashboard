@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -26,6 +27,16 @@ import { NotificationsModule } from './notifications/notifications.module';
         buildDatabaseOptions(configService),
       inject: [ConfigService],
     }),
+    // Rate limiting — applied per-controller via @UseGuards(ThrottlerGuard).
+    // NOTE: in-memory storage resets per serverless cold start; add a Redis
+    // store (e.g. @nestjs-throttler-storage-redis) for cross-instance limits.
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 200,
+      },
+    ]),
     UsersModule,
     AuthModule,
     TasksModule,

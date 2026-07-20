@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';
@@ -52,8 +52,10 @@ export class AuthService {
   }
 
   async devLogin(email: string) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new ForbiddenException('Dev login is not available in production');
+    // Explicit opt-in required — must set DEV_LOGIN_ENABLED=true in env.
+    // Returns 404 (not 403) to avoid revealing the endpoint exists in production.
+    if (process.env.DEV_LOGIN_ENABLED !== 'true') {
+      throw new NotFoundException();
     }
 
     const devEmail = email || 'dev@lifedashboard.local';
@@ -63,7 +65,7 @@ export class AuthService {
       user = await this.usersService.create({
         email: devEmail,
         name: 'Dev User',
-        role: 'admin', // Admin so you can see all widgets
+        role: 'admin',
       });
     }
 
