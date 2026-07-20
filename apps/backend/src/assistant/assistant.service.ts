@@ -4,9 +4,17 @@ import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { FinanceService } from '../finance/finance.service';
 import { CaloriesService } from '../calories/calories.service';
+import { TasksService } from '../tasks/tasks.service';
+import { HabitsService } from '../habits/habits.service';
+import { FocusService } from '../focus/focus.service';
+import { WishesService } from '../wishes/wishes.service';
 import { ToolRegistry } from './tools/tool-registry';
 import { buildFinanceTools } from './tools/finance.tools';
 import { buildCaloriesTools } from './tools/calories.tools';
+import { buildTasksTools } from './tools/tasks.tools';
+import { buildHabitsTools } from './tools/habits.tools';
+import { buildFocusTools } from './tools/focus.tools';
+import { buildWishesTools } from './tools/wishes.tools';
 import { ChatRequestDto } from './dto/chat.dto';
 import type { AssistantAction, ChatResponse } from '@life-dashboard/shared';
 
@@ -16,7 +24,7 @@ const MAX_TOKENS = 4096;
 const MAX_TOOL_ITERATIONS = 10;
 
 const SYSTEM_PROMPT = `You are a helpful personal assistant integrated into the LifeDashboard app.
-You help users manage their finances and calorie/nutrition tracking.
+You help users manage their finances, calories/nutrition, tasks, habits, focus sessions, and wishlist.
 
 Guidelines:
 - Always use the available tools to fetch real data before answering questions about the user's finances or calories.
@@ -36,6 +44,10 @@ export class AssistantService implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly financeService: FinanceService,
     private readonly caloriesService: CaloriesService,
+    private readonly tasksService: TasksService,
+    private readonly habitsService: HabitsService,
+    private readonly focusService: FocusService,
+    private readonly wishesService: WishesService,
   ) {}
 
   onModuleInit() {
@@ -55,6 +67,18 @@ export class AssistantService implements OnModuleInit {
       this.registry.register(tool);
     }
     for (const tool of buildCaloriesTools(this.caloriesService)) {
+      this.registry.register(tool);
+    }
+    for (const tool of buildTasksTools(this.tasksService)) {
+      this.registry.register(tool);
+    }
+    for (const tool of buildHabitsTools(this.habitsService)) {
+      this.registry.register(tool);
+    }
+    for (const tool of buildFocusTools(this.focusService)) {
+      this.registry.register(tool);
+    }
+    for (const tool of buildWishesTools(this.wishesService)) {
       this.registry.register(tool);
     }
 
