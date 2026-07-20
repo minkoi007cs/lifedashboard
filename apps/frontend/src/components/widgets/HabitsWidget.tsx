@@ -7,9 +7,11 @@ import { format } from 'date-fns';
 import { WidgetFrame } from '../ui/shell';
 import type { Habit } from '../../types/habit';
 import { HabitModal } from '../habits/HabitModal';
+import { useToastStore } from '../../store/toastStore';
 
 export const HabitsWidget: React.FC = () => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -24,6 +26,7 @@ export const HabitsWidget: React.FC = () => {
     const logHabitMutation = useMutation({
         mutationFn: (id: string) => api.post(`/api/v1/habits/${id}/log`, { date: today }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['habits'] }),
+        onError: () => showToast('Failed to log habit.', 'error'),
     });
 
     if (isLoading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-pink-500" /></div>;

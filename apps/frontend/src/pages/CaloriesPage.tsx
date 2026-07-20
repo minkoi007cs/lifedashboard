@@ -82,7 +82,7 @@ export const CaloriesPage: React.FC = () => {
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-500">Calories</span>
-                                <span className="font-bold">{stats?.today.calories.toFixed(0)} / {stats?.today.target} kcal</span>
+                                <span className="font-bold">{(stats?.today?.calories ?? 0).toFixed(0)} / {stats?.today?.target ?? 2000} kcal</span>
                             </div>
                             <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
                                 <div
@@ -93,15 +93,15 @@ export const CaloriesPage: React.FC = () => {
                             <div className="grid grid-cols-3 gap-2 mt-4 text-center">
                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <p className="text-[10px] uppercase font-bold text-blue-600">Protein</p>
-                                    <p className="font-black">{stats?.today.macros.protein.toFixed(0)}g</p>
+                                    <p className="font-black">{(stats?.today?.macros?.protein ?? 0).toFixed(0)}g</p>
                                 </div>
                                 <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                                     <p className="text-[10px] uppercase font-bold text-yellow-600">Fat</p>
-                                    <p className="font-black">{stats?.today.macros.fat.toFixed(0)}g</p>
+                                    <p className="font-black">{(stats?.today?.macros?.fat ?? 0).toFixed(0)}g</p>
                                 </div>
                                 <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                                     <p className="text-[10px] uppercase font-bold text-green-600">Carbs</p>
-                                    <p className="font-black">{stats?.today.macros.carbs.toFixed(0)}g</p>
+                                    <p className="font-black">{(stats?.today?.macros?.carbs ?? 0).toFixed(0)}g</p>
                                 </div>
                             </div>
                         </div>

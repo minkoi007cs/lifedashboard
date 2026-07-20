@@ -37,11 +37,11 @@ export const FoodLogTable: React.FC<FoodLogTableProps> = ({ entries, onDelete })
                             entries.map((entry) => (
                                 <tr key={entry.id} className="transition-colors hover:bg-orange-50/70 dark:hover:bg-slate-800/70">
                                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{entry.name}</td>
-                                    <td className="px-6 py-4">{entry.calories.toFixed(0)} kcal</td>
+                                    <td className="px-6 py-4">{(entry.calories ?? 0).toFixed(0)} kcal</td>
                                     <td className="px-6 py-4 text-sm">
-                                        <span className="text-blue-500 font-bold">{entry.protein.toFixed(0)}g</span> /
-                                        <span className="text-yellow-500 font-bold ml-1">{entry.fat.toFixed(0)}g</span> /
-                                        <span className="text-green-500 font-bold ml-1">{entry.carbs.toFixed(0)}g</span>
+                                        <span className="text-blue-500 font-bold">{(entry.protein ?? 0).toFixed(0)}g</span> /
+                                        <span className="text-yellow-500 font-bold ml-1">{(entry.fat ?? 0).toFixed(0)}g</span> /
+                                        <span className="text-green-500 font-bold ml-1">{(entry.carbs ?? 0).toFixed(0)}g</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-[10px] font-bold uppercase">{entry.mealType}</span>

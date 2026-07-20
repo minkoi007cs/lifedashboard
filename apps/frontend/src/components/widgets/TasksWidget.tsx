@@ -4,6 +4,7 @@ import api from '../../lib/axios';
 import { Plus, Check, Trash2, Loader2, Square } from 'lucide-react';
 import clsx from 'clsx';
 import { WidgetFrame } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 interface Task {
     id: string;
@@ -14,6 +15,7 @@ interface Task {
 
 export const TasksWidget: React.FC = () => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [newTaskTitle, setNewTaskTitle] = useState('');
 
     const { data: tasks, isLoading } = useQuery<Task[]>({
@@ -30,17 +32,20 @@ export const TasksWidget: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setNewTaskTitle('');
         },
+        onError: () => showToast('Failed to create task.', 'error'),
     });
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, status }: { id: string; status: Task['status'] }) =>
             api.patch(`/api/v1/tasks/${id}`, { status }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+        onError: () => showToast('Failed to update task status.', 'error'),
     });
 
     const deleteTaskMutation = useMutation({
         mutationFn: (id: string) => api.delete(`/api/v1/tasks/${id}`),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+        onError: () => showToast('Failed to delete task.', 'error'),
     });
 
     const handleSubmit = (e: React.FormEvent) => {

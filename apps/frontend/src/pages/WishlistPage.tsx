@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Gift } from 'lucide-react';
 import api from '../lib/axios';
 import { PageHeader } from '../components/ui/shell';
+import { useToastStore } from '../store/toastStore';
 import type { FeedWish, MyWish, WishlistUser } from '../types/wishlist';
 import { WishComposer } from '../components/wishlist/WishComposer';
 import { FriendsWishlistSection } from '../components/wishlist/FriendsWishlistSection';
@@ -26,6 +27,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export const WishlistPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const showToast = useToastStore((state) => state.showToast);
   const [form, setForm] = useState<WishFormState>(defaultWishForm);
   const [editingWishId, setEditingWishId] = useState<string | null>(null);
   const [shareWishId, setShareWishId] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export const WishlistPage: React.FC = () => {
   const deleteWishMutation = useMutation({
     mutationFn: async (wishId: string) => api.delete(`/api/v1/wishes/${wishId}`),
     onSuccess: () => invalidateData(),
+    onError: () => showToast('Failed to delete wish.', 'error'),
   });
 
   const shareWishMutation = useMutation({
@@ -122,6 +125,7 @@ export const WishlistPage: React.FC = () => {
       return api.post(`/api/v1/wishes/${wishId}/respond`, payload);
     },
     onSuccess: () => invalidateData(),
+    onError: () => showToast('Failed to submit response.', 'error'),
     onSettled: () => setSubmitPendingId(null),
   });
 
@@ -135,6 +139,7 @@ export const WishlistPage: React.FC = () => {
       setCommentDrafts((current) => ({ ...current, [variables.wishId]: '' }));
       invalidateData();
     },
+    onError: () => showToast('Failed to post comment.', 'error'),
     onSettled: () => setCommentPendingId(null),
   });
 

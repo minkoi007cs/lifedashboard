@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { Plus, Loader2 } from 'lucide-react';
 import { ActionButton, SurfaceCard } from '../ui/shell';
+import { useToastStore } from '../../store/toastStore';
 
 interface FoodLogFormProps {
     onSuccess?: () => void;
@@ -10,6 +11,7 @@ interface FoodLogFormProps {
 
 export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [formData, setFormData] = useState({
         name: '',
         amount: 100,
@@ -25,15 +27,12 @@ export const FoodLogForm: React.FC<FoodLogFormProps> = ({ onSuccess }) => {
         mutationFn: (data: typeof formData) => api.post('/api/v1/calories/food', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['calories-statistics'] });
-            setFormData({
-                ...formData,
-                name: '',
-                calories: 0,
-                protein: 0,
-                fat: 0,
-                carbs: 0
-            });
+            setFormData((prev) => ({ ...prev, name: '', calories: 0, protein: 0, fat: 0, carbs: 0 }));
+            showToast('Food entry logged successfully.', 'success');
             if (onSuccess) onSuccess();
+        },
+        onError: () => {
+            showToast('Failed to log food entry. Please try again.', 'error');
         },
     });
 
