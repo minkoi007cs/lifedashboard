@@ -44,7 +44,7 @@ export class HabitsService {
     const habit = this.habitsRepository.create({
       ...createHabitDto,
       userId,
-      start_date: createHabitDto.start_date || format(new Date(), 'yyyy-MM-dd'),
+      startDate: createHabitDto.startDate || format(new Date(), 'yyyy-MM-dd'),
     });
     return this.habitsRepository.save(habit);
   }
@@ -72,16 +72,16 @@ export class HabitsService {
     });
 
     if (log) {
-      log.completed_count += count;
+      log.completedCount += count;
     } else {
       log = this.logsRepository.create({
         habitId,
         date,
-        completed_count: count,
+        completedCount: count,
       });
     }
 
-    log.is_completed = log.completed_count >= habit.target_count;
+    log.isCompleted = log.completedCount >= habit.targetCount;
     await this.logsRepository.save(log);
 
     await this.updateStreaks(habit);
@@ -91,7 +91,7 @@ export class HabitsService {
 
   private async updateStreaks(habit: Habit): Promise<void> {
     const logs = await this.logsRepository.find({
-      where: { habitId: habit.id, is_completed: true },
+      where: { habitId: habit.id, isCompleted: true },
       order: { date: 'DESC' },
     });
 
@@ -102,7 +102,7 @@ export class HabitsService {
     }
 
     let currentStreak = 0;
-    const longestStreak = habit.longest_streak;
+    const longestStreak = habit.longestStreak;
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
     const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
@@ -131,7 +131,7 @@ export class HabitsService {
     }
 
     if (habit.streak > longestStreak) {
-      habit.longest_streak = habit.streak;
+      habit.longestStreak = habit.streak;
     }
 
     await this.habitsRepository.save(habit);
@@ -144,7 +144,7 @@ export class HabitsService {
     });
 
     const totalCompletions = habits.reduce(
-      (acc, h) => acc + h.logs.filter((l) => l.is_completed).length,
+      (acc, h) => acc + h.logs.filter((l) => l.isCompleted).length,
       0,
     );
 
@@ -156,7 +156,7 @@ export class HabitsService {
 
     const weeklySummary = last7Days.map((date) => {
       const completed = habits.reduce((acc, h) => {
-        const log = h.logs.find((l) => l.date === date && l.is_completed);
+        const log = h.logs.find((l) => l.date === date && l.isCompleted);
         return acc + (log ? 1 : 0);
       }, 0);
       return { date, completed, target: habits.length };
@@ -171,7 +171,7 @@ export class HabitsService {
 
     const monthlyHeatmap = monthDays.map((date) => {
       const count = habits.reduce((acc, h) => {
-        const log = h.logs.find((l) => l.date === date && l.is_completed);
+        const log = h.logs.find((l) => l.date === date && l.isCompleted);
         return acc + (log ? 1 : 0);
       }, 0);
       return { date, count };
@@ -181,8 +181,8 @@ export class HabitsService {
       totalCompletions,
       weeklySummary,
       monthlyHeatmap,
-      activeHabits: habits.filter((h) => !h.is_archived).length,
-      archivedHabits: habits.filter((h) => h.is_archived).length,
+      activeHabits: habits.filter((h) => !h.isArchived).length,
+      archivedHabits: habits.filter((h) => h.isArchived).length,
     };
   }
 

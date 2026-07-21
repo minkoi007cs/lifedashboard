@@ -37,7 +37,14 @@ export const TasksPage: React.FC = () => {
         },
     });
 
-    type TaskFormValues = Pick<Task, 'title' | 'description' | 'priority' | 'status' | 'dueDate' | 'reminderTime'>;
+    type TaskFormValues = {
+        title: string;
+        description: string;
+        priority: Task['priority'];
+        status: Task['status'];
+        dueDate: string;
+        reminderTime?: string;
+    };
 
     const createTaskMutation = useMutation({
         mutationFn: (data: TaskFormValues) => api.post('/api/v1/tasks', data),

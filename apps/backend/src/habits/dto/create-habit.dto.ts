@@ -17,25 +17,25 @@ export class CreateHabitDto {
   description?: string;
 
   @IsEnum(['daily', 'weekly'])
-  frequency_type: string;
+  frequencyType: string;
 
   @IsOptional()
   @IsArray()
   @IsNumber({}, { each: true })
-  frequency_days?: number[];
+  frequencyDays?: number[];
 
   @IsOptional()
   @IsNumber()
-  target_count?: number;
+  targetCount?: number;
 
   @IsOptional()
   @IsString()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-    message: 'reminder_time must be in HH:mm format',
+    message: 'reminderTime must be in HH:mm format',
   })
-  reminder_time?: string;
+  reminderTime?: string;
 
   @IsOptional()
   @IsDateString()
-  start_date?: string;
+  startDate?: string;
 }

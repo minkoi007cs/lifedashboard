@@ -1,6 +1,4 @@
-export type WishType = 'activity' | 'item';
-export type WishTimeTag = 'today' | 'this_week' | 'soon';
-export type WishResponseStatus = 'confirmed' | 'declined' | 'commented';
+export type { WishType, WishTimeTag, WishResponseStatus } from '@life-dashboard/shared';
 
 export interface WishlistUser {
   id: string;
@@ -11,7 +9,7 @@ export interface WishlistUser {
 
 export interface WishResponseItem {
   id: string;
-  status: WishResponseStatus;
+  status: import('@life-dashboard/shared').WishResponseStatus;
   comment?: string | null;
   addToPlan: boolean;
   respondedAt: string;
@@ -29,8 +27,8 @@ export interface MyWish {
   id: string;
   title: string;
   description?: string | null;
-  type: WishType;
-  timeTag: WishTimeTag;
+  type: import('@life-dashboard/shared').WishType;
+  timeTag: import('@life-dashboard/shared').WishTimeTag;
   wasEdited: boolean;
   planTaskId?: string | null;
   planCreatedAt?: string | null;
@@ -54,8 +52,8 @@ export interface FeedWish {
   id: string;
   title: string;
   description?: string | null;
-  type: WishType;
-  timeTag: WishTimeTag;
+  type: import('@life-dashboard/shared').WishType;
+  timeTag: import('@life-dashboard/shared').WishTimeTag;
   wasEdited: boolean;
   planCreatedAt?: string | null;
   updatedAt: string;
@@ -65,7 +63,7 @@ export interface FeedWish {
     id: string;
     wishId: string;
     responderId: string;
-    status: WishResponseStatus;
+    status: import('@life-dashboard/shared').WishResponseStatus;
     comment?: string | null;
     addToPlan: boolean;
     respondedAt: string;

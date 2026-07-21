@@ -29,7 +29,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
 
     const getTasksForSlot = (day: Date, hour: number) => {
         return tasks?.filter(task => {
-            const taskDate = new Date(task.dueDate);
+            const taskDate = new Date(task.dueDate!);
             return isSameDay(taskDate, day) && taskDate.getHours() === hour;
         });
     };
@@ -81,7 +81,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ startDate }) =
                                                 >
                                                     <div className="flex items-center">
                                                         <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
-                                                        {format(new Date(task.dueDate), 'HH:mm')}
+                                                        {format(new Date(task.dueDate!), 'HH:mm')}
                                                     </div>
                                                     <div className="mt-1 truncate">{task.title}</div>
                                                     {task.isSharedPlan ? (

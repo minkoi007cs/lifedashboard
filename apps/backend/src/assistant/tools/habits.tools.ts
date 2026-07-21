@@ -33,27 +33,27 @@ export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[]
         properties: {
           name: { type: 'string', description: 'Habit name (e.g. "Drink 8 glasses of water")' },
           description: { type: 'string', description: 'Optional description' },
-          frequency_type: {
+          frequencyType: {
             type: 'string',
             enum: ['daily', 'weekly'],
             description: 'How often this habit repeats',
           },
-          frequency_days: {
+          frequencyDays: {
             type: 'array',
             items: { type: 'number' },
             description:
               'Days of week to repeat (0=Sunday … 6=Saturday). Required for weekly habits. Leave empty for daily.',
           },
-          target_count: {
+          targetCount: {
             type: 'number',
             description: 'How many times per session to complete (default: 1)',
           },
-          reminder_time: {
+          reminderTime: {
             type: 'string',
             description: 'Optional reminder time in HH:mm format (e.g. "08:00")',
           },
         },
-        required: ['name', 'frequency_type'],
+        required: ['name', 'frequencyType'],
       },
       type: 'MUTATE',
       execute: async (params, userId) => {
@@ -61,16 +61,16 @@ export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[]
           {
             name: params.name as string,
             description: params.description as string | undefined,
-            frequency_type: params.frequency_type as string,
-            frequency_days: params.frequency_days as number[] | undefined,
-            target_count: (params.target_count as number | undefined) ?? 1,
-            reminder_time: params.reminder_time as string | undefined,
+            frequencyType: params.frequencyType as string,
+            frequencyDays: params.frequencyDays as number[] | undefined,
+            targetCount: (params.targetCount as number | undefined) ?? 1,
+            reminderTime: params.reminderTime as string | undefined,
           },
           userId,
         );
       },
       describeAction: (params) =>
-        `Create habit: "${params.name}" (${params.frequency_type})`,
+        `Create habit: "${params.name}" (${params.frequencyType})`,
     },
 
     {

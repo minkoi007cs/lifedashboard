@@ -1,12 +1,12 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Bell, Calendar, Flag, Sparkles } from 'lucide-react';
-import { TaskStatus, TaskPriority } from '../../types/task.ts';
+import { TaskStatus, TaskPriority } from '../../types/task';
 import { ActionButton, SoftButton } from '../ui/shell';
 
 type TaskFormValues = {
   title: string;
-  description?: string;
+  description: string;
   priority: TaskPriority;
   status: TaskStatus;
   dueDate: string;

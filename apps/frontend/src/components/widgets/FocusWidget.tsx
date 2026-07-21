@@ -5,13 +5,7 @@ import api from '../../lib/axios';
 import clsx from 'clsx';
 import { WidgetFrame } from '../ui/shell';
 import { useToastStore } from '../../store/toastStore';
-
-type FocusSessionPayload = {
-  startTime: Date;
-  endTime: Date;
-  durationMinutes: number;
-  label: string;
-};
+import type { CreateFocusPayload } from '../../types/focus';
 
 const SESSION_MINUTES = 25;
 const SESSION_SECONDS = SESSION_MINUTES * 60;
@@ -23,7 +17,7 @@ export const FocusWidget: React.FC = () => {
   const showToast = useToastStore((state) => state.showToast);
 
   const saveSessionMutation = useMutation({
-    mutationFn: (data: FocusSessionPayload) => api.post('/api/v1/focus', data),
+    mutationFn: (data: CreateFocusPayload) => api.post('/api/v1/focus', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['focus-stats'] }),
   });
 
