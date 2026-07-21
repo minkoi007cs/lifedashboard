@@ -7,34 +7,7 @@ import {
     PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import { ArrowDown, ArrowUp, LayoutDashboard, LineChart as LineIcon, PieChart as PieIcon, ReceiptText, Wallet, Coins, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface Sale {
-    id: string;
-    serviceSales: number;
-    cashTips: number;
-    date: string;
-    description?: string;
-}
-
-interface Expense {
-    id: string;
-    description: string;
-    amount: number;
-    category: string;
-    date: string;
-}
-
-interface StatsData {
-    totalExpenses: number;
-    totalRealProfit: number;
-    totalCheckIncome?: number;
-    totalCashIncome?: number;
-    totalGrossIncome?: number;
-    totalTaxAmount?: number;
-    totalNetIncome?: number;
-    sales: Sale[];
-    expenses: Expense[];
-}
+import type { FinanceSale, FinanceExpense, FinanceStats } from '@life-dashboard/shared';
 
 interface ReportRow {
     key: string;
@@ -273,10 +246,10 @@ const getReportLabel = (key: string, mode: ReportGroupingMode) => {
     return mode === 'week' ? `W ${month}/${day}` : `${month}/${day}`;
 };
 
-const getCheckIncome = (sale: Sale) => sale.serviceSales || 0;
-const getCashIncome = (sale: Sale) => sale.cashTips || 0;
-const getTax = (sale: Sale) => getCheckIncome(sale) * TAX_RATE;
-const getNetIncome = (sale: Sale) => getCheckIncome(sale) - getTax(sale) + getCashIncome(sale);
+const getCheckIncome = (sale: FinanceSale) => sale.serviceSales || 0;
+const getCashIncome = (sale: FinanceSale) => sale.cashTips || 0;
+const getTax = (sale: FinanceSale) => getCheckIncome(sale) * TAX_RATE;
+const getNetIncome = (sale: FinanceSale) => getCheckIncome(sale) - getTax(sale) + getCashIncome(sale);
 const getMoneyValue = (value: unknown) => formatMoney(Number(value) || 0);
 
 interface ChartLabelProps {
@@ -313,7 +286,7 @@ const CustomChartLabel = (props: ChartLabelProps) => {
     );
 };
 
-const buildReportRows = (sales: Sale[], expenses: Expense[], period: PeriodKey): ReportRow[] => {
+const buildReportRows = (sales: FinanceSale[], expenses: FinanceExpense[], period: PeriodKey): ReportRow[] => {
     const mode = getGroupingMode(period);
     const rows = new Map<string, ReportRow>();
 
@@ -531,7 +504,7 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
         accumulatedBalance: true,
     });
 
-    const { data: stats, isLoading } = useQuery<StatsData>({
+    const { data: stats, isLoading } = useQuery<FinanceStats>({
         queryKey: ['finance-stats', targetUserId ?? 'self'],
         queryFn: async () => {
             const res = await api.get('/api/v1/finance/statistics', {
@@ -586,11 +559,11 @@ export const FinanceStatsDashboard: React.FC<FinanceStatsDashboardProps> = ({ ta
 
     const salesFor = (period: PeriodKey) => stats.sales.filter(sale => isInPeriod(sale.date, period));
     const expensesFor = (period: PeriodKey) => stats.expenses.filter(expense => isInPeriod(expense.date, period));
-    const sumCheck = (sales: Sale[]) => sales.reduce((sum, sale) => sum + getCheckIncome(sale), 0);
-    const sumCash = (sales: Sale[]) => sales.reduce((sum, sale) => sum + getCashIncome(sale), 0);
-    const sumTax = (sales: Sale[]) => sales.reduce((sum, sale) => sum + getTax(sale), 0);
-    const sumNet = (sales: Sale[]) => sales.reduce((sum, sale) => sum + getNetIncome(sale), 0);
-    const sumExpenses = (expenses: Expense[]) => expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const sumCheck = (sales: FinanceSale[]) => sales.reduce((sum, sale) => sum + getCheckIncome(sale), 0);
+    const sumCash = (sales: FinanceSale[]) => sales.reduce((sum, sale) => sum + getCashIncome(sale), 0);
+    const sumTax = (sales: FinanceSale[]) => sales.reduce((sum, sale) => sum + getTax(sale), 0);
+    const sumNet = (sales: FinanceSale[]) => sales.reduce((sum, sale) => sum + getNetIncome(sale), 0);
+    const sumExpenses = (expenses: FinanceExpense[]) => expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
     const checkSales = salesFor(periods.checkIncome);
     const cashSales = salesFor(periods.cashIncome);

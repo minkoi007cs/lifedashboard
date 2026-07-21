@@ -1,8 +1,4 @@
-export const APP_NAME = "Life Dashboard";
-
 // ── AI Assistant contract ─────────────────────────────────────────────────────
-// These types are the canonical contract between backend and frontend.
-// Backend exports them; frontend imports from '@life-dashboard/shared'.
 
 /** One message in the conversation history sent to / received from the assistant. */
 export interface AssistantMessage {
@@ -14,10 +10,10 @@ export interface AssistantMessage {
  * A tool action surfaced to the frontend.
  *
  * status:
- *   'done'                — tool was executed this turn; `result` contains the outcome.
- *   'pending_confirmation' — MUTATE tool intercepted; frontend must show a confirm dialog
- *                           and re-send with `confirmedActions` containing this id + params.
- *   'failed'              — execution threw; `errorMessage` explains why.
+ *   'done'                 — executed this turn; `result` has the outcome.
+ *   'pending_confirmation' — MUTATE tool queued; frontend must show a confirm dialog
+ *                            and re-send with `confirmedActions` containing id + params.
+ *   'failed'               — execution threw; `errorMessage` explains why.
  */
 export interface AssistantAction {
     id: string;
@@ -25,15 +21,15 @@ export interface AssistantAction {
     description: string;
     status: 'done' | 'pending_confirmation' | 'failed';
     result?: unknown;
-    /** Params to replay on confirmation. Only present when status === 'pending_confirmation'. */
+    /** Only present when status === 'pending_confirmation'. Echo back on confirmation. */
     params?: Record<string, unknown>;
     errorMessage?: string;
 }
 
 /**
  * One confirmed action the frontend sends back.
- * `params` must match what was returned in the prior `pending_confirmation` action —
- * userId is NOT in params; it is always injected from the JWT on the server.
+ * `params` must match what was returned in the prior pending_confirmation action.
+ * userId is NOT in params — always injected server-side from the JWT.
  */
 export interface ConfirmedAction {
     id: string;
@@ -54,76 +50,258 @@ export interface ChatResponse {
     actions: AssistantAction[];
 }
 
+// ── Finance ───────────────────────────────────────────────────────────────────
 
-export interface User {
+/** One income/sales entry. Maps to FinanceSale entity. */
+export interface FinanceSale {
     id: string;
-    email: string;
-    name: string;
-    role: 'user' | 'admin';
-    avatarUrl?: string;
-}
-
-export enum FrequencyType {
-    DAILY = 'daily',
-    WEEKLY = 'weekly'
-}
-
-export interface Habit {
-    id: string;
-    userId: string;
-    name: string;
-    description?: string;
-    frequencyType: FrequencyType;
-    frequencyDays: number[]; // 0-6 for Sun-Sat
-    targetCount: number;
-    reminderTime?: string; // HH:mm
-    startDate: string;
-    isArchived: boolean;
     createdAt: string;
     updatedAt: string;
+    date: string;           // YYYY-MM-DD
+    serviceSales: number;
+    cashTips: number;
+    ccTips: number;
+    commissionBase: number;
+    cashCommission: number;
+    checkCommission: number;
+    taxAmount: number;
+    netCheck: number;
+    description: string;
+    receiptImage?: string;
+    userId: string;
+}
+
+/** One expense entry. Maps to FinanceExpense entity. */
+export interface FinanceExpense {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    date: string;           // YYYY-MM-DD
+    amount: number;
+    description: string;
+    category: string;
+    receiptImage?: string;
+    userId: string;
+}
+
+/** Response shape of GET /finance/statistics. */
+export interface FinanceStats {
+    totalExpenses: number;
+    totalRealProfit: number;
+    totalCheckIncome: number;
+    totalCashIncome: number;
+    totalGrossIncome: number;
+    totalTaxAmount: number;
+    totalNetIncome: number;
+    sales: FinanceSale[];
+    expenses: FinanceExpense[];
+}
+
+// ── Calories ─────────────────────────────────────────────────────────────────
+
+/** One logged food entry. Maps to FoodEntry entity. */
+export interface FoodEntry {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    amount: number;         // grams or servings
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    date: string;           // YYYY-MM-DD
+    mealType: string;       // breakfast | lunch | dinner | snack
+    userId: string;
+}
+
+/** One weight log entry. Maps to WeightLog entity. */
+export interface WeightLog {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    weight: number;
+    date: string;           // YYYY-MM-DD
+    userId: string;
+}
+
+/** Active diet plan. Maps to DietPlan entity. */
+export interface DietPlan {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    targetCalories: number;
+    proteinRatio: number;   // percentage
+    fatRatio: number;
+    carbsRatio: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    userId: string;
+}
+
+/** Response shape of GET /calories/statistics. */
+export interface CaloriesStats {
+    today: {
+        calories: number;
+        macros: { protein: number; fat: number; carbs: number };
+        target: number;
+    };
+    weightTrend: WeightLog[];
+    allEntries: FoodEntry[];
+    activePlan: DietPlan | null;
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+
+export type TaskStatus = 'TODO' | 'DOING' | 'DONE';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+/** One task. Maps to Task entity. */
+export interface Task {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    title: string;
+    description: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    dueDate: string | null;
+    reminderTime: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    isSharedPlan: boolean;
+    sourceWishId: string | null;
+    userId: string;
+    participants: TaskParticipant[];
+}
+
+export interface TaskParticipant {
+    id: string;
+    taskId: string;
+    userId: string;
+}
+
+/** Response shape of GET /tasks/statistics. */
+export interface TaskStats {
+    total: number;
+    statusStats: { done: number; pending: number };
+    priorityStats: { low: number; medium: number; high: number };
+}
+
+// ── Focus ─────────────────────────────────────────────────────────────────────
+
+/** One focus session. Maps to FocusSession entity. */
+export interface FocusSession {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    startTime: string;      // ISO datetime
+    endTime: string;        // ISO datetime
+    durationMinutes: number;
+    label: string | null;
+    userId: string;
+}
+
+/** Response shape of GET /focus/stats. */
+export interface FocusStats {
+    totalMinutes: number;
+    count: number;
+}
+
+// ── Habits ────────────────────────────────────────────────────────────────────
+
+/** One habit. Maps to Habit entity (camelCase since Phase B migration). */
+export interface Habit {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    description: string;
+    frequencyType: string;      // 'daily' | 'weekly'
+    frequencyDays: number[];    // 0–6 for Sun–Sat
+    targetCount: number;
+    reminderTime: string | null;
+    startDate: string | null;
+    isArchived: boolean;
     streak: number;
     longestStreak: number;
-    completionRate: number;
-    totalCompletions: number;
-    lastCompletedDate?: string;
-    logs?: HabitLog[];
+    userId: string;
+    logs: HabitLog[];
 }
 
+/** One habit log entry. Maps to HabitLog entity. */
 export interface HabitLog {
     id: string;
-    habitId: string;
-    date: string;
+    createdAt: string;
+    updatedAt: string;
+    date: string;               // YYYY-MM-DD
     completedCount: number;
     isCompleted: boolean;
-    createdAt: string;
+    habitId: string;
 }
 
-export interface CreateHabitDto {
+/** Response shape of GET /habits/statistics. */
+export interface HabitStatistics {
+    totalCompletions: number;
+    activeHabits: number;
+    archivedHabits: number;
+    weeklySummary: { date: string; completed: number; target: number }[];
+    monthlyHeatmap: { date: string; count: number }[];
+}
+
+/** POST /habits body. */
+export interface CreateHabitPayload {
     name: string;
     description?: string;
-    frequencyType: FrequencyType;
+    frequencyType: 'daily' | 'weekly';
     frequencyDays?: number[];
     targetCount?: number;
     reminderTime?: string;
     startDate?: string;
 }
 
-export interface UpdateHabitDto extends Partial<CreateHabitDto> {
+/** PUT /habits/:id body. */
+export type UpdateHabitPayload = Partial<CreateHabitPayload> & {
     isArchived?: boolean;
-}
+};
 
-export interface HabitStatistics {
-    currentStreak: number;
-    longestStreak: number;
-    totalCompletions: number;
-    completionRate: number;
-    weeklySummary: {
-        date: string;
-        completed: number;
-        target: number;
+// ── Wishlist ──────────────────────────────────────────────────────────────────
+
+export type WishType = 'activity' | 'item';
+export type WishTimeTag = 'today' | 'this_week' | 'soon';
+export type WishResponseStatus = 'confirmed' | 'declined' | 'commented';
+
+/** One wish entry (owner view). Maps to WishesService.getMine() shape. */
+export interface WishEntry {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    title: string;
+    description: string | undefined;
+    type: WishType;
+    timeTag: WishTimeTag;
+    wasEdited: boolean;
+    planTaskId: string | undefined;
+    planCreatedAt: Date | undefined;
+    shareCount: number;
+    shares: {
+        id: string;
+        recipient: { id: string; name: string; email: string; avatarUrl: string };
     }[];
-    monthlyHeatmap: {
-        date: string;
-        count: number;
+    responseSummary: { confirmed: number; declined: number; comments: number };
+    responses: {
+        id: string;
+        status: WishResponseStatus;
+        comment: string | undefined;
+        addToPlan: boolean;
+        respondedAt: Date;
+        responder: { id: string; name: string; email: string; avatarUrl: string };
+    }[];
+    comments: {
+        id: string;
+        comment: string;
+        createdAt: Date;
+        author: { id: string; name: string; email: string; avatarUrl: string };
     }[];
 }

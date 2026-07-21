@@ -5,13 +5,7 @@ import { Plus, Check, Trash2, Loader2, Square } from 'lucide-react';
 import clsx from 'clsx';
 import { WidgetFrame } from '../ui/shell';
 import { useToastStore } from '../../store/toastStore';
-
-interface Task {
-    id: string;
-    title: string;
-    status: 'TODO' | 'DOING' | 'DONE';
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
-}
+import type { Task } from '../../types/task';
 
 export const TasksWidget: React.FC = () => {
     const queryClient = useQueryClient();

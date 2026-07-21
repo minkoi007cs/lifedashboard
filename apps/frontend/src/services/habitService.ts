@@ -1,5 +1,5 @@
 import api from '../lib/axios';
-import type { Habit, HabitLog, HabitStatistics, CreateHabitDto, UpdateHabitDto } from '../types/habit';
+import type { Habit, HabitLog, HabitStatistics, CreateHabitPayload, UpdateHabitPayload } from '@life-dashboard/shared';
 
 export const habitService = {
     getAll: async () => {
@@ -17,12 +17,12 @@ export const habitService = {
         return response.data;
     },
 
-    create: async (data: CreateHabitDto) => {
+    create: async (data: CreateHabitPayload) => {
         const response = await api.post<Habit>('/api/v1/habits', data);
         return response.data;
     },
 
-    update: async (id: string, data: UpdateHabitDto) => {
+    update: async (id: string, data: UpdateHabitPayload) => {
         const response = await api.put<Habit>(`/api/v1/habits/${id}`, data);
         return response.data;
     },

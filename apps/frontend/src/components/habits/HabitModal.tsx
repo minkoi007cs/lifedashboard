@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { habitService } from '../../services/habitService';
 import { X, Bell, Target, Sparkles } from 'lucide-react';
-import type { FrequencyType, Habit } from '../../types/habit';
+import type { Habit, CreateHabitPayload } from '@life-dashboard/shared';
 import { ActionButton, SoftButton } from '../ui/shell';
 import { useToastStore } from '../../store/toastStore';
 
 type HabitFormValues = {
   name: string;
   description: string;
-  frequency_type: FrequencyType;
-  target_count: number;
-  reminder_time: string;
+  frequencyType: 'daily' | 'weekly';
+  targetCount: number;
+  reminderTime: string;
 };
 
 interface HabitModalProps {
@@ -22,17 +22,25 @@ interface HabitModalProps {
 export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.showToast);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<HabitFormValues>({
     name: habit?.name ?? '',
     description: habit?.description ?? '',
-    frequency_type: (habit?.frequencyType ?? 'daily') as FrequencyType,
-    target_count: habit?.targetCount ?? 1,
-    reminder_time: habit?.reminderTime ?? '',
+    frequencyType: (habit?.frequencyType ?? 'daily') as 'daily' | 'weekly',
+    targetCount: habit?.targetCount ?? 1,
+    reminderTime: habit?.reminderTime ?? '',
   });
 
   const mutation = useMutation({
-    mutationFn: (data: HabitFormValues) =>
-      habit ? habitService.update(habit.id, data) : habitService.create(data),
+    mutationFn: (data: HabitFormValues) => {
+      const payload: CreateHabitPayload = {
+        name: data.name,
+        description: data.description || undefined,
+        frequencyType: data.frequencyType,
+        targetCount: data.targetCount,
+        reminderTime: data.reminderTime || undefined,
+      };
+      return habit ? habitService.update(habit.id, payload) : habitService.create(payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
       queryClient.invalidateQueries({ queryKey: ['habits', 'stats'] });
@@ -108,11 +116,11 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
                 Frequency
               </label>
               <select
-                value={formData.frequency_type}
+                value={formData.frequencyType}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    frequency_type: e.target.value as FrequencyType,
+                    frequencyType: e.target.value as 'daily' | 'weekly',
                   })
                 }
                 className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-300 focus:bg-white dark:border-white/10 dark:bg-slate-800 dark:text-white"
@@ -128,11 +136,11 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
               <input
                 type="number"
                 min="1"
-                value={formData.target_count}
+                value={formData.targetCount}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    target_count: parseInt(e.target.value),
+                    targetCount: parseInt(e.target.value),
                   })
                 }
                 className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-300 focus:bg-white dark:border-white/10 dark:bg-slate-800 dark:text-white"
@@ -146,9 +154,9 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose }) => {
             </label>
             <input
               type="time"
-              value={formData.reminder_time}
+              value={formData.reminderTime}
               onChange={(e) =>
-                setFormData({ ...formData, reminder_time: e.target.value })
+                setFormData({ ...formData, reminderTime: e.target.value })
               }
               className="w-full rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-300 focus:bg-white dark:border-white/10 dark:bg-slate-800 dark:text-white"
             />

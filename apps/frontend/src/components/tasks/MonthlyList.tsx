@@ -27,7 +27,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
 
     // Group tasks by day
     const groupedTasks = tasks?.reduce((acc, task) => {
-        const date = format(new Date(task.dueDate), 'yyyy-MM-dd');
+        const date = format(new Date(task.dueDate!), 'yyyy-MM-dd');
         if (!acc[date]) acc[date] = [];
         acc[date].push(task);
         return acc;
@@ -81,7 +81,7 @@ export const MonthlyList: React.FC<MonthlyListProps> = ({ month }) => {
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         <div className="text-xs font-medium text-gray-400">
-                                            {format(new Date(task.dueDate), 'HH:mm')}
+                                            {format(new Date(task.dueDate!), 'HH:mm')}
                                         </div>
                                         <div className={clsx(
                                             "px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",

@@ -10,31 +10,30 @@ export class Habit extends BaseEntity {
   @Column({ nullable: true, type: 'text' })
   description: string;
 
-  @Column({
-    default: 'daily',
-  })
-  frequency_type: string;
+  // name: keeps the existing DB column; TS property is now camelCase
+  @Column({ name: 'frequency_type', default: 'daily' })
+  frequencyType: string;
 
-  @Column({ type: 'simple-json', nullable: true })
-  frequency_days: number[]; // 0-6 for Sun-Sat
+  @Column({ name: 'frequency_days', type: 'simple-json', nullable: true })
+  frequencyDays: number[]; // 0-6 for Sun-Sat
 
-  @Column({ default: 1 })
-  target_count: number;
+  @Column({ name: 'target_count', default: 1 })
+  targetCount: number;
 
-  @Column({ nullable: true })
-  reminder_time: string; // HH:mm
+  @Column({ name: 'reminder_time', nullable: true })
+  reminderTime: string; // HH:mm
 
-  @Column({ type: 'date', nullable: true })
-  start_date: string;
+  @Column({ name: 'start_date', type: 'date', nullable: true })
+  startDate: string;
 
-  @Column({ default: false })
-  is_archived: boolean;
+  @Column({ name: 'is_archived', default: false })
+  isArchived: boolean;
 
   @Column({ default: 0 })
   streak: number;
 
-  @Column({ default: 0 })
-  longest_streak: number;
+  @Column({ name: 'longest_streak', default: 0 })
+  longestStreak: number;
 
   @ManyToOne(() => User, (user) => user.habits, { onDelete: 'CASCADE' })
   user: User;
@@ -51,11 +50,11 @@ export class HabitLog extends BaseEntity {
   @Column({ type: 'date' })
   date: string; // YYYY-MM-DD
 
-  @Column({ default: 0 })
-  completed_count: number;
+  @Column({ name: 'completed_count', default: 0 })
+  completedCount: number;
 
-  @Column({ default: false })
-  is_completed: boolean;
+  @Column({ name: 'is_completed', default: false })
+  isCompleted: boolean;
 
   @ManyToOne(() => Habit, (habit) => habit.logs, { onDelete: 'CASCADE' })
   habit: Habit;

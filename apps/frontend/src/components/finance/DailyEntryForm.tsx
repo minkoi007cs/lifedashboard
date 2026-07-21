@@ -5,31 +5,7 @@ import { formatMoney } from '../../lib/format-money';
 import { Save, Calculator, ClipboardList, Calendar, Tag, ChevronDown, ChevronUp, AlertCircle, Search, ArrowUpDown, Download, Upload, X } from 'lucide-react';
 import { ActionButton, SurfaceCard, SoftButton } from '../ui/shell';
 import { useToastStore } from '../../store/toastStore';
-
-interface Expense {
-    id?: string;
-    description: string;
-    amount: number;
-    category?: string;
-    date?: string;
-    receiptImage?: string;
-}
-
-interface Sale {
-    id: string;
-    serviceSales: number;
-    cashTips: number;
-    date: string;
-    description?: string;
-    receiptImage?: string;
-}
-
-interface StatsData {
-    totalExpenses: number;
-    totalRealProfit: number;
-    sales: Sale[];
-    expenses: Expense[];
-}
+import type { FinanceSale, FinanceExpense, FinanceStats } from '@life-dashboard/shared';
 
 type MoneyEntryType = 'income' | 'expense';
 type SortBy = 'date' | 'income' | 'balance';
@@ -90,7 +66,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
     };
 
     // Query for recent entries
-    const { data: stats, isLoading: isStatsLoading } = useQuery<StatsData>({
+    const { data: stats, isLoading: isStatsLoading } = useQuery<FinanceStats>({
         queryKey: ['finance-stats', targetUserId ?? 'self'],
         queryFn: async () => {
             const res = await api.get('/api/v1/finance/statistics', {
@@ -312,7 +288,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         }
     };
 
-    const handleEditIncome = (sale: Sale) => {
+    const handleEditIncome = (sale: FinanceSale) => {
         setIsEditing(true);
         setEditingTransactionId(sale.id);
         setDate(sale.date);
@@ -324,7 +300,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({ targetUserId, is
         scrollToForm();
     };
 
-    const handleEditExpense = (expense: Expense) => {
+    const handleEditExpense = (expense: FinanceExpense) => {
         setIsEditing(true);
         setEditingTransactionId(expense.id || null);
         setDate(expense.date || new Date().toISOString().split('T')[0]);

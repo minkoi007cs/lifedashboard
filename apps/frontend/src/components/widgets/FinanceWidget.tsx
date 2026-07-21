@@ -5,22 +5,7 @@ import { formatMoney } from '../../lib/format-money';
 import { DollarSign, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LinkLikeFooter, WidgetFrame } from '../ui/shell';
-
-interface Sale {
-    serviceSales: number;
-    cashTips: number;
-    date: string;
-}
-
-interface Expense {
-    amount: number;
-    date: string;
-}
-
-interface StatsData {
-    sales: Sale[];
-    expenses: Expense[];
-}
+import type { FinanceStats } from '@life-dashboard/shared';
 
 const TAX_RATE = 0.15;
 const isThisMonth = (date: string) => {
@@ -30,7 +15,7 @@ const isThisMonth = (date: string) => {
 };
 
 export const FinanceWidget: React.FC = () => {
-    const { data: stats, isLoading } = useQuery<StatsData>({
+    const { data: stats, isLoading } = useQuery<FinanceStats>({
         queryKey: ['finance-stats'],
         queryFn: async () => {
             const res = await api.get('/api/v1/finance/statistics');
