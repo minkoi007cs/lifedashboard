@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@life-dashboard/shared": "*",
     "@tanstack/react-query": "^5.100.14",
     "axios": "^1.16.1",
     "clsx": "^2.1.1",
