@@ -50,6 +50,52 @@ export interface ChatResponse {
     actions: AssistantAction[];
 }
 
+// ── AI Assistant SSE Streaming (POST /api/v1/assistant/chat/stream) ───────────
+//
+// Each event is sent as:  data: {JSON}\n\n
+// Discriminate by `type` field. Always ends with a `done` event (even after `error`).
+
+/** A chunk of text to append to the in-progress reply. Emit one per SDK text_delta. */
+export interface StreamDelta {
+    type: 'delta';
+    text: string;
+}
+
+/**
+ * One tool action surfaced mid-stream.
+ * READ tools emit `done` immediately after execution.
+ * MUTATE tools emit `pending_confirmation` — frontend must show confirm dialog,
+ * then re-POST to /chat with confirmedActions[] to execute.
+ */
+export interface StreamAction {
+    type: 'action';
+    action: AssistantAction;
+}
+
+/**
+ * Terminal event — stream is complete.
+ * `reply` is the full accumulated text (all prior deltas joined) for reconciliation.
+ * `actions` is the complete list for the turn.
+ * Always emitted last, even when preceded by an `error` event.
+ */
+export interface StreamDone {
+    type: 'done';
+    reply: string;
+    actions: AssistantAction[];
+}
+
+/**
+ * A non-fatal error occurred (e.g. rate-limit, bad API key).
+ * Always followed by a `done` event so the frontend can close cleanly.
+ */
+export interface StreamError {
+    type: 'error';
+    message: string;
+}
+
+/** Discriminated union of all SSE payloads for POST /api/v1/assistant/chat/stream. */
+export type StreamEvent = StreamDelta | StreamAction | StreamDone | StreamError;
+
 // ── Finance ───────────────────────────────────────────────────────────────────
 
 /** One income/sales entry. Maps to FinanceSale entity. */

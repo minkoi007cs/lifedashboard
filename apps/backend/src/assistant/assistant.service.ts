@@ -16,7 +16,7 @@ import { buildHabitsTools } from './tools/habits.tools';
 import { buildFocusTools } from './tools/focus.tools';
 import { buildWishesTools } from './tools/wishes.tools';
 import { ChatRequestDto } from './dto/chat.dto';
-import type { AssistantAction, ChatResponse } from '@life-dashboard/shared';
+import type { AssistantAction, ChatResponse, StreamError, StreamEvent } from '@life-dashboard/shared';
 
 const MODEL = 'claude-sonnet-5';
 const MAX_TOKENS = 4096;
@@ -297,6 +297,266 @@ export class AssistantService implements OnModuleInit {
     };
   }
 
+  // ── Streaming endpoint (POST /assistant/chat/stream) ────────────────────────
+  //
+  // Additive — does NOT replace chat(). The caller (controller) iterates this
+  // async generator and writes each yielded StreamEvent as an SSE line:
+  //   data: {JSON}\n\n
+  //
+  // The tool-use loop mirrors chat() exactly:
+  //   - READ tools → execute immediately, yield 'action' (done)
+  //   - MUTATE tools → intercept, yield 'action' (pending_confirmation), let Claude explain
+  //   - confirmedActions → execute first, then stream the acknowledgment
+  //
+  // Every path ends with a 'done' event, even after an 'error', so the frontend
+  // can always close the EventSource cleanly on 'done'.
+
+  async *chatStream(dto: ChatRequestDto, userId: string): AsyncGenerator<StreamEvent> {
+    if (!this.anthropic) {
+      yield {
+        type: 'error',
+        message:
+          'The AI assistant is not available — ANTHROPIC_API_KEY is not configured on the server.',
+      };
+      yield { type: 'done', reply: '', actions: [] };
+      return;
+    }
+
+    const collectedActions: AssistantAction[] = [];
+    let finalReply = '';
+
+    // ── Phase 1: Execute confirmed MUTATE actions from the previous turn ───────
+    if (dto.confirmedActions && dto.confirmedActions.length > 0) {
+      for (const confirmed of dto.confirmedActions) {
+        const tool = this.registry.get(confirmed.toolName);
+        if (!tool || tool.type !== 'MUTATE') {
+          this.logger.warn(
+            `Ignoring unknown or non-MUTATE confirmed action: ${confirmed.toolName}`,
+          );
+          continue;
+        }
+
+        try {
+          const result = await tool.execute(confirmed.params, userId);
+          const action: AssistantAction = {
+            id: confirmed.id,
+            toolName: confirmed.toolName,
+            description: tool.describeAction
+              ? tool.describeAction(confirmed.params)
+              : confirmed.toolName,
+            status: 'done',
+            result,
+          };
+          collectedActions.push(action);
+          yield { type: 'action', action };
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.error(`Confirmed action ${confirmed.toolName} failed: ${msg}`);
+          const action: AssistantAction = {
+            id: confirmed.id,
+            toolName: confirmed.toolName,
+            description: tool.describeAction
+              ? tool.describeAction(confirmed.params)
+              : confirmed.toolName,
+            status: 'failed',
+            errorMessage: msg,
+          };
+          collectedActions.push(action);
+          yield { type: 'action', action };
+        }
+      }
+
+      const allDone = collectedActions.every((a) => a.status === 'done');
+
+      if (allDone && collectedActions.length > 0) {
+        // Stream a short acknowledgment from Claude so the user gets natural feedback.
+        const doneDescriptions = collectedActions.map((a) => `• ${a.description}`).join('\n');
+        const ackMessages: Anthropic.MessageParam[] = [
+          ...dto.messages.map(toAnthropicMessage),
+          {
+            role: 'user',
+            content: `The user confirmed these actions, which have now been executed:\n${doneDescriptions}\nPlease acknowledge briefly and naturally.`,
+          },
+        ];
+
+        try {
+          const ackStream = this.anthropic.messages.stream({
+            model: MODEL,
+            max_tokens: 512,
+            system: SYSTEM_PROMPT,
+            messages: ackMessages,
+          });
+
+          for await (const event of ackStream) {
+            if (
+              event.type === 'content_block_delta' &&
+              event.delta.type === 'text_delta'
+            ) {
+              finalReply += event.delta.text;
+              yield { type: 'delta', text: event.delta.text };
+            }
+          }
+        } catch (err: unknown) {
+          // Ack stream failed — fall back to inline summary rather than crashing.
+          finalReply = `Done: ${collectedActions.map((a) => a.description).join(', ')}`;
+          yield { type: 'delta', text: finalReply };
+        }
+      } else {
+        // Some confirmed actions failed — report inline.
+        const failedDescriptions = collectedActions
+          .filter((a) => a.status === 'failed')
+          .map((a) => `• ${a.description}: ${a.errorMessage}`)
+          .join('\n');
+        finalReply = `Some actions could not be completed:\n${failedDescriptions}`;
+        yield { type: 'delta', text: finalReply };
+      }
+
+      yield { type: 'done', reply: finalReply, actions: collectedActions };
+      return;
+    }
+
+    // ── Phase 2: Normal streaming Claude tool-use loop ────────────────────────
+    const anthropicMessages: Anthropic.MessageParam[] = dto.messages.map(toAnthropicMessage);
+    const anthropicTools = this.registry.toAnthropicTools();
+    let iterations = 0;
+
+    while (iterations < MAX_TOOL_ITERATIONS) {
+      iterations++;
+      let turnText = '';
+      let finalMessage: Anthropic.Message;
+
+      try {
+        // Start a streaming request for this iteration.
+        const stream = this.anthropic.messages.stream({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system: SYSTEM_PROMPT,
+          tools: anthropicTools,
+          messages: anthropicMessages,
+        });
+
+        // Yield text_delta events in real time as Claude generates tokens.
+        for await (const event of stream) {
+          if (
+            event.type === 'content_block_delta' &&
+            event.delta.type === 'text_delta'
+          ) {
+            turnText += event.delta.text;
+            yield { type: 'delta', text: event.delta.text };
+          }
+        }
+
+        // After the stream exhausts, assemble the complete message for tool inspection.
+        finalMessage = await stream.finalMessage();
+      } catch (err: unknown) {
+        yield this.handleStreamError(err);
+        yield { type: 'done', reply: finalReply, actions: collectedActions };
+        return;
+      }
+
+      // Accumulate this turn's text into the final reply (even when tool calls follow).
+      finalReply += turnText;
+
+      const toolUseBlocks = finalMessage.content.filter(
+        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      );
+
+      // Natural end or no tools — we're done.
+      if (finalMessage.stop_reason === 'end_turn' || toolUseBlocks.length === 0) {
+        break;
+      }
+
+      // ── Process tool calls ────────────────────────────────────────────────
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+      for (const toolCall of toolUseBlocks) {
+        const tool = this.registry.get(toolCall.name);
+
+        if (!tool) {
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: JSON.stringify({ error: `Unknown tool: ${toolCall.name}` }),
+          });
+          continue;
+        }
+
+        const params = toolCall.input as Record<string, unknown>;
+
+        if (tool.type === 'MUTATE') {
+          // Intercept — do NOT execute. Queue for user confirmation and let Claude explain.
+          const actionId = randomUUID();
+          const description = tool.describeAction ? tool.describeAction(params) : tool.name;
+          const action: AssistantAction = {
+            id: actionId,
+            toolName: tool.name,
+            description,
+            status: 'pending_confirmation',
+            params, // echoed back so the frontend can include it in confirmedActions
+          };
+          collectedActions.push(action);
+          yield { type: 'action', action };
+
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: JSON.stringify({
+              status: 'pending_confirmation',
+              actionId,
+              message:
+                'This action has been queued for user confirmation. Do not retry it automatically.',
+            }),
+          });
+        } else {
+          // READ — execute immediately, emit an action event so the frontend can reflect state.
+          try {
+            const result = await tool.execute(params, userId);
+            const action: AssistantAction = {
+              id: randomUUID(),
+              toolName: tool.name,
+              description: tool.name,
+              status: 'done',
+              result,
+            };
+            collectedActions.push(action);
+            yield { type: 'action', action };
+
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: toolCall.id,
+              content: JSON.stringify(result),
+            });
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.logger.error(`READ tool ${tool.name} failed: ${msg}`);
+            // Don't yield an action event — Claude will explain the error in its next turn.
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: toolCall.id,
+              is_error: true,
+              content: JSON.stringify({ error: msg }),
+            });
+          }
+        }
+      }
+
+      // Append this turn to message history so the next iteration has full context.
+      anthropicMessages.push({ role: 'assistant', content: finalMessage.content });
+      anthropicMessages.push({ role: 'user', content: toolResults });
+    }
+
+    if (iterations >= MAX_TOOL_ITERATIONS) {
+      const maxMsg = 'Reached maximum tool iterations. Please try a simpler request.';
+      finalReply = finalReply || maxMsg;
+      if (!finalReply.includes(maxMsg)) {
+        yield { type: 'delta', text: '\n' + maxMsg };
+        finalReply += '\n' + maxMsg;
+      }
+    }
+
+    yield { type: 'done', reply: finalReply, actions: collectedActions };
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   private async callClaude(
@@ -338,6 +598,30 @@ export class AssistantService implements OnModuleInit {
     return {
       reply: 'An unexpected error occurred with the AI assistant. Please try again.',
       actions: [],
+    };
+  }
+
+  private handleStreamError(err: unknown): StreamError {
+    if (err instanceof Anthropic.APIError) {
+      this.logger.error(`Anthropic stream error ${err.status}: ${err.message}`);
+      if (err.status === 429) {
+        return {
+          type: 'error',
+          message: 'The AI assistant is temporarily rate-limited. Please try again in a moment.',
+        };
+      }
+      if (err.status === 401) {
+        return {
+          type: 'error',
+          message:
+            'The AI assistant is not properly configured (invalid API key). Please contact support.',
+        };
+      }
+    }
+    this.logger.error(`Unexpected Anthropic stream error: ${String(err)}`);
+    return {
+      type: 'error',
+      message: 'An unexpected error occurred with the AI assistant. Please try again.',
     };
   }
 }
