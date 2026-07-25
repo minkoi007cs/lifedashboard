@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bot,
@@ -10,15 +9,16 @@ import {
   Send,
   X,
 } from 'lucide-react';
-import api from '../../lib/axios';
+import { getApiBaseUrl } from '../../lib/api-config';
 import type {
   AssistantAction,
   AssistantMessage,
   ChatRequest,
-  ChatResponse,
   ConfirmedAction,
+  StreamEvent,
 } from '@life-dashboard/shared';
 
+// ── Entry types ────────────────────────────────────────────────────────────────
 type MessageEntry = { type: 'message'; data: AssistantMessage };
 type ActionsEntry = { type: 'actions'; id: string; data: AssistantAction[] };
 type ChatEntry = MessageEntry | ActionsEntry;
@@ -33,49 +33,177 @@ export const AssistantWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState('');
+
+  // Streaming state — active only while a stream is in flight
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [streamingActions, setStreamingActions] = useState<AssistantAction[]>([]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  // AbortController for the active fetch so we can cancel mid-stream
+  const abortRef = useRef<AbortController | null>(null);
 
-  const chatMutation = useMutation({
-    mutationFn: async (body: ChatRequest) => {
-      const res = await api.post<ChatResponse>('/api/v1/assistant/chat', body);
-      return res.data;
-    },
-    onSuccess: (data) => {
-      const assistantEntry: MessageEntry = {
-        type: 'message',
-        data: { role: 'assistant', content: data.reply },
+  // Cancel any in-flight stream when the widget unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  // Auto-scroll to bottom whenever content changes
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [entries, isStreaming, streamingText]);
+
+  // ── Core streaming function ─────────────────────────────────────────────────
+  const streamChat = useCallback(
+    async (messages: AssistantMessage[], confirmedActions?: ConfirmedAction[]) => {
+      // Cancel previous stream if any
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setIsStreaming(true);
+      setStreamingText('');
+      setStreamingActions([]);
+
+      // Attach Bearer token the same way the shared axios instance does
+      const token = localStorage.getItem('token');
+      const body: ChatRequest = {
+        messages,
+        ...(confirmedActions ? { confirmedActions } : {}),
       };
-      if (data.actions.length > 0) {
-        const actionsEntry: ActionsEntry = {
-          type: 'actions',
-          id: crypto.randomUUID(),
-          data: data.actions,
-        };
-        setEntries((prev) => [...prev, assistantEntry, actionsEntry]);
-      } else {
-        setEntries((prev) => [...prev, assistantEntry]);
-      }
-    },
-    onError: () => {
-      setEntries((prev) => [
-        ...prev,
-        {
-          type: 'message',
-          data: { role: 'assistant', content: 'Something went wrong. Please try again.' },
-        },
-      ]);
-    },
-  });
 
+      let response: Response;
+      try {
+        response = await fetch(`${getApiBaseUrl()}/api/v1/assistant/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      } catch (err) {
+        // AbortError = intentional cancel (new message sent, widget unmounted)
+        if ((err as Error).name === 'AbortError') return;
+        setEntries((prev) => [
+          ...prev,
+          { type: 'message', data: { role: 'assistant', content: 'Connection error. Please try again.' } },
+        ]);
+        setIsStreaming(false);
+        return;
+      }
+
+      if (!response.ok || !response.body) {
+        setEntries((prev) => [
+          ...prev,
+          { type: 'message', data: { role: 'assistant', content: 'Server error. Please try again.' } },
+        ]);
+        setIsStreaming(false);
+        return;
+      }
+
+      // ── SSE read loop ───────────────────────────────────────────────────────
+      // The server sends events as:  data: {JSON}\n\n
+      // We read raw bytes from the stream, decode them, and split on the \n\n
+      // event boundary. The last element after split may be an incomplete event
+      // so we keep it in `buffer` and prepend it to the next chunk.
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        let done: boolean;
+        let value: Uint8Array | undefined;
+        try {
+          ({ done, value } = await reader.read());
+        } catch (err) {
+          if ((err as Error).name !== 'AbortError') {
+            setEntries((prev) => [
+              ...prev,
+              { type: 'message', data: { role: 'assistant', content: 'Stream interrupted.' } },
+            ]);
+          }
+          setIsStreaming(false);
+          return;
+        }
+
+        if (done) break;
+
+        // Accumulate decoded text and split on SSE event boundaries
+        buffer += decoder.decode(value, { stream: true });
+        const rawEvents = buffer.split('\n\n');
+
+        // The last element is incomplete (no trailing \n\n yet) — keep it
+        buffer = rawEvents.pop() ?? '';
+
+        for (const raw of rawEvents) {
+          const line = raw.trim();
+          // Every SSE data line starts with "data: "
+          if (!line.startsWith('data: ')) continue;
+
+          let event: StreamEvent;
+          try {
+            event = JSON.parse(line.slice(6)) as StreamEvent;
+          } catch {
+            // Malformed JSON frame — skip silently
+            continue;
+          }
+
+          // ── Dispatch by event type ──────────────────────────────────────────
+          if (event.type === 'delta') {
+            // Append incremental text to the in-progress bubble
+            setStreamingText((prev) => prev + event.text);
+          } else if (event.type === 'action') {
+            // Upsert action card: replace if id already exists, otherwise append
+            setStreamingActions((prev) => {
+              const idx = prev.findIndex((a) => a.id === event.action.id);
+              if (idx >= 0) {
+                const next = [...prev];
+                next[idx] = event.action;
+                return next;
+              }
+              return [...prev, event.action];
+            });
+          } else if (event.type === 'error') {
+            // Non-fatal — always followed by a `done` event
+            setStreamingText((prev) => prev || `Error: ${event.message}`);
+          } else if (event.type === 'done') {
+            // Terminal event: use the reconciled reply and action list from `done`
+            const finalActions = event.actions;
+            setEntries((prev) => [
+              ...prev,
+              { type: 'message', data: { role: 'assistant', content: event.reply } },
+              ...(finalActions.length > 0
+                ? [{ type: 'actions' as const, id: crypto.randomUUID(), data: finalActions }]
+                : []),
+            ]);
+            setStreamingText('');
+            setStreamingActions([]);
+            setIsStreaming(false);
+            return;
+          }
+        }
+      }
+
+      // Stream closed without a `done` event — clean up gracefully
+      setIsStreaming(false);
+    },
+    [],
+  );
+
+  // ── Event handlers ──────────────────────────────────────────────────────────
   const handleSend = () => {
     const text = input.trim();
-    if (!text || chatMutation.isPending) return;
+    if (!text || isStreaming) return;
 
     const userEntry: MessageEntry = { type: 'message', data: { role: 'user', content: text } };
     const nextEntries = [...entries, userEntry];
     setEntries(nextEntries);
     setInput('');
-    chatMutation.mutate({ messages: pickMessages(nextEntries) });
+    void streamChat(pickMessages(nextEntries));
   };
 
   const handleConfirm = (actionsEntryId: string, action: AssistantAction) => {
@@ -86,7 +214,7 @@ export const AssistantWidget: React.FC = () => {
     };
     const currentMessages = pickMessages(entries);
     setEntries((prev) => prev.filter((e) => !(e.type === 'actions' && e.id === actionsEntryId)));
-    chatMutation.mutate({ messages: currentMessages, confirmedActions: [confirmed] });
+    void streamChat(currentMessages, [confirmed]);
   };
 
   const handleDismiss = (actionsEntryId: string) => {
@@ -99,10 +227,6 @@ export const AssistantWidget: React.FC = () => {
       handleSend();
     }
   };
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [entries, chatMutation.isPending]);
 
   return (
     <>
@@ -143,7 +267,7 @@ export const AssistantWidget: React.FC = () => {
 
           {/* Message list */}
           <div className="flex-1 space-y-3 overflow-y-auto p-4" style={{ minHeight: 0 }}>
-            {entries.length === 0 && (
+            {entries.length === 0 && !isStreaming && (
               <div className="py-6 text-center">
                 <Bot className="mx-auto mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
                 <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -158,7 +282,7 @@ export const AssistantWidget: React.FC = () => {
                 return (
                   <div key={i} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                      className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                         isUser
                           ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white'
                           : 'bg-gray-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
@@ -170,7 +294,7 @@ export const AssistantWidget: React.FC = () => {
                 );
               }
 
-              // Action entry
+              // Action entry — pending_confirmation cards + resolved chips
               const pending = entry.data.filter((a) => a.status === 'pending_confirmation');
               const resolved = entry.data.filter((a) => a.status !== 'pending_confirmation');
 
@@ -212,14 +336,14 @@ export const AssistantWidget: React.FC = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleConfirm(entry.id, action)}
-                              disabled={chatMutation.isPending}
+                              disabled={isStreaming}
                               className="flex-1 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
                             >
                               Confirm
                             </button>
                             <button
                               onClick={() => handleDismiss(entry.id)}
-                              disabled={chatMutation.isPending}
+                              disabled={isStreaming}
                               className="flex-1 rounded-xl border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/40"
                             >
                               Cancel
@@ -233,13 +357,46 @@ export const AssistantWidget: React.FC = () => {
               );
             })}
 
-            {chatMutation.isPending && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-2.5 dark:bg-slate-800">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Thinking…</span>
+            {/* Live streaming bubble — shown while stream is in flight */}
+            {isStreaming && (
+              <>
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-gray-100 px-4 py-2.5 text-sm leading-relaxed text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                    {streamingText === '' ? (
+                      // Typing indicator: shown before the first delta arrives
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Thinking…</span>
+                      </div>
+                    ) : (
+                      streamingText
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {/* Resolved action chips that arrived mid-stream via `action` events */}
+                {streamingActions
+                  .filter((a) => a.status !== 'pending_confirmation')
+                  .map((action) => (
+                    <div
+                      key={action.id}
+                      className={`rounded-xl border px-3 py-2 text-xs ${
+                        action.status === 'done'
+                          ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-400'
+                          : 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {action.status === 'done' ? (
+                          <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                        )}
+                        <span>{action.description}</span>
+                      </div>
+                    </div>
+                  ))}
+              </>
             )}
 
             <div ref={bottomRef} />
@@ -259,7 +416,7 @@ export const AssistantWidget: React.FC = () => {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || chatMutation.isPending}
+                disabled={!input.trim() || isStreaming}
                 className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white transition-all hover:scale-105 disabled:scale-100 disabled:opacity-40"
                 aria-label="Send message"
               >
