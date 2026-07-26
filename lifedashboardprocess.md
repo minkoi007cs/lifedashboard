@@ -95,6 +95,13 @@ bằng script `schema:sync` (dev dùng `DB_SYNCHRONIZE`, prod dùng schema đã 
 
 ---
 
-## 8. Đang làm
+## 8. Tiến độ P1 — nâng chất AI (đang chạy)
 
-- **Streaming AI (P1):** chuyển assistant sang trả lời dạng stream (token hiện dần như Claude). Cách tiếp cận: thêm endpoint SSE **additive** (không phá endpoint JSON cũ) → deploy backend an toàn → frontend chuyển sang dùng stream → deploy lockstep.
+- ✅ **Prompt hội thoại ấm áp** (`0d3bbf3`) — agent chào hỏi tự nhiên, theo ngôn ngữ user.
+- ✅ **Streaming SSE** (`2b504ce` BE + `e96f1e9` FE) — endpoint `POST /assistant/chat/stream` additive (endpoint JSON cũ nguyên vẹn); `AssistantWidget` dùng `fetch`+`ReadableStream`, chữ hiện dần, typing indicator, AbortController. *Caveat: Vercel Node serverless có thể buffer → chưa chắc hiện dần từng chữ trên prod; muốn stream thật cần chuyển Edge Runtime (follow-up).*
+- ✅ **Prompt caching** (`2da90ac`) — cache prefix ổn định (tools + system prompt) qua `cache_control: ephemeral`; phần này gửi lại mỗi vòng tool-use nên tiết kiệm ~90% chi phí input của nó (cache read ~10% giá gốc). Log debug `cache_read/write_input_tokens` để nghiệm thu.
+- ⏳ **Còn lại P1:** render kết quả tool đẹp (markdown, thẻ) — FRONTEND (đang chờ, worker rate-limited); lưu lịch sử chat; guardrail chi phí sâu hơn (fallback `claude-haiku-4-5` rẻ ~3×, đổi qua env — KHÔNG đổi model giữa hội thoại vì vỡ cache).
+
+## Ghi chú model & chi phí (Claude API)
+- Model hiện tại: `claude-sonnet-5` ($3/$15 per MTok; intro $2/$10 tới 2026-08-31). `claude-haiku-4-5` = $1/$5, rẻ ~3× — cân nhắc cho tác vụ nhẹ.
+- Prompt caching: ngưỡng tối thiểu ~1–2k token cho Sonnet-tier; hòa vốn từ request thứ 2. Đổi model giữa hội thoại làm mất cache.
