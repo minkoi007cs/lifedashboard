@@ -51,6 +51,18 @@ Never skip the confirmation step or pretend the action is done before confirmati
 - Be warm and human — not robotic or overly formal.
 - When data is missing or empty, say so honestly and offer a helpful next step.`;
 
+// Prompt caching (Anthropic): the system prompt + tool definitions are identical on
+// every request and are re-sent on every turn of the tool-use loop. Marking the system
+// block with `cache_control` caches the stable prefix — because the render order is
+// tools -> system -> messages, a breakpoint on the system block caches BOTH the tools
+// and the system prompt together. Cache reads cost ~10% of the base input price and
+// break even from the 2nd request on. The cached prefix must stay byte-identical, so
+// never interpolate per-request data (timestamps, userId, request ids) into
+// SYSTEM_PROMPT or the tool definitions — userId is applied only inside tool execution.
+const CACHED_SYSTEM: Anthropic.TextBlockParam[] = [
+  { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+];
+
 @Injectable()
 export class AssistantService implements OnModuleInit {
   private readonly logger = new Logger(AssistantService.name);
@@ -194,13 +206,24 @@ export class AssistantService implements OnModuleInit {
         response = await this.anthropic.messages.create({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: SYSTEM_PROMPT,
+          system: CACHED_SYSTEM,
           tools: anthropicTools,
           messages: anthropicMessages,
         });
       } catch (err: unknown) {
         return this.handleAnthropicError(err);
       }
+
+      // Debug: verify prompt caching is active. `cache_read_input_tokens` should be > 0
+      // from the 2nd tool-use turn / request onward (the stable tools+system prefix is
+      // served from cache). If both stay 0, the prefix is below the ~1–2k token cache
+      // minimum for the model — check the tool/system size.
+      this.logger.debug(
+        `assistant usage: input=${response.usage.input_tokens} ` +
+          `cache_write=${response.usage.cache_creation_input_tokens ?? 0} ` +
+          `cache_read=${response.usage.cache_read_input_tokens ?? 0} ` +
+          `output=${response.usage.output_tokens}`,
+      );
 
       // Collect text blocks for the final reply.
       const textBlocks = response.content.filter(
@@ -383,7 +406,7 @@ export class AssistantService implements OnModuleInit {
           const ackStream = this.anthropic.messages.stream({
             model: MODEL,
             max_tokens: 512,
-            system: SYSTEM_PROMPT,
+            system: CACHED_SYSTEM,
             messages: ackMessages,
           });
 
@@ -430,7 +453,7 @@ export class AssistantService implements OnModuleInit {
         const stream = this.anthropic.messages.stream({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: SYSTEM_PROMPT,
+          system: CACHED_SYSTEM,
           tools: anthropicTools,
           messages: anthropicMessages,
         });
@@ -566,7 +589,7 @@ export class AssistantService implements OnModuleInit {
     const response = await this.anthropic!.messages.create({
       model: MODEL,
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      system: CACHED_SYSTEM,
       tools: tools.length ? tools : undefined,
       messages,
     });
