@@ -1,16 +1,20 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { MailAccount } from './entities/mail-account.entity';
 import { MailMessage } from './entities/mail-message.entity';
 import { TasksService } from '../tasks/tasks.service';
 import { FinanceService } from '../finance/finance.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 import { TaskPriority, TaskStatus } from '../tasks/task.entity';
 import type {
   CreateMailAccountDto,
   MailOverview,
   MailMessage as SharedMailMessage,
   MailAccount as SharedMailAccount,
+  MailCategory,
+  MailIncomingSimulationDto,
 } from '@life-dashboard/shared';
 import { format } from 'date-fns';
 
@@ -25,6 +29,7 @@ export class MailService {
     private readonly messageRepo: Repository<MailMessage>,
     private readonly tasksService: TasksService,
     private readonly financeService: FinanceService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getAccounts(userId: string): Promise<SharedMailAccount[]> {
@@ -77,6 +82,16 @@ export class MailService {
     return saved;
   }
 
+  async batchCreateAccounts(userId: string, dtos: CreateMailAccountDto[]): Promise<MailAccount[]> {
+    const results: MailAccount[] = [];
+    for (const dto of dtos) {
+      if (!dto.email?.trim()) continue;
+      const acc = await this.createAccount(userId, dto);
+      results.push(acc);
+    }
+    return results;
+  }
+
   async deleteAccount(id: string, userId: string): Promise<{ success: boolean }> {
     const account = await this.accountRepo.findOne({ where: { id, userId } });
     if (!account) throw new NotFoundException('Mail account not found');
@@ -113,7 +128,7 @@ export class MailService {
     userId: string,
     filters?: { accountId?: string; category?: string; search?: string },
   ): Promise<SharedMailMessage[]> {
-    // If user has zero accounts, seed 2 default accounts (Gmail Work + Outlook Personal)
+    // If user has zero accounts, seed 2 default accounts (Gmail Work + Outlook University/Personal)
     const count = await this.accountRepo.count({ where: { userId } });
     if (count === 0) {
       await this.createAccount(userId, {
@@ -124,8 +139,8 @@ export class MailService {
       });
       await this.createAccount(userId, {
         provider: 'outlook',
-        email: 'khoi.personal@outlook.com',
-        label: 'Outlook Cá nhân',
+        email: 'khoi.student@hust.edu.vn',
+        label: 'Outlook ĐH Bách Khoa',
         color: '#0078d4',
       });
     }
@@ -160,7 +175,7 @@ export class MailService {
     return messages.map((m) => this.mapToShared(m));
   }
 
-  async getMessage(id: string, userId: string): Promise<SharedMailMessage> {
+  async getMessageById(id: string, userId: string): Promise<SharedMailMessage> {
     const message = await this.messageRepo.findOne({
       where: { id, userId },
       relations: ['account'],
@@ -175,6 +190,10 @@ export class MailService {
     return this.mapToShared(message);
   }
 
+  async getMessage(id: string, userId: string): Promise<SharedMailMessage> {
+    return this.getMessageById(id, userId);
+  }
+
   async toggleStarred(id: string, userId: string): Promise<SharedMailMessage> {
     const message = await this.messageRepo.findOne({
       where: { id, userId },
@@ -187,6 +206,202 @@ export class MailService {
     return this.mapToShared(saved);
   }
 
+  classifyEmailContent(subject: string, body: string, fromAddress: string): MailCategory {
+    const text = `${subject} ${body} ${fromAddress}`.toLowerCase();
+
+    // 1. Check Academic / Education
+    if (
+      fromAddress.includes('.edu') ||
+      fromAddress.includes('hust.edu.vn') ||
+      fromAddress.includes('coursera.org') ||
+      fromAddress.includes('edx.org') ||
+      text.includes('đồ án') ||
+      text.includes('khóa luận') ||
+      text.includes('học kỳ') ||
+      text.includes('giảng viên') ||
+      text.includes('giáo sư') ||
+      text.includes('bài tập lớn') ||
+      text.includes('lịch thi') ||
+      text.includes('học bổng') ||
+      text.includes('seminar') ||
+      text.includes('assignment') ||
+      text.includes('thesis')
+    ) {
+      return 'academic';
+    }
+
+    // 2. Check Spam / Phishing
+    if (
+      text.includes('trúng thưởng') ||
+      text.includes('quay số may mắn') ||
+      text.includes('casino') ||
+      text.includes('tài xỉu') ||
+      text.includes('nhận quà miễn phí') ||
+      text.includes('vay tiền nhanh') ||
+      text.includes('lottery') ||
+      text.includes('claim your prize') ||
+      text.includes('urgent transfer funds')
+    ) {
+      return 'spam';
+    }
+
+    // 3. Check Promotions / Marketing
+    if (
+      text.includes('khuyến mãi') ||
+      text.includes('giảm giá') ||
+      text.includes('voucher') ||
+      text.includes('flash sale') ||
+      text.includes('black friday') ||
+      text.includes('ưu đãi 50%') ||
+      text.includes('ưu đãi 40%') ||
+      text.includes('deal hot') ||
+      text.includes('promo code')
+    ) {
+      return 'promotions';
+    }
+
+    // 4. Check Finance & Bills
+    if (
+      text.includes('hóa đơn') ||
+      text.includes('invoice') ||
+      text.includes('tiền điện') ||
+      text.includes('tiền nước') ||
+      text.includes('thanh toán thành công') ||
+      text.includes('billing receipt') ||
+      text.includes('payment confirmed')
+    ) {
+      return 'finance';
+    }
+
+    // 5. Check Action Required
+    if (
+      text.includes('khẩn') ||
+      text.includes('gấp') ||
+      text.includes('deadline') ||
+      text.includes('ký xác nhận') ||
+      text.includes('action required') ||
+      text.includes('phê duyệt')
+    ) {
+      return 'action_required';
+    }
+
+    // 6. Check Newsletter
+    if (text.includes('newsletter') || text.includes('bản tin') || text.includes('digest')) {
+      return 'newsletter';
+    }
+
+    return 'work';
+  }
+
+  async receiveIncomingEmail(
+    userId: string,
+    dto: MailIncomingSimulationDto,
+  ): Promise<SharedMailMessage> {
+    // Find target account or pick first account
+    let account: MailAccount | null = null;
+    if (dto.accountId) {
+      account = await this.accountRepo.findOne({ where: { id: dto.accountId, userId } });
+    }
+    if (!account && dto.provider) {
+      account = await this.accountRepo.findOne({ where: { provider: dto.provider, userId } });
+    }
+    if (!account) {
+      const accounts = await this.accountRepo.find({ where: { userId } });
+      account = accounts[0] || null;
+    }
+
+    if (!account) {
+      account = await this.createAccount(userId, {
+        provider: dto.provider || 'outlook',
+        email: 'khoi.outlook@live.com',
+        label: dto.provider === 'gmail' ? 'Gmail' : 'Outlook',
+      });
+    }
+
+    const category = dto.category || this.classifyEmailContent(dto.subject, dto.bodyText, dto.fromAddress);
+
+    // AI summary & Action extraction
+    let aiSummary = `Email từ ${dto.fromName} về chủ đề "${dto.subject}".`;
+    let aiActionRequired = false;
+    let aiPriority = 'normal';
+    const aiActionItems: string[] = [];
+
+    if (category === 'academic') {
+      aiSummary = `Thông báo học thuật từ ${dto.fromName}: Cần kiểm tra lịch trình, yêu cầu đồ án/bài tập và phản hồi kịp thời.`;
+      aiActionRequired = true;
+      aiPriority = 'urgent';
+      aiActionItems.push(`Rà soát yêu cầu và thời hạn trong thông báo từ ${dto.fromName}`);
+      aiActionItems.push('Cập nhật kế hoạch học tập cá nhân');
+    } else if (category === 'action_required') {
+      aiSummary = `Email khẩn yêu cầu phản hồi từ ${dto.fromName}: "${dto.subject}". Cần xử lý trước hạn chót.`;
+      aiActionRequired = true;
+      aiPriority = 'urgent';
+      aiActionItems.push(`Đọc kỹ nội dung thư và phản hồi cho ${dto.fromName}`);
+    } else if (category === 'spam') {
+      aiSummary = `Cảnh báo: Thư rác/lừa đảo tiềm ẩn từ ${dto.fromAddress}. Không nhấp vào đường link lạ.`;
+      aiPriority = 'low';
+    } else if (category === 'promotions') {
+      aiSummary = `Chương trình khuyến mãi & tiếp thị từ ${dto.fromName}: "${dto.subject}".`;
+      aiPriority = 'low';
+    } else if (category === 'finance') {
+      aiSummary = `Hóa đơn giao dịch thanh toán từ ${dto.fromName} cho dịch vụ "${dto.subject}".`;
+      aiPriority = 'high';
+      aiActionItems.push('Kiểm tra và lưu biên lai vào ví chi tiêu');
+    }
+
+    const message = this.messageRepo.create({
+      accountId: account.id,
+      userId,
+      fromName: dto.fromName,
+      fromAddress: dto.fromAddress,
+      toAddress: dto.toAddress || account.email,
+      subject: dto.subject,
+      snippet: dto.bodyText.substring(0, 150) + '...',
+      bodyText: dto.bodyText,
+      receivedAt: new Date(),
+      isRead: false,
+      isStarred: category === 'academic' || category === 'action_required',
+      aiCategory: category,
+      aiPriority,
+      aiSummary,
+      aiActionRequired,
+      aiActionItems,
+    });
+
+    const saved = await this.messageRepo.save(message);
+
+    // Send Live System Notification
+    try {
+      await this.notificationsService.createForUsers({
+        userIds: [userId],
+        title: `📬 [${account.label}] Email mới: ${dto.subject}`,
+        message: `Tóm tắt AI: ${aiSummary}`,
+        type: NotificationType.EMAIL_IMPORTANT,
+        link: '/mail',
+      });
+    } catch (err: any) {
+      this.logger.warn(`Failed to push notification for email: ${err.message}`);
+    }
+
+    return this.mapToShared(saved);
+  }
+
+  async cleanSpamAndPromotions(userId: string, accountId?: string): Promise<{ deletedCount: number }> {
+    const qb = this.messageRepo
+      .createQueryBuilder()
+      .delete()
+      .from(MailMessage)
+      .where('userId = :userId', { userId })
+      .andWhere('aiCategory IN (:...cats)', { cats: ['spam', 'promotions'] });
+
+    if (accountId && accountId !== 'all') {
+      qb.andWhere('accountId = :accountId', { accountId });
+    }
+
+    const res = await qb.execute();
+    return { deletedCount: res.affected || 0 };
+  }
+
   async convertToTask(id: string, userId: string): Promise<{ task: any; message: SharedMailMessage }> {
     const message = await this.messageRepo.findOne({
       where: { id, userId },
@@ -195,7 +410,7 @@ export class MailService {
     if (!message) throw new NotFoundException('Message not found');
 
     const actionText = (message.aiActionItems || []).join('\n- ');
-    const description = `Nguồn từ Email [${message.account.label}]: ${message.fromName} <${message.fromAddress}>\n\n**Tóm tắt AI:**\n${message.aiSummary}\n\n**Việc cần làm:**\n- ${actionText || message.subject}`;
+    const description = `Nguồn từ Email [${message.account?.label || 'Mail'}]: ${message.fromName} <${message.fromAddress}>\n\n**Tóm tắt AI:**\n${message.aiSummary}\n\n**Việc cần làm:**\n- ${actionText || message.subject}`;
 
     const priority =
       message.aiPriority === 'urgent'
@@ -280,6 +495,8 @@ export class MailService {
 
     if (tone === 'quick_confirm') {
       reply = `Chào ${message.fromName},\n\nTôi xác nhận đồng ý với kế hoạch. Tôi đã thêm các đầu việc vào hệ thống LifeOS để tiến hành triển khai.\n\nCảm ơn bạn!`;
+    } else if (tone === 'academic') {
+      reply = `Kính gửi Thầy/Cô ${message.fromName},\n\nEm đã nhận được thông báo về "${message.subject}". Em đang tiến hành hoàn thiện nội dung theo đúng yêu cầu và sẽ nộp lại báo cáo trước thời hạn quy định.\n\nEm xin trân trọng cảm ơn Thầy/Cô,\nSinh viên Khôi Hoàng`;
     }
 
     message.aiDraftReply = reply;
@@ -295,12 +512,16 @@ export class MailService {
     const totalUnread = messages.filter((m) => !m.isRead).length;
     const totalActionRequired = messages.filter((m) => m.aiActionRequired && !m.isRead).length;
     const totalFinanceBills = messages.filter((m) => m.aiCategory === 'finance').length;
+    const totalAcademic = messages.filter((m) => m.aiCategory === 'academic').length;
+    const totalSpam = messages.filter((m) => m.aiCategory === 'spam').length;
 
     return {
       totalAccounts: accounts.length,
       totalUnread,
       totalActionRequired,
       totalFinanceBills,
+      totalAcademic,
+      totalSpam,
       accounts,
     };
   }
@@ -319,7 +540,7 @@ export class MailService {
       subject: m.subject,
       snippet: m.snippet,
       bodyText: m.bodyText,
-      receivedAt: m.receivedAt.toISOString(),
+      receivedAt: m.receivedAt ? m.receivedAt.toISOString() : new Date().toISOString(),
       isRead: m.isRead,
       isStarred: m.isStarred,
       aiCategory: m.aiCategory as any,
@@ -384,18 +605,36 @@ export class MailService {
         {
           accountId: account.id,
           userId: account.userId,
-          fromName: 'Hacker Newsletter',
-          fromAddress: 'digest@hackernewsletter.xyz',
+          fromName: 'Coursera & Tech Academy',
+          fromAddress: 'promotions@learntech.org',
           toAddress: account.email,
-          subject: 'Weekly Tech Digest: Sự trỗi dậy của Personal LifeOS và AI Agent tự hành',
-          snippet: 'Bản tin tuần này: Khảo sát xu hướng xây dựng hệ điều hành cuộc sống cá nhân, tối ưu prompt caching và NextJS vs NestJS...',
-          bodyText: `Chào bạn,\n\nTuần này trong thế giới công nghệ:\n1. Personal LifeOS đang trở thành trào lưu mới của các kỹ sư: tích hợp tài chính, calo, thói quen và deep work.\n2. Prompt caching giúp cắt giảm 90% chi phí gọi LLM trong các ứng dụng AI tương tác dài.\n3. Thiết kế Kanban Board hiện đại với React 19 và TailwindCSS.`,
-          receivedAt: new Date(now.getTime() - 14 * 3600 * 1000),
-          isRead: true,
+          subject: '⚡ Flash Sale 40%: Trọn bộ khóa học AI Agent Architect & Modern Web',
+          snippet: 'Khóa đào tạo chuyên sâu về xây dựng Monorepo, MCP Server và NestJS 11 với ưu đãi giảm giá 40% trong 48 giờ...',
+          bodyText: `Chào Khôi,\n\nKhóa học "AI Agent Architect & Fullstack Development" đang có ưu đãi 40% chỉ trong cuối tuần này.\n- Làm chủ Model Context Protocol (MCP)\n- Tối ưu hóa Database PostgreSQL & TypeORM\n- Áp dụng mã giảm giá TECH40 khi thanh toán.`,
+          receivedAt: new Date(now.getTime() - 6 * 3600 * 1000),
+          isRead: false,
           isStarred: false,
-          aiCategory: 'newsletter',
+          aiCategory: 'promotions',
           aiPriority: 'low',
-          aiSummary: 'Bản tin tổng hợp tuần: Xu hướng Personal LifeOS kết hợp AI Agent, kỹ thuật prompt caching tiết kiệm 90% chi phí LLM.',
+          aiSummary: 'Ưu đãi giảm giá 40% khóa học AI Agent Architect & Modern Web trên Coursera/Tech Academy kết thúc trong 48h.',
+          aiActionRequired: false,
+          aiActionItems: [],
+        },
+        {
+          accountId: account.id,
+          userId: account.userId,
+          fromName: 'Global Rewards Center',
+          fromAddress: 'winner@lucky-jackpot99.xyz',
+          toAddress: account.email,
+          subject: 'CHÚC MỪNG! Bạn đã trúng thưởng 50,000,000 VNĐ - Nhận thưởng trong 24h',
+          snippet: 'Địa chỉ email của bạn đã may mắn trúng giải nhì chương trình tri ân khách hàng trực tuyến...',
+          bodyText: `Chào bạn,\n\nBạn đã may mắn trúng thưởng 50,000,000 VNĐ tiền mặt! Hãy bấm vào link bên dưới và chuyển khoản 500,000đ tiền phí xác thực hồ sơ để nhận tiền ngay trong ngày.\n\nLink nhận thưởng: http://lucky-phishing-scam-demo.xyz`,
+          receivedAt: new Date(now.getTime() - 10 * 3600 * 1000),
+          isRead: false,
+          isStarred: false,
+          aiCategory: 'spam',
+          aiPriority: 'low',
+          aiSummary: 'Cảnh báo lừa đảo: Email trúng thưởng giả mạo yêu cầu nộp phí chuyển khoản. Tuyệt đối không mở liên kết.',
           aiActionRequired: false,
           aiActionItems: [],
         },
@@ -406,6 +645,29 @@ export class MailService {
       }
     } else {
       const msgs = [
+        {
+          accountId: account.id,
+          userId: account.userId,
+          fromName: 'GS. Đặng Văn Nam (Khoa CNTT - ĐH Bách Khoa)',
+          fromAddress: 'nam.dang@hust.edu.vn',
+          toAddress: account.email,
+          subject: '[ĐH Bách Khoa] Khẩn: Lịch phản biện Đề cương Đồ án Tốt nghiệp & Nộp báo cáo kỳ 1',
+          snippet: 'Chào Khôi và các bạn sinh viên, Thầy thông báo hạn chót nộp bản hoàn chỉnh đề cương đồ án tốt nghiệp...',
+          bodyText: `Chào Khôi và các em sinh viên lớp Đồ án tốt nghiệp,\n\nKhoa CNTT vừa công bố kế hoạch bảo vệ đợt 1 năm học 2026. Thầy nhắc các em 3 việc quan trọng sau:\n1. Nộp bản đề cương chi tiết (có chữ ký của giảng viên hướng dẫn) lên cổng đào tạo trước 23:59 ngày 25/09/2026.\n2. Kiểm tra lại kiến trúc hệ thống và kết quả thực nghiệm mô hình AI.\n3. Gửi email đăng ký lịch phản biện với hội đồng chuyên môn.\n\nĐề nghị các em khẩn trương hoàn thiện đúng tiến độ!\n\nThân ái,\nGS. Đặng Văn Nam`,
+          receivedAt: new Date(now.getTime() - 40 * 60 * 1000),
+          isRead: false,
+          isStarred: true,
+          aiCategory: 'academic',
+          aiPriority: 'urgent',
+          aiSummary: 'GS. Nam nhắc hạn nộp đề cương đồ án tốt nghiệp trước 23:59 ngày 25/09/2026 và đăng ký lịch bảo vệ với hội đồng Khoa CNTT.',
+          aiActionRequired: true,
+          aiActionItems: [
+            'Hoàn thiện đề cương chi tiết đồ án tốt nghiệp',
+            'Nộp file PDF lên cổng đào tạo trước 23:59 ngày 25/09',
+            'Đăng ký lịch phản biện với hội đồng chuyên môn',
+          ],
+          aiDraftReply: `Kính gửi Thầy Nam,\n\nEm đã nhận được thông báo của Thầy. Em đang hoàn thiện các phần cuối của đề cương đồ án và sẽ nộp lên hệ thống đào tạo trước ngày 25/09 ạ.\n\nEm xin trân trọng cảm ơn Thầy,\nSinh viên Khôi Hoàng`,
+        },
         {
           accountId: account.id,
           userId: account.userId,

@@ -13,7 +13,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { MailService } from './mail.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
-import type { CreateMailAccountDto } from '@life-dashboard/shared';
+import type {
+  CreateMailAccountDto,
+  BatchCreateMailAccountDto,
+  MailIncomingSimulationDto,
+} from '@life-dashboard/shared';
 
 @Controller('mail')
 @UseGuards(AuthGuard('jwt'))
@@ -36,6 +40,30 @@ export class MailController {
     @Body() body: CreateMailAccountDto,
   ) {
     return this.mailService.createAccount(user.userId, body);
+  }
+
+  @Post('accounts/batch')
+  batchCreateAccounts(
+    @GetUser() user: AuthenticatedUser,
+    @Body() body: BatchCreateMailAccountDto,
+  ) {
+    return this.mailService.batchCreateAccounts(user.userId, body.accounts || []);
+  }
+
+  @Post('incoming/simulate')
+  simulateIncoming(
+    @GetUser() user: AuthenticatedUser,
+    @Body() body: MailIncomingSimulationDto,
+  ) {
+    return this.mailService.receiveIncomingEmail(user.userId, body);
+  }
+
+  @Post('clean-spam')
+  cleanSpam(
+    @GetUser() user: AuthenticatedUser,
+    @Body() body?: { accountId?: string },
+  ) {
+    return this.mailService.cleanSpamAndPromotions(user.userId, body?.accountId);
   }
 
   @Delete('accounts/:id')

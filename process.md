@@ -34,7 +34,38 @@
 
 ## 2. ACTIVE WORKLOG (NHẬT KÝ PHIÊN LÀM VIỆC - MỚI NHẤT Ở TRÊN)
 
-### 📌 [2026-09-10] — Triển khai hoàn thiện Smart Mail Hub (Đa tài khoản Gmail & Outlook với AI) & Social Media Hub (Content Studio)
+### 📌 [2026-09-10] — Nâng cấp Smart Mail Hub: Multi-Account Setup Wizard, MCP Server Integration, Live Outlook Reader & Phân loại Học vấn / Thư rác / Quảng cáo
+- **Người thực hiện:** Antigravity AI & User
+- **Yêu cầu của người dùng:** 
+  1. Khi bắt đầu hỏi nhập tất cả tài khoản Google & Outlook cùng lúc.
+  2. Kết nối MCP Server để AI Agent ngoài có thể đọc và quản lý mail.
+  3. Khi có thông báo từ Outlook, tự động đọc và tóm tắt ngay lập tức.
+  4. Phân loại chuyên sâu: Thư rác (Spam), Quảng cáo (Promotions), Học vấn & Giáo dục (Academic).
+- **Nội dung đã hoàn thành:**
+  1. **Shared Types (`packages/shared/src/index.ts`):**
+     - Mở rộng `MailCategory`: `'academic'`, `'spam'`, `'promotions'`, `'action_required'`, `'work'`, `'finance'`, `'newsletter'`, `'personal'`, `'all'`.
+     - Thêm `BatchCreateMailAccountDto`, `MailIncomingSimulationDto`, `MailMcpStatus`.
+  2. **Backend Mail & MCP Module (`apps/backend/src/mail/`):**
+     - `MailMcpService` & `MailMcpController` (`/api/v1/mail/mcp`): Triển khai chuẩn Model Context Protocol với 7 công cụ AI: `list_mail_accounts`, `fetch_unread_emails`, `summarize_email`, `classify_email`, `clean_spam`, `convert_to_task`, `draft_reply`. Hỗ trợ JSON schema manifest và endpoint thực thi tool calls cho Claude Desktop / Cursor.
+     - `MailService`:
+       - Phương thức `batchCreateAccounts`: Nhập hàng loạt tài khoản từ Setup Wizard.
+       - Phương thức `classifyEmailContent`: Tự động nhận diện từ khóa học thuật/giảng viên/đồ án, lừa đảo trúng thưởng/vay nợ, và voucher khuyến mãi.
+       - Phương thức `receiveIncomingEmail`: Nhận thư mới đến (Outlook/Gmail), tự động kích hoạt AI tóm tắt ngắn (TL;DR), trích xuất việc cần làm và đẩy thông báo trực tiếp vào `ld_notifications`.
+       - Phương thức `cleanSpamAndPromotions`: 1-click dọn sạch thư rác.
+       - Cập nhật seed data thực tế cho danh mục Học vấn (ĐH Bách Khoa / GS. Nam), Thư rác (lừa đảo trúng thưởng), Quảng cáo (flash sale Coursera).
+  3. **Frontend UI & Trải nghiệm người dùng:**
+     - `MultiAccountSetupWizardModal.tsx`: Wizard chào mừng cho phép nhập cùng lúc nhiều tài khoản Google & Outlook, tùy chỉnh nhãn và màu sắc nhận diện.
+     - `McpServerModal.tsx`: Bảng điều khiển MCP Server hiển thị trạng thái kết nối, danh sách tools đã kích hoạt, đoạn cấu hình mẫu cho Claude Desktop, và nút bấm kiểm thử live tool call.
+     - `MailPage.tsx`:
+       - Thêm các nút điều hướng Header: `⚡ Thiết lập hàng loạt`, `🔌 MCP Server (🟢 Connected)`, `🔔 Thư Outlook mới`, `🧹 Dọn thư rác`.
+       - Bổ sung bộ lọc danh mục tại cột trái: 🎓 **Học vấn & ĐH**, 🏷️ **Quảng cáo**, 🗑️ **Thư rác / Lừa đảo** kèm huy hiệu số lượng.
+       - Banner thông báo email Outlook mới xuất hiện trực tiếp trên đầu feed thư khi có thư đến, hiển thị ngay AI TL;DR.
+  4. **Kiểm thử & Build:**
+     - Đầy đủ 10 test suites, 32/32 tests pass 100% (`npm run test --workspace apps/backend`).
+     - Monorepo compile sạch 3/3 packages (`turbo run build`).
+- **Trạng thái:** Hoàn tất, sẵn sàng commit và push production.
+
+---
 - **Người thực hiện:** Antigravity AI & User
 - **Yêu cầu của người dùng:** Bổ sung module Smart Mail tóm tắt, phân loại AI cho Gmail & Outlook hỗ trợ kết nối nhiều tài khoản cùng lúc và module quản lý mạng xã hội.
 - **Nội dung đã hoàn thành:**

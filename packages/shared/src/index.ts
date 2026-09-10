@@ -538,10 +538,12 @@ export type MailProvider = 'gmail' | 'outlook';
 export type MailCategory =
     | 'all'
     | 'action_required'
+    | 'academic'
     | 'work'
     | 'finance'
     | 'newsletter'
     | 'promotions'
+    | 'spam'
     | 'personal';
 
 export type MailPriority = 'urgent' | 'high' | 'normal' | 'low';
@@ -591,6 +593,8 @@ export interface MailOverview {
     totalUnread: number;
     totalActionRequired: number;
     totalFinanceBills: number;
+    totalAcademic: number;
+    totalSpam: number;
     accounts: MailAccount[];
 }
 
@@ -600,6 +604,33 @@ export interface CreateMailAccountDto {
     label?: string;
     color?: string;
     accessToken?: string;
+}
+
+export interface BatchCreateMailAccountDto {
+    accounts: CreateMailAccountDto[];
+}
+
+export interface MailIncomingSimulationDto {
+    accountId?: string;
+    provider?: MailProvider;
+    fromName: string;
+    fromAddress: string;
+    toAddress?: string;
+    subject: string;
+    bodyText: string;
+    category?: MailCategory;
+}
+
+export interface MailMcpStatus {
+    isConnected: boolean;
+    serverUrl: string;
+    protocolVersion: string;
+    supportedTools: {
+        name: string;
+        description: string;
+    }[];
+    activeAccountsCount: number;
+    lastPingAt: string;
 }
 
 // ── Social Media Hub & Content Studio ─────────────────────────────────────────
