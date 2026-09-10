@@ -5,6 +5,7 @@ import { FinanceWidget } from '../components/widgets/FinanceWidget';
 import { FocusWidget } from '../components/widgets/FocusWidget';
 import { AdminWidget } from '../components/widgets/AdminWidget';
 import { CaloriesWidget } from '../components/widgets/CaloriesWidget';
+import { AiMorningDigest } from '../components/widgets/AiMorningDigest';
 import { useAuthStore } from '../store/authStore';
 import { PageHeader } from '../components/ui/shell';
 import { Sparkles } from 'lucide-react';
@@ -20,6 +21,9 @@ export const Dashboard: React.FC = () => {
                 description="Your dashboard brings together priorities, routines, money, nutrition and focus into one daily home base."
                 icon={<Sparkles className="h-6 w-6" />}
             />
+
+            <AiMorningDigest />
+
             <div className="grid grid-cols-1 gap-5 auto-rows-[350px] md:grid-cols-2 xl:grid-cols-3">
                 <div className="col-span-1 md:col-span-1 lg:col-span-1">
                     <TasksWidget />

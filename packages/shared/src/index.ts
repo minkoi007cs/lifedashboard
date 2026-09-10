@@ -42,12 +42,31 @@ export interface ChatRequest {
     messages: AssistantMessage[];
     /** Omit or send [] when there are no pending actions to confirm. */
     confirmedActions?: ConfirmedAction[];
+    conversationId?: string;
 }
 
 /** POST /api/v1/assistant/chat — response body. */
 export interface ChatResponse {
     reply: string;
     actions: AssistantAction[];
+    conversationId?: string;
+}
+
+export interface ConversationSummary {
+    id: string;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ConversationDetail extends ConversationSummary {
+    messages: {
+        id: string;
+        role: 'user' | 'assistant';
+        content: string;
+        actions?: AssistantAction[];
+        createdAt: string;
+    }[];
 }
 
 // ── AI Assistant SSE Streaming (POST /api/v1/assistant/chat/stream) ───────────
@@ -82,6 +101,7 @@ export interface StreamDone {
     type: 'done';
     reply: string;
     actions: AssistantAction[];
+    conversationId?: string;
 }
 
 /**
@@ -96,7 +116,84 @@ export interface StreamError {
 /** Discriminated union of all SSE payloads for POST /api/v1/assistant/chat/stream. */
 export type StreamEvent = StreamDelta | StreamAction | StreamDone | StreamError;
 
-// ── Finance ───────────────────────────────────────────────────────────────────
+// ── Standard Personal & Family Finance ────────────────────────────────────────
+
+export type WalletType = 'cash' | 'bank' | 'savings' | 'credit';
+export type TransactionType = 'income' | 'expense' | 'transfer';
+export type CategoryType = 'income' | 'expense';
+
+export interface FinanceWallet {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    type: WalletType;
+    balance: number;
+    currency: string;
+    isFamilyShared: boolean;
+    userId: string;
+}
+
+export interface FinanceCategory {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    type: CategoryType;
+    icon: string;
+    color: string;
+    isSystem: boolean;
+    userId?: string;
+}
+
+export interface FinanceTransaction {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    amount: number;
+    type: TransactionType;
+    date: string; // YYYY-MM-DD
+    note?: string;
+    receiptImage?: string;
+    isFamilyShared: boolean;
+    walletId?: string;
+    wallet?: FinanceWallet;
+    categoryId?: string;
+    category?: FinanceCategory;
+    userId: string;
+    paidByUserId?: string;
+}
+
+export interface FinanceBudget {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    month: string; // YYYY-MM
+    limitAmount: number;
+    notifyThreshold: number;
+    categoryId: string;
+    category?: FinanceCategory;
+    userId: string;
+    spentAmount?: number;
+}
+
+export interface FinanceOverview {
+    totalNetWorth: number;
+    monthlyIncome: number;
+    monthlyExpense: number;
+    monthlyCashFlow: number;
+    wallets: FinanceWallet[];
+    recentTransactions: FinanceTransaction[];
+    budgets: FinanceBudget[];
+    categoryBreakdown: {
+        categoryName: string;
+        color: string;
+        amount: number;
+        percent: number;
+    }[];
+}
+
+// ── Legacy Finance (kept for backward compatibility) ──────────────────────────
 
 /** One income/sales entry. Maps to FinanceSale entity. */
 export interface FinanceSale {
@@ -141,6 +238,41 @@ export interface FinanceStats {
     totalNetIncome: number;
     sales: FinanceSale[];
     expenses: FinanceExpense[];
+}
+
+// ── Connected Accounts & Daily Digest ─────────────────────────────────────────
+
+export interface ConnectedAccountInfo {
+    id: string;
+    provider: 'google' | 'microsoft' | 'github';
+    emailOrUsername?: string;
+    syncStatus: string;
+    lastSyncedAt?: string;
+}
+
+export interface DailyDigest {
+    date: string;
+    greeting: string;
+    headline?: string;
+    quote?: {
+        text: string;
+        author: string;
+    };
+    scheduleHighlights?: string[];
+    priorityEmails?: { subject: string; from: string; snippet: string; date: string }[];
+    githubItems?: { title: string; repo: string; type: string }[];
+    recommendedActions?: string[];
+    taskSummary: {
+        totalPending: number;
+        topPriorities: DigestTaskItem[];
+    };
+    habitSummary: {
+        dueTodayCount: number;
+        completedTodayCount: number;
+        activeStreaks: DigestHabitItem[];
+    };
+    notificationHighlights: DigestHighlightItem[];
+    focusRecommendation: string;
 }
 
 // ── Calories ─────────────────────────────────────────────────────────────────
@@ -350,4 +482,51 @@ export interface WishEntry {
         createdAt: Date;
         author: { id: string; name: string; email: string; avatarUrl: string };
     }[];
+}
+
+// ── Notification Hub & AI Daily Digest ────────────────────────────────────────
+
+export type AccountProvider = 'google' | 'microsoft' | 'github';
+
+export interface ConnectedAccountDto {
+    id: string;
+    provider: AccountProvider;
+    emailOrUsername?: string;
+    syncStatus: string;
+    lastSyncedAt?: string;
+    createdAt: string;
+}
+
+export interface DigestTaskItem {
+    id: string;
+    title: string;
+    priority: string;
+    dueDate?: string;
+    status: string;
+}
+
+export interface DigestHabitItem {
+    id: string;
+    name: string;
+    streak: number;
+    targetCount: number;
+    completedCount: number;
+    isCompleted: boolean;
+}
+
+export interface DigestHighlightItem {
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    actorName?: string;
+    createdAt: string;
+}
+
+
+export interface ConvertNotificationToTaskDto {
+    notificationId: string;
+    title?: string;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    dueDate?: string;
 }

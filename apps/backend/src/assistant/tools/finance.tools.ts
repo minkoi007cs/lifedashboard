@@ -101,5 +101,21 @@ export function buildFinanceTools(financeService: FinanceService): ToolDefinitio
       },
       describeAction: (params) => `Delete expense ID: ${params.id}`,
     },
+    {
+      name: 'finance_get_overview',
+      description:
+        'Get the personal & family finance overview: total net worth, monthly income, monthly expenses, cash flow, wallets balance, recent transactions, and budgets.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          month: { type: 'string', description: 'Optional month in YYYY-MM format' },
+        },
+        required: [],
+      },
+      type: 'READ',
+      execute: async (params, userId) => {
+        return financeService.getOverview(userId, params.month as string | undefined);
+      },
+    },
   ];
 }

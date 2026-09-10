@@ -1,5 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { FinanceService } from '../finance/finance.service';
@@ -16,6 +18,8 @@ import { buildHabitsTools } from './tools/habits.tools';
 import { buildFocusTools } from './tools/focus.tools';
 import { buildWishesTools } from './tools/wishes.tools';
 import { ChatRequestDto } from './dto/chat.dto';
+import { AssistantConversation } from './entities/assistant-conversation.entity';
+import { AssistantMessageEntity } from './entities/assistant-message.entity';
 import type { AssistantAction, ChatResponse, StreamError, StreamEvent } from '@life-dashboard/shared';
 
 const MODEL = 'claude-sonnet-5';
@@ -77,6 +81,10 @@ export class AssistantService implements OnModuleInit {
     private readonly habitsService: HabitsService,
     private readonly focusService: FocusService,
     private readonly wishesService: WishesService,
+    @InjectRepository(AssistantConversation)
+    private readonly conversationRepo: Repository<AssistantConversation>,
+    @InjectRepository(AssistantMessageEntity)
+    private readonly messageRepo: Repository<AssistantMessageEntity>,
   ) {}
 
   onModuleInit() {
@@ -234,9 +242,24 @@ export class AssistantService implements OnModuleInit {
       );
 
       if (response.stop_reason === 'end_turn' || toolUseBlocks.length === 0) {
+        const finalReply = textBlocks.map((b) => b.text).join('\n').trim();
+        const userLastMessage = dto.messages[dto.messages.length - 1]?.content || '';
+        let savedConvId = dto.conversationId;
+        try {
+          savedConvId = await this.saveTurn(
+            userId,
+            dto.conversationId,
+            userLastMessage,
+            finalReply,
+            collectedActions,
+          );
+        } catch (e) {
+          this.logger.error(`Failed to save turn: ${e}`);
+        }
         return {
-          reply: textBlocks.map((b) => b.text).join('\n').trim(),
+          reply: finalReply,
           actions: collectedActions,
+          conversationId: savedConvId,
         };
       }
 
@@ -577,7 +600,98 @@ export class AssistantService implements OnModuleInit {
       }
     }
 
-    yield { type: 'done', reply: finalReply, actions: collectedActions };
+    const userLastMessage = dto.messages[dto.messages.length - 1]?.content || '';
+    let savedConvId = dto.conversationId;
+    try {
+      savedConvId = await this.saveTurn(
+        userId,
+        dto.conversationId,
+        userLastMessage,
+        finalReply,
+        collectedActions,
+      );
+    } catch (e) {
+      this.logger.error(`Failed to save stream turn: ${e}`);
+    }
+
+    yield {
+      type: 'done',
+      reply: finalReply,
+      actions: collectedActions,
+      conversationId: savedConvId,
+    };
+  }
+
+  // ── Conversation Persistence ────────────────────────────────────────────────
+  async saveTurn(
+    userId: string,
+    conversationId: string | undefined,
+    userContent: string,
+    assistantContent: string,
+    actions?: AssistantAction[],
+  ): Promise<string> {
+    let conversation: AssistantConversation | null = null;
+    if (conversationId) {
+      conversation = await this.conversationRepo.findOne({
+        where: { id: conversationId, userId },
+      });
+    }
+
+    if (!conversation) {
+      const title = userContent.trim().slice(0, 45) || 'Cuộc trò chuyện mới';
+      conversation = this.conversationRepo.create({
+        userId,
+        title,
+      });
+      conversation = await this.conversationRepo.save(conversation);
+    }
+
+    const userMsg = this.messageRepo.create({
+      conversationId: conversation.id,
+      role: 'user',
+      content: userContent,
+    });
+    const assistantMsg = this.messageRepo.create({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: assistantContent,
+      actions: actions && actions.length > 0 ? (actions as unknown as Record<string, unknown>[]) : undefined,
+    });
+
+    await this.messageRepo.save([userMsg, assistantMsg]);
+    return conversation.id;
+  }
+
+  async getConversations(userId: string) {
+    return this.conversationRepo.find({
+      where: { userId },
+      order: { updatedAt: 'DESC' },
+      take: 20,
+    });
+  }
+
+  async getConversationMessages(conversationId: string, userId: string) {
+    const conversation = await this.conversationRepo.findOne({
+      where: { id: conversationId, userId },
+      relations: ['messages'],
+    });
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+    return {
+      id: conversation.id,
+      title: conversation.title,
+      createdAt: conversation.createdAt,
+      updatedAt: conversation.updatedAt,
+      messages: (conversation.messages || []).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    };
+  }
+
+  async deleteConversation(conversationId: string, userId: string) {
+    await this.conversationRepo.delete({ id: conversationId, userId });
+    return { success: true };
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import api from '../lib/axios';
 import { DailyEntryForm } from '../components/finance/DailyEntryForm';
 import { FinanceStatsDashboard } from '../components/finance/FinanceStatsDashboard';
 import { FinanceShareModal } from '../components/finance/FinanceShareModal';
+import { PersonalFinanceDashboard } from '../components/finance/PersonalFinanceDashboard';
 import { Wallet, Calculator, ChartBar, Users, ChevronDown } from 'lucide-react';
 import { PageHeader, SegmentedTabs, SoftButton } from '../components/ui/shell';
 
@@ -23,7 +24,7 @@ interface FinanceContext {
 }
 
 export const FinancePage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'entry'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'overview' | 'legacy_dashboard' | 'legacy_entry'>('overview');
     const [activeContext, setActiveContext] = useState<FinanceContext | null>(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [showContextMenu, setShowContextMenu] = useState(false);
@@ -137,8 +138,9 @@ export const FinancePage: React.FC = () => {
                             value={activeTab}
                             onChange={setActiveTab}
                             tabs={[
-                                { id: 'dashboard', icon: ChartBar, label: 'Dashboard' },
-                                { id: 'entry', icon: Calculator, label: 'Daily Entry' },
+                                { id: 'overview', icon: Wallet, label: 'Tài chính gia đình' },
+                                { id: 'legacy_dashboard', icon: ChartBar, label: 'Thống kê dịch vụ' },
+                                { id: 'legacy_entry', icon: Calculator, label: 'Nhập hoa hồng cũ' },
                             ]}
                             className="xl:w-auto"
                         />
@@ -172,10 +174,13 @@ export const FinancePage: React.FC = () => {
             )}
 
             <div className="space-y-8">
-                {activeTab === 'dashboard' && (
+                {activeTab === 'overview' && (
+                    <PersonalFinanceDashboard />
+                )}
+                {activeTab === 'legacy_dashboard' && (
                     <FinanceStatsDashboard targetUserId={targetUserId} />
                 )}
-                {activeTab === 'entry' && (
+                {activeTab === 'legacy_entry' && (
                     <DailyEntryForm targetUserId={targetUserId} isReadOnly={isReadOnly} />
                 )}
             </div>

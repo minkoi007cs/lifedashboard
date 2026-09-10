@@ -23,6 +23,13 @@ import {
   WishResponse,
   WishShare,
 } from '../wishes/wish.entity';
+import { AssistantConversation } from '../assistant/entities/assistant-conversation.entity';
+import { AssistantMessageEntity } from '../assistant/entities/assistant-message.entity';
+import { FinanceWallet } from '../finance/entities/finance-wallet.entity';
+import { FinanceCategory } from '../finance/entities/finance-category.entity';
+import { FinanceTransaction } from '../finance/entities/finance-transaction.entity';
+import { FinanceBudget } from '../finance/entities/finance-budget.entity';
+import { ConnectedAccount } from '../notifications/entities/connected-account.entity';
 
 export const typeOrmEntities = [
   User,
@@ -32,6 +39,11 @@ export const typeOrmEntities = [
   FinanceExpense,
   PayPeriod,
   FinanceShare,
+  FinanceWallet,
+  FinanceCategory,
+  FinanceTransaction,
+  FinanceBudget,
+  ConnectedAccount,
   FocusSession,
   FoodEntry,
   WeightLog,
@@ -44,6 +56,8 @@ export const typeOrmEntities = [
   WishShare,
   WishComment,
   AppNotification,
+  AssistantConversation,
+  AssistantMessageEntity,
 ];
 
 function getRequiredConfig(configService: ConfigService, key: string): string {

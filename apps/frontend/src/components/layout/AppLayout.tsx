@@ -13,6 +13,7 @@ import {
   Bell,
   CheckSquare,
   CircleHelp,
+  Cloud,
   DollarSign,
   Gift,
   LayoutDashboard,
@@ -20,6 +21,8 @@ import {
   Menu,
   Monitor,
   Moon,
+  Plus,
+  Search,
   Settings,
   Sparkles,
   Sun,
@@ -33,6 +36,9 @@ import { HelpPanel } from '../help/HelpPanel';
 import { getHelpPageKey } from '../../help/help-content';
 import { ToastContainer } from '../ui/ToastContainer';
 import { AssistantWidget } from '../assistant/AssistantWidget';
+import { CommandBar } from '../ui/CommandBar';
+import { ConnectedAccountsModal } from '../notifications/ConnectedAccountsModal';
+import { useToastStore } from '../../store/toastStore';
 
 type NavItem = {
   to: string;
@@ -401,9 +407,13 @@ function SidebarContent({
 
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
+  const showToast = useToastStore((state) => state.showToast);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+  const [isConnectedAccountsOpen, setIsConnectedAccountsOpen] = useState(false);
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -430,6 +440,31 @@ export const AppLayout: React.FC = () => {
     onError: () =>
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
+
+  const convertNotificationMutation = useMutation({
+    mutationFn: async (notificationId: string) =>
+      api.post(`/api/v1/notifications/${notificationId}/convert-to-task`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-digest'] });
+      showToast('Đã chuyển đổi thông báo thành Task mới!', 'success');
+    },
+    onError: () => {
+      showToast('Không thể tạo task từ thông báo này', 'error');
+    },
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandBarOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const closeSidebar = () => setIsSidebarOpen(false);
@@ -498,6 +533,20 @@ export const AppLayout: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-3">
+                {/* Quick Command Bar Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsCommandBarOpen(true)}
+                  className="theme-soft-button hidden items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white sm:flex"
+                  title="Mở thanh lệnh nhanh (Cmd + K)"
+                >
+                  <Search className="h-4 w-4 text-indigo-500" />
+                  <span>Lệnh nhanh</span>
+                  <kbd className="rounded-md bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                    ⌘K
+                  </kbd>
+                </button>
+
                 <div className="relative">
                   <button
                     type="button"
@@ -513,7 +562,7 @@ export const AppLayout: React.FC = () => {
                   </button>
 
                   {isNotificationsOpen ? (
-                    <div className="themed-surface absolute right-0 top-14 z-40 w-[320px] p-4">
+                    <div className="themed-surface absolute right-0 top-14 z-40 w-[340px] p-4 shadow-xl">
                       <div className="mb-3 flex items-center justify-between">
                         <div>
                           <p className="text-sm font-black text-slate-900 dark:text-white">
@@ -523,43 +572,73 @@ export const AppLayout: React.FC = () => {
                             {notifications?.unreadCount ?? 0} unread
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => markAllReadMutation.mutate()}
-                          className="theme-eyebrow text-xs font-semibold transition hover:opacity-80"
-                        >
-                          Mark all read
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsNotificationsOpen(false);
+                              setIsConnectedAccountsOpen(true);
+                            }}
+                            className="theme-eyebrow flex items-center gap-1 text-[11px] font-semibold text-indigo-600 transition hover:opacity-80 dark:text-indigo-400"
+                            title="Quản lý kết nối Gmail, Outlook, GitHub"
+                          >
+                            <Cloud className="h-3 w-3" /> Hub
+                          </button>
+                          <span className="text-slate-300 dark:text-slate-600">|</span>
+                          <button
+                            type="button"
+                            onClick={() => markAllReadMutation.mutate()}
+                            className="theme-eyebrow text-xs font-semibold transition hover:opacity-80"
+                          >
+                            Mark all read
+                          </button>
+                        </div>
                       </div>
                       <div className="max-h-80 space-y-2 overflow-y-auto">
                         {notifications?.items?.length ? (
                           notifications.items.map((item) => (
-                            <button
+                            <div
                               key={item.id}
-                              type="button"
-                              onClick={() => {
-                                if (!item.isRead) {
-                                  markReadMutation.mutate(item.id);
-                                }
-                                setIsNotificationsOpen(false);
-                                if (item.link) {
-                                  navigate(item.link);
-                                }
-                              }}
-                              className="theme-notification-row w-full rounded-2xl px-4 py-3 text-left transition"
+                              className="theme-notification-row group flex items-start justify-between gap-2 rounded-2xl p-3 transition"
                             >
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {item.title}
-                              </p>
-                              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                {item.message}
-                              </p>
-                              {!item.isRead ? (
-                                <p className="theme-eyebrow mt-2 text-[10px] font-bold uppercase tracking-[0.18em]">
-                                  Unread
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!item.isRead) {
+                                    markReadMutation.mutate(item.id);
+                                  }
+                                  setIsNotificationsOpen(false);
+                                  if (item.link) {
+                                    navigate(item.link);
+                                  }
+                                }}
+                                className="min-w-0 flex-1 text-left"
+                              >
+                                <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                  {item.title}
                                 </p>
-                              ) : null}
-                            </button>
+                                <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-500 dark:text-slate-400">
+                                  {item.message}
+                                </p>
+                                {!item.isRead ? (
+                                  <p className="theme-eyebrow mt-1 text-[9px] font-bold uppercase tracking-[0.18em]">
+                                    Unread
+                                  </p>
+                                ) : null}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  convertNotificationMutation.mutate(item.id);
+                                }}
+                                title="Tạo Task từ thông báo này"
+                                className="flex h-7 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 opacity-80 shadow-sm transition hover:border-indigo-400 hover:text-indigo-600 hover:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                              >
+                                <Plus className="h-3 w-3" /> Task
+                              </button>
+                            </div>
                           ))
                         ) : (
                           <p className="rounded-2xl border border-dashed border-orange-100 px-4 py-6 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
@@ -601,6 +680,15 @@ export const AppLayout: React.FC = () => {
         pageKey={helpPageKey}
       />
       <AssistantWidget />
+      <CommandBar
+        isOpen={isCommandBarOpen}
+        onClose={() => setIsCommandBarOpen(false)}
+        onOpenConnectedAccounts={() => setIsConnectedAccountsOpen(true)}
+      />
+      <ConnectedAccountsModal
+        isOpen={isConnectedAccountsOpen}
+        onClose={() => setIsConnectedAccountsOpen(false)}
+      />
       <ToastContainer />
     </div>
   );

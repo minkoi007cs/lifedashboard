@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/axios';
-import { Plus, Calendar, List, BarChart2, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
+import { Plus, Calendar, List, BarChart2, ChevronLeft, ChevronRight, CheckSquare, Kanban } from 'lucide-react';
 import type { Task, TaskStats } from '../types/task';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { WeeklyScheduler } from '../components/tasks/WeeklyScheduler.tsx';
 import { MonthlyList } from '../components/tasks/MonthlyList.tsx';
 import { TaskStats as TaskStatsView } from '../components/tasks/TaskStats.tsx';
+import { KanbanBoard } from '../components/tasks/KanbanBoard';
 import { ActionButton, PageHeader, SegmentedTabs, SoftButton, SurfaceCard } from '../components/ui/shell';
 import { useToastStore } from '../store/toastStore';
 
 export const TasksPage: React.FC = () => {
     const queryClient = useQueryClient();
     const showToast = useToastStore((state) => state.showToast);
-    const [view, setView] = useState<'weekly' | 'monthly' | 'stats'>('weekly');
+    const [view, setView] = useState<'weekly' | 'monthly' | 'kanban' | 'stats'>('kanban');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -85,6 +86,7 @@ export const TasksPage: React.FC = () => {
                             value={view}
                             onChange={setView}
                             tabs={[
+                                { id: 'kanban', icon: Kanban, label: 'Kanban' },
                                 { id: 'weekly', icon: Calendar, label: 'Weekly' },
                                 { id: 'monthly', icon: List, label: 'Monthly' },
                                 { id: 'stats', icon: BarChart2, label: 'Stats' },
@@ -98,7 +100,7 @@ export const TasksPage: React.FC = () => {
                 }
             />
 
-            {view !== 'stats' && (
+            {view !== 'stats' && view !== 'kanban' && (
                 <SurfaceCard className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center space-x-4">
                         <SoftButton onClick={() => navigateDate('prev')} className="h-11 w-11 rounded-full px-0">
@@ -125,6 +127,7 @@ export const TasksPage: React.FC = () => {
             )}
 
             <div className="min-h-[600px]">
+                {view === 'kanban' && <KanbanBoard onOpenCreateTask={() => setIsFormOpen(true)} />}
                 {view === 'weekly' && <WeeklyScheduler startDate={currentDate} />}
                 {view === 'monthly' && <MonthlyList month={currentDate} />}
                 {view === 'stats' && <TaskStatsView stats={stats} isLoading={statsLoading} />}

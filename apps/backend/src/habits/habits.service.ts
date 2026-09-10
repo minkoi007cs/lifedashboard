@@ -101,36 +101,58 @@ export class HabitsService {
       return;
     }
 
+    const completedDates = new Set(logs.map((l) => l.date));
+    const targetDays =
+      habit.frequencyDays && habit.frequencyDays.length > 0
+        ? new Set(habit.frequencyDays)
+        : null; // null means every day (0-6) is expected
+
+    const isExpectedDay = (d: Date): boolean => {
+      if (!targetDays) return true;
+      return targetDays.has(d.getDay());
+    };
+
     let currentStreak = 0;
-    const longestStreak = habit.longestStreak;
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
-    const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
 
-    // Check if latest log is today or yesterday
-    const latestLogDate = logs[0].date;
-    if (latestLogDate !== todayStr && latestLogDate !== yesterdayStr) {
-      habit.streak = 0;
+    // 1. Check if today was completed
+    let checkDate: Date;
+    if (completedDates.has(todayStr)) {
+      currentStreak++;
+      checkDate = subDays(today, 1);
+    } else if (isExpectedDay(today)) {
+      // Expected today, but not completed yet: grace period, start checking from yesterday
+      checkDate = subDays(today, 1);
     } else {
-      currentStreak = 1;
-      for (let i = 0; i < logs.length - 1; i++) {
-        const currentLogDate = new Date(logs[i].date);
-        const nextLogDate = new Date(logs[i + 1].date);
-        const diffDays = Math.round(
-          (currentLogDate.getTime() - nextLogDate.getTime()) /
-            (1000 * 60 * 60 * 24),
-        );
+      // Today is a rest day: start checking from yesterday
+      checkDate = subDays(today, 1);
+    }
 
-        if (diffDays === 1) {
+    // 2. Walk backwards day by day (up to 365 days)
+    for (let dayOffset = 0; dayOffset < 365; dayOffset++) {
+      const dateStr = format(checkDate, 'yyyy-MM-dd');
+
+      // If habit has a startDate and we've reached before it, stop
+      if (habit.startDate && dateStr < habit.startDate) {
+        break;
+      }
+
+      if (isExpectedDay(checkDate)) {
+        if (completedDates.has(dateStr)) {
           currentStreak++;
         } else {
+          // An expected day was missed, streak ends here
           break;
         }
       }
-      habit.streak = currentStreak;
+      // If it's not an expected day (rest day), continue walking backwards without breaking streak
+
+      checkDate = subDays(checkDate, 1);
     }
 
-    if (habit.streak > longestStreak) {
+    habit.streak = currentStreak;
+    if (habit.streak > habit.longestStreak) {
       habit.longestStreak = habit.streak;
     }
 

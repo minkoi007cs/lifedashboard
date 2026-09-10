@@ -9,12 +9,14 @@ import {
   Send,
   X,
 } from 'lucide-react';
+import api from '../../lib/axios';
 import { getApiBaseUrl } from '../../lib/api-config';
 import type {
   AssistantAction,
   AssistantMessage,
   ChatRequest,
   ConfirmedAction,
+  ConversationSummary,
   StreamEvent,
 } from '@life-dashboard/shared';
 
@@ -33,6 +35,7 @@ export const AssistantWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 
   // Streaming state — active only while a stream is in flight
   const [isStreaming, setIsStreaming] = useState(false);
@@ -42,6 +45,45 @@ export const AssistantWidget: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   // AbortController for the active fetch so we can cancel mid-stream
   const abortRef = useRef<AbortController | null>(null);
+
+  // Load previous conversation history when opening widget if empty
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadHistory = async () => {
+      try {
+        const listRes = await api.get<ConversationSummary[]>('/api/v1/assistant/conversations');
+        if (listRes.data && listRes.data.length > 0) {
+          const latestId = listRes.data[0].id;
+          setConversationId(latestId);
+          const detailRes = await api.get(`/api/v1/assistant/conversations/${latestId}`);
+          if (detailRes.data?.messages && detailRes.data.messages.length > 0) {
+            const loadedEntries: ChatEntry[] = [];
+            for (const msg of detailRes.data.messages) {
+              loadedEntries.push({
+                type: 'message',
+                data: { role: msg.role, content: msg.content },
+              });
+              if (msg.actions && msg.actions.length > 0) {
+                loadedEntries.push({
+                  type: 'actions',
+                  id: crypto.randomUUID(),
+                  data: msg.actions,
+                });
+              }
+            }
+            setEntries(loadedEntries);
+          }
+        }
+      } catch {
+        // graceful ignore on load error
+      }
+    };
+
+    if (entries.length === 0) {
+      loadHistory();
+    }
+  }, [isOpen, entries.length]);
 
   // Cancel any in-flight stream when the widget unmounts
   useEffect(() => {
@@ -71,6 +113,7 @@ export const AssistantWidget: React.FC = () => {
       const token = localStorage.getItem('token');
       const body: ChatRequest = {
         messages,
+        conversationId,
         ...(confirmedActions ? { confirmedActions } : {}),
       };
 
@@ -171,6 +214,9 @@ export const AssistantWidget: React.FC = () => {
             // Non-fatal — always followed by a `done` event
             setStreamingText((prev) => prev || `Error: ${event.message}`);
           } else if (event.type === 'done') {
+            if (event.conversationId) {
+              setConversationId(event.conversationId);
+            }
             // Terminal event: use the reconciled reply and action list from `done`
             const finalActions = event.actions;
             setEntries((prev) => [

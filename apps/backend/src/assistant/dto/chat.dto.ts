@@ -40,4 +40,8 @@ export class ChatRequestDto {
   @ValidateNested({ each: true })
   @Type(() => ConfirmedActionDto)
   confirmedActions?: ConfirmedActionDto[];
+
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

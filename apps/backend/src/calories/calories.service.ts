@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import {
   FoodEntry,
   WeightLog,
@@ -67,7 +67,7 @@ export class CaloriesService {
       where: {
         userId,
         isActive: true,
-        startDate: MoreThanOrEqual(date),
+        startDate: LessThanOrEqual(date),
       },
       order: { startDate: 'DESC' },
     });
@@ -85,19 +85,30 @@ export class CaloriesService {
   async getStatistics(userId: string) {
     const today = new Date().toISOString().split('T')[0];
 
-    const foodEntries = await this.foodEntryRepository.find({
-      where: { userId },
+    // Query today's entries directly at database level
+    const todayEntries = await this.foodEntryRepository.find({
+      where: { userId, date: today },
     });
+
+    // Query recent entries with a sensible limit (e.g. 100 recent entries) instead of loading all history
+    const recentEntries = await this.foodEntryRepository.find({
+      where: { userId },
+      order: { date: 'DESC', createdAt: 'DESC' },
+      take: 100,
+    });
+
+    // Query recent weight logs (last 60 entries)
     const weightLogs = await this.weightLogRepository.find({
       where: { userId },
       order: { date: 'ASC' },
+      take: 60,
     });
+
     const activePlan = await this.dietPlanRepository.findOne({
       where: { userId, isActive: true },
     });
 
-    // Today's stats
-    const todayEntries = foodEntries.filter((e) => e.date === today);
+    // Today's stats calculation
     const todayCalories = todayEntries.reduce((sum, e) => sum + e.calories, 0);
     const todayMacros = todayEntries.reduce(
       (acc, e) => {
@@ -116,7 +127,7 @@ export class CaloriesService {
         target: activePlan?.targetCalories || 2000,
       },
       weightTrend: weightLogs,
-      allEntries: foodEntries,
+      allEntries: recentEntries,
       activePlan,
     };
   }

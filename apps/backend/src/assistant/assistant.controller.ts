@@ -1,4 +1,4 @@
-import { Body, Controller, Logger, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -15,6 +15,21 @@ export class AssistantController {
   private readonly logger = new Logger(AssistantController.name);
 
   constructor(private readonly assistantService: AssistantService) {}
+
+  @Get('conversations')
+  getConversations(@GetUser() user: AuthenticatedUser) {
+    return this.assistantService.getConversations(user.userId);
+  }
+
+  @Get('conversations/:id')
+  getConversation(@Param('id') id: string, @GetUser() user: AuthenticatedUser) {
+    return this.assistantService.getConversationMessages(id, user.userId);
+  }
+
+  @Delete('conversations/:id')
+  deleteConversation(@Param('id') id: string, @GetUser() user: AuthenticatedUser) {
+    return this.assistantService.deleteConversation(id, user.userId);
+  }
 
   // ── Existing JSON endpoint — unchanged ──────────────────────────────────────
   // Frontend currently uses this. Do NOT remove or rename.
