@@ -18,12 +18,14 @@ import {
   Gift,
   LayoutDashboard,
   LogOut,
+  Mail,
   Menu,
   Monitor,
   Moon,
   Plus,
   Search,
   Settings,
+  Share2,
   Sparkles,
   Sun,
   Target,
@@ -48,6 +50,8 @@ type NavItem = {
 
 const navigationItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/mail', label: 'Smart Mail', icon: Mail },
+  { to: '/social', label: 'Social Hub', icon: Share2 },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/wishlist', label: 'Wishlist', icon: Gift },
   { to: '/habits', label: 'Habits', icon: Zap },

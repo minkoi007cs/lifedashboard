@@ -62,6 +62,8 @@ flowchart TB
         HabitsModule["Habits Module (Streaks, Heatmap, Frequency)"]
         FocusModule["Focus Module (Pomodoro, Cycles, Task Linking)"]
         WishlistModule["Wishlist & Social Sharing Module"]
+        MailModule["Smart Mail Hub Module (Multi-Account Gmail & Outlook, AI Summaries)"]
+        SocialModule["Social Media Hub Module (Multi-Channel Content Studio)"]
         NotifHub["Notification Hub & Ingestion Service"]
         AssistantModule["AI Assistant & Tool Registry Service"]
     end
@@ -256,6 +258,14 @@ Tất cả bảng đều dùng tiền tố **`ld_`**. Tên cột trong Database 
 ### 4.9. AI Assistant Conversation History
 * **`ld_assistant_conversations`**: Hội thoại chat (id, user_id, title, last_activity_at).
 * **`ld_assistant_messages`**: Tin nhắn từng turn (id, conversation_id, role: `user` | `assistant`, content, actions jsonb, created_at).
+
+### 4.10. Smart Mail Hub (Gmail & Outlook Multi-Account Intelligence)
+* **`ld_mail_accounts`**: Quản lý đa tài khoản Email (id, user_id, provider: `gmail` | `outlook`, email, label, color, access_token, refresh_token, sync_status: `active` | `error` | `syncing`, last_synced_at, created_at). Cho phép người dùng kết nối nhiều tài khoản cùng lúc (ví dụ: Gmail cá nhân, Gmail công việc, Outlook công ty).
+* **`ld_mail_messages`**: Dữ liệu email đồng bộ & phân tích AI (id, user_id, account_id, external_id, thread_id, from_name, from_address, to_address, subject, snippet, body, received_at, is_read, is_starred, category: `ALL` | `ACTION_REQUIRED` | `WORK` | `FINANCE_BILLS` | `NEWSLETTERS` | `PERSONAL`, ai_summary, ai_action_items jsonb, ai_draft_reply, ai_priority: `urgent` | `high` | `medium` | `low`, ai_action_required bool, extracted_amount, is_task_converted, linked_task_id, is_expense_converted, linked_transaction_id).
+
+### 4.11. Social Media Hub & Content Studio
+* **`ld_social_channels`**: Kênh mạng xã hội kết nối (id, user_id, platform: `youtube` | `tiktok` | `facebook` | `linkedin` | `x` | `instagram`, name, handle, avatar_url, followers_count, profile_url, last_synced_at).
+* **`ld_social_posts`**: Bài viết, kịch bản & lịch đăng bài (id, user_id, title, content, platforms jsonb, status: `idea` | `draft` | `scheduled` | `published` | `archived`, scheduled_at, published_at, post_url, media_urls jsonb, hashtags jsonb, metrics jsonb, created_at, updated_at).
 
 ---
 

@@ -16,6 +16,8 @@ import { buildDatabaseOptions } from './config/database.config';
 import { WishesModule } from './wishes/wishes.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AssistantModule } from './assistant/assistant.module';
+import { MailModule } from './mail/mail.module';
+import { SocialModule } from './social/social.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { AssistantModule } from './assistant/assistant.module';
     WishesModule,
     NotificationsModule,
     AssistantModule,
+    MailModule,
+    SocialModule,
   ],
   controllers: [AppController],
   providers: [AppService],

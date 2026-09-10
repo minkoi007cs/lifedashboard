@@ -530,3 +530,130 @@ export interface ConvertNotificationToTaskDto {
     priority?: 'low' | 'medium' | 'high' | 'urgent';
     dueDate?: string;
 }
+
+// ── Smart Mail Hub (Multiple Gmail & Outlook Accounts) ────────────────────────
+
+export type MailProvider = 'gmail' | 'outlook';
+
+export type MailCategory =
+    | 'all'
+    | 'action_required'
+    | 'work'
+    | 'finance'
+    | 'newsletter'
+    | 'promotions'
+    | 'personal';
+
+export type MailPriority = 'urgent' | 'high' | 'normal' | 'low';
+
+export interface MailAccount {
+    id: string;
+    provider: MailProvider;
+    email: string;
+    label: string;
+    color: string;
+    syncStatus: 'active' | 'syncing' | 'error' | 'paused';
+    lastSyncedAt?: string;
+    unreadCount: number;
+    actionRequiredCount: number;
+    createdAt: string;
+}
+
+export interface MailMessage {
+    id: string;
+    accountId: string;
+    accountEmail: string;
+    accountLabel: string;
+    accountColor: string;
+    provider: MailProvider;
+    fromName: string;
+    fromAddress: string;
+    toAddress: string;
+    subject: string;
+    snippet: string;
+    bodyText: string;
+    receivedAt: string;
+    isRead: boolean;
+    isStarred: boolean;
+    aiCategory: MailCategory;
+    aiPriority: MailPriority;
+    aiSummary: string;
+    aiActionRequired: boolean;
+    aiActionItems: string[];
+    aiDraftReply?: string;
+    extractedAmount?: number;
+    linkedTaskId?: string;
+    linkedTransactionId?: string;
+}
+
+export interface MailOverview {
+    totalAccounts: number;
+    totalUnread: number;
+    totalActionRequired: number;
+    totalFinanceBills: number;
+    accounts: MailAccount[];
+}
+
+export interface CreateMailAccountDto {
+    provider: MailProvider;
+    email: string;
+    label?: string;
+    color?: string;
+    accessToken?: string;
+}
+
+// ── Social Media Hub & Content Studio ─────────────────────────────────────────
+
+export type SocialPlatform =
+    | 'facebook'
+    | 'youtube'
+    | 'tiktok'
+    | 'instagram'
+    | 'twitter'
+    | 'linkedin'
+    | 'threads';
+
+export type SocialPostStatus = 'idea' | 'draft' | 'scheduled' | 'published' | 'archived';
+
+export interface SocialChannel {
+    id: string;
+    platform: SocialPlatform;
+    name: string;
+    handle: string;
+    avatarUrl?: string;
+    followersCount: number;
+    profileUrl?: string;
+    lastSyncedAt?: string;
+}
+
+export interface SocialPost {
+    id: string;
+    title: string;
+    content: string;
+    platforms: SocialPlatform[];
+    status: SocialPostStatus;
+    scheduledAt?: string;
+    publishedAt?: string;
+    postUrl?: string;
+    mediaUrls?: string[];
+    hashtags: string[];
+    metrics?: {
+        views?: number;
+        likes?: number;
+        comments?: number;
+        shares?: number;
+    };
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateSocialPostDto {
+    title: string;
+    content: string;
+    platforms: SocialPlatform[];
+    status?: SocialPostStatus;
+    scheduledAt?: string;
+    hashtags?: string[];
+    mediaUrls?: string[];
+}
+

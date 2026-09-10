@@ -7,10 +7,12 @@ import {
   CheckSquare,
   DollarSign,
   Utensils,
-  Target,
   Gift,
-  Zap,
   LayoutDashboard,
+  Mail,
+  Share2,
+  Target,
+  Zap,
   Cloud,
   ArrowRight,
 } from 'lucide-react';
@@ -113,6 +115,8 @@ export const CommandBar: React.FC<Props> = ({
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, shortcut: '1' },
+    { label: 'Smart Mail Hub (Gmail & Outlook)', path: '/mail', icon: Mail, shortcut: 'M' },
+    { label: 'Social Hub & Content Studio', path: '/social', icon: Share2, shortcut: 'S' },
     { label: 'Tasks (Nhiệm vụ)', path: '/tasks', icon: CheckSquare, shortcut: '2' },
     { label: 'Habits (Thói quen)', path: '/habits', icon: Zap, shortcut: '3' },
     { label: 'Focus Timer (Tập trung)', path: '/focus', icon: Target, shortcut: '4' },
@@ -122,6 +126,26 @@ export const CommandBar: React.FC<Props> = ({
   ];
 
   const quickActions = [
+    {
+      id: 'mail',
+      label: '📬 Mở Hộp Thư Thông Minh (Mail Hub)',
+      icon: Mail,
+      shortcut: 'M',
+      action: () => {
+        navigate('/mail');
+        onClose();
+      },
+    },
+    {
+      id: 'social',
+      label: '📢 Lên Kế Hoạch Đăng Mạng Xã Hội (Social Hub)',
+      icon: Share2,
+      shortcut: 'S',
+      action: () => {
+        navigate('/social');
+        onClose();
+      },
+    },
     {
       id: 'task',
       label: '⚡ Tạo Task mới...',

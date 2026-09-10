@@ -30,6 +30,10 @@ import { FinanceCategory } from '../finance/entities/finance-category.entity';
 import { FinanceTransaction } from '../finance/entities/finance-transaction.entity';
 import { FinanceBudget } from '../finance/entities/finance-budget.entity';
 import { ConnectedAccount } from '../notifications/entities/connected-account.entity';
+import { MailAccount } from '../mail/entities/mail-account.entity';
+import { MailMessage } from '../mail/entities/mail-message.entity';
+import { SocialChannel } from '../social/entities/social-channel.entity';
+import { SocialPost } from '../social/entities/social-post.entity';
 
 export const typeOrmEntities = [
   User,
@@ -44,6 +48,10 @@ export const typeOrmEntities = [
   FinanceTransaction,
   FinanceBudget,
   ConnectedAccount,
+  MailAccount,
+  MailMessage,
+  SocialChannel,
+  SocialPost,
   FocusSession,
   FoodEntry,
   WeightLog,

@@ -34,7 +34,39 @@
 
 ## 2. ACTIVE WORKLOG (NHẬT KÝ PHIÊN LÀM VIỆC - MỚI NHẤT Ở TRÊN)
 
-### 📌 [2026-09-10] — Hoàn tất trọn vẹn 4 Giai đoạn: Personal Finance, Notification Hub & AI Digest, Quick Capture (Cmd+K), Focus Timer & Kanban
+### 📌 [2026-09-10] — Triển khai hoàn thiện Smart Mail Hub (Đa tài khoản Gmail & Outlook với AI) & Social Media Hub (Content Studio)
+- **Người thực hiện:** Antigravity AI & User
+- **Yêu cầu của người dùng:** Bổ sung module Smart Mail tóm tắt, phân loại AI cho Gmail & Outlook hỗ trợ kết nối nhiều tài khoản cùng lúc và module quản lý mạng xã hội.
+- **Nội dung đã hoàn thành:**
+  1. **Single Source of Truth Types (`packages/shared/src/index.ts`):**
+     - Đầy đủ Types: `MailProvider`, `MailCategory`, `MailPriority`, `MailAccount`, `MailMessage`, `MailOverview`, `CreateMailAccountDto`.
+     - Types cho mạng xã hội: `SocialPlatform`, `SocialPostStatus`, `SocialChannel`, `SocialPost`, `CreateSocialPostDto`.
+  2. **Backend Mail Module (`apps/backend/src/mail/`):**
+     - Entities: `MailAccount` (`ld_mail_accounts`), `MailMessage` (`ld_mail_messages`). Hỗ trợ kết nối đồng thời nhiều tài khoản Gmail và Outlook với nhãn tùy biến (label) và màu sắc nhận diện.
+     - `MailService` & `MailController`:
+       - Tự động seed dữ liệu mẫu phong phú khi tài khoản mới kết nối.
+       - AI Phân loại hộp thư: 🚨 Cần hành động khẩn, 💼 Công việc, 💳 Hóa đơn tài chính, 📰 Bản tin định kỳ.
+       - Hộp AI TL;DR tóm tắt 2 dòng + trích xuất gạch đầu dòng việc cần làm (Action items).
+       - Nút 1-Click "Convert to Task" tạo Task mới trong hệ thống.
+       - Nút 1-Click "Convert to Expense" ghi nhận hóa đơn vào Ví tài chính trong FinanceModule.
+       - Nút AI Quick Reply tạo câu trả lời mẫu chuyên nghiệp hoặc xác nhận nhanh.
+  3. **Backend Social Module (`apps/backend/src/social/`):**
+     - Entities: `SocialChannel` (`ld_social_channels`), `SocialPost` (`ld_social_posts`). Quản lý đa kênh: YouTube, TikTok, Facebook, LinkedIn, X, Instagram.
+     - `SocialService` & `SocialController`:
+       - Kanban Board quản lý vòng đời bài viết: Ý tưởng (Idea) ➔ Bản nháp (Draft) ➔ Lên lịch (Scheduled) ➔ Đã đăng (Published).
+       - AI Content Studio Generator: Tự động tạo Hook giật tít thu hút người xem, nội dung kịch bản và bộ Hashtags chuẩn SEO theo từng nền tảng.
+  4. **Frontend UI & Trải nghiệm người dùng:**
+     - `apps/frontend/src/pages/MailPage.tsx`: Giao diện 3 cột chuyên nghiệp (Danh sách tài khoản & bộ lọc thông minh; Danh sách email theo nhãn AI; Chi tiết email với bảng phân tích AI và nút chuyển đổi tác vụ).
+     - `apps/frontend/src/components/mail/ConnectMailAccountModal.tsx`: Hộp thoại thêm tài khoản Gmail / Outlook với tùy chọn màu sắc và nhãn.
+     - `apps/frontend/src/pages/SocialPage.tsx`: Giao diện Content Studio kết hợp Kanban Board bài viết, thẻ thống kê kênh và bộ tạo AI Content tức thì.
+     - `apps/frontend/src/components/social/SocialPostModal.tsx`: Modal tạo và lên lịch bài viết đa kênh với trợ lý AI hỗ trợ viết caption.
+     - Tích hợp điều hướng trong `AppLayout.tsx` (Sidebar menu) và `CommandBar.tsx` (`Cmd+K` phím tắt M và S).
+  5. **Kiểm thử & Build:**
+     - Đầy đủ Unit tests: `mail.service.spec.ts` và `social.service.spec.ts` (9 test suites, 23/23 tests pass 100%).
+     - Turbo build monorepo: 3/3 packages (`@life-dashboard/shared`, `backend`, `frontend`) biên dịch thành công không lỗi.
+- **Trạng thái:** Sẵn sàng commit và push production.
+
+---
 - **Người thực hiện:** Antigravity AI & User
 - **Nội dung đã hoàn thành:**
   1. **Giai đoạn 1 (Foundation Fixes & Persistent Chat):**

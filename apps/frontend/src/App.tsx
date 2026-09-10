@@ -10,6 +10,8 @@ import { CaloriesPage } from './pages/CaloriesPage';
 import { HabitsPage } from './pages/HabitsPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { FocusPage } from './pages/FocusPage';
+import { MailPage } from './pages/MailPage';
+import { SocialPage } from './pages/SocialPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -80,6 +82,8 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="mail" element={<MailPage />} />
+            <Route path="social" element={<SocialPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="habits" element={<HabitsPage />} />
