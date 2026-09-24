@@ -1,3 +1,9 @@
+[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?style=for-the-badge&logo=turborepo)](https://turbo.build/)
+[![NestJS](https://img.shields.io/badge/NestJS-Backend_API-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
+[![React + Vite](https://img.shields.io/badge/React-Vite_Client-61DAFB?style=for-the-badge&logo=react)](https://vitejs.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Postgres_Local-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
 # LifeDashboard
 
 Monorepo gồm:
@@ -5,6 +11,22 @@ Monorepo gồm:
 - `apps/backend`: NestJS API, PostgreSQL, Google OAuth, deploy serverless/Vercel hoặc container
 - `apps/frontend`: React + Vite client
 - `packages/shared`: shared types
+
+## ⚡ 1-Minute Quickstart
+
+```bash
+# 1. Cài đặt monorepo
+git clone https://github.com/minkoi007cs/lifedashboard.git
+cd lifedashboard
+npm install
+
+# 2. Chạy PostgreSQL bằng Docker
+docker compose up -d db
+
+# 3. Chạy đồng thời cả Backend và Frontend
+npm run dev --workspace apps/backend &
+npm run dev --workspace apps/frontend
+```
 
 ## Environment Files
 
