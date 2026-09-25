@@ -16,10 +16,14 @@ export function getApiBaseUrl(): string {
   const runtimeUrl = normalizeApiUrl((window as RuntimeWindow).env?.VITE_API_URL);
   const buildTimeUrl = normalizeApiUrl(import.meta.env.VITE_API_URL);
 
-  const apiUrl = runtimeUrl ?? buildTimeUrl;
-  if (!apiUrl) {
-    throw new Error('Missing required environment variable: VITE_API_URL');
+  const rawUrl = runtimeUrl ?? buildTimeUrl ?? '';
+
+  // In unified single-domain deployment, if VITE_API_URL is '/api' or '/', return ''
+  // to avoid duplicating '/api/api/v1' when combined with endpoint paths starting with '/api/v1'
+  if (!rawUrl || rawUrl === '/api' || rawUrl === '/') {
+    return '';
   }
 
-  return apiUrl;
+  // Strip trailing '/api' or '/'
+  return rawUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
 }
