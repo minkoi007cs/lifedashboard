@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/Login';
@@ -13,15 +13,7 @@ import { FocusPage } from './pages/FocusPage';
 import { MailPage } from './pages/MailPage';
 import { SocialPage } from './pages/SocialPage';
 import { useAuthStore } from './store/authStore';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30000,
-      retry: 1,
-    },
-  },
-});
+import { queryClient } from './lib/query-client';
 
 function ProtectedRoute({ children }: { children: React.ReactElement }) {
   const { user, isLoading, token } = useAuthStore();

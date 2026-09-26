@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '../lib/axios';
+import { queryClient } from '../lib/query-client';
 
 interface User {
     id: string;
@@ -35,6 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
     logout: () => {
         localStorage.removeItem('token');
+        queryClient.clear();
         set({ user: null, token: null });
     },
     checkAuth: async () => {

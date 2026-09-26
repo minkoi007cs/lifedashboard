@@ -62,8 +62,9 @@ export const McpServerModal: React.FC<Props> = ({ isOpen, onClose }) => {
       });
       setTestResponse(JSON.stringify(res.data, null, 2));
       showToast('Kiểm thử gọi MCP Tool thành công!', 'success');
-    } catch (err: any) {
-      setTestResponse(`Lỗi: ${err.response?.data?.message || err.message}`);
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      setTestResponse(`Lỗi: ${e.response?.data?.message || e.message}`);
       showToast('Kiểm thử MCP thất bại', 'error');
     } finally {
       setIsTestingTool(false);
