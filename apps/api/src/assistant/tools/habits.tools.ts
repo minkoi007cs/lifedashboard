@@ -1,7 +1,9 @@
 import { HabitsService } from '../../habits/habits.service';
 import { ToolDefinition } from './tool-registry';
 
-export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[] {
+export function buildHabitsTools(
+  habitsService: HabitsService,
+): ToolDefinition[] {
   return [
     // ── READ ─────────────────────────────────────────────────────────────────
     {
@@ -31,7 +33,10 @@ export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[]
       inputSchema: {
         type: 'object' as const,
         properties: {
-          name: { type: 'string', description: 'Habit name (e.g. "Drink 8 glasses of water")' },
+          name: {
+            type: 'string',
+            description: 'Habit name (e.g. "Drink 8 glasses of water")',
+          },
           description: { type: 'string', description: 'Optional description' },
           frequencyType: {
             type: 'string',
@@ -50,7 +55,8 @@ export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[]
           },
           reminderTime: {
             type: 'string',
-            description: 'Optional reminder time in HH:mm format (e.g. "08:00")',
+            description:
+              'Optional reminder time in HH:mm format (e.g. "08:00")',
           },
         },
         required: ['name', 'frequencyType'],
@@ -76,7 +82,7 @@ export function buildHabitsTools(habitsService: HabitsService): ToolDefinition[]
     {
       name: 'habits_log_today',
       description:
-        "Log a check-in for a habit for today (or a specified date). Requires user confirmation. Get the habit ID from habits_get_overview.",
+        'Log a check-in for a habit for today (or a specified date). Requires user confirmation. Get the habit ID from habits_get_overview.',
       inputSchema: {
         type: 'object' as const,
         properties: {

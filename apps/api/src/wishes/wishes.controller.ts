@@ -8,7 +8,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { WishesService } from './wishes.service';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
@@ -17,10 +16,11 @@ import { RespondToWishDto } from './dto/respond-to-wish.dto';
 import { CreatePlanFromWishDto } from './dto/create-plan-from-wish.dto';
 import { CreateWishCommentDto } from './dto/create-wish-comment.dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
 
 @Controller('wishes')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class WishesController {
   constructor(private readonly wishesService: WishesService) {}
 

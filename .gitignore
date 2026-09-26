@@ -1,17 +1,23 @@
 node_modules
 dist
-*.env
-**/.env
-!.env.sample
-!**/.env.sample
-*.log
-.DS_Store
 coverage
 .turbo
+.vercel
+.DS_Store
+*.log
+*.tsbuildinfo
 
-# Vercel serverless sources live in apps/backend/api/*.ts.
-# Do not commit TypeScript build artifacts beside them because Vercel treats
-# api/index.js and api/index.ts as conflicting functions.
-apps/backend/api/*.js
-apps/backend/api/*.js.map
-apps/backend/api/*.d.ts
+# Env: chỉ commit file mẫu
+.env
+.env.*
+*.env
+!.env.sample
+!.env.example
+!.env.production.sample
+
+# Thư mục cũ (đã đổi tên thành apps/api, apps/web)
+apps/backend/
+apps/frontend/
+
+# Supabase CLI
+supabase/.temp/

@@ -44,7 +44,9 @@ export const FocusPage: React.FC = () => {
   const [completedSessionsCount, setCompletedSessionsCount] = useState(0);
 
   const activePresetRef = useRef(selectedPreset);
-  activePresetRef.current = selectedPreset;
+  useEffect(() => {
+    activePresetRef.current = selectedPreset;
+  }, [selectedPreset]);
 
   const totalSeconds = selectedPreset.minutes * 60;
   const progress = Math.min(100, Math.max(0, ((totalSeconds - timeLeft) / totalSeconds) * 100));

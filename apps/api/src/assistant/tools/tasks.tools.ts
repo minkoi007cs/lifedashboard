@@ -41,7 +41,8 @@ export function buildTasksTools(tasksService: TasksService): ToolDefinition[] {
           },
           dueDate: {
             type: 'string',
-            description: 'Due date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ)',
+            description:
+              'Due date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ)',
           },
         },
         required: ['title'],
@@ -54,7 +55,9 @@ export function buildTasksTools(tasksService: TasksService): ToolDefinition[] {
             description: params.description as string | undefined,
             priority: (params.priority as TaskPriority) ?? TaskPriority.MEDIUM,
             status: TaskStatus.TODO,
-            dueDate: params.dueDate ? new Date(params.dueDate as string) : undefined,
+            dueDate: params.dueDate
+              ? new Date(params.dueDate as string)
+              : undefined,
           },
           userId,
         );
@@ -76,7 +79,11 @@ export function buildTasksTools(tasksService: TasksService): ToolDefinition[] {
       },
       type: 'MUTATE',
       execute: async (params, userId) => {
-        return tasksService.update(params.id as string, { status: TaskStatus.DONE }, userId);
+        return tasksService.update(
+          params.id as string,
+          { status: TaskStatus.DONE },
+          userId,
+        );
       },
       describeAction: (params) => `Mark task done: ID ${params.id}`,
     },

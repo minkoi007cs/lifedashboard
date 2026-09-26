@@ -41,14 +41,20 @@ export const CommandBar: React.FC<Props> = ({
   const [amountValue, setAmountValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  // Reset form khi mở lại (adjust state during render thay vì setState trong effect)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setMode('menu');
       setQuery('');
       setInputValue('');
       setAmountValue('');
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
+  }
+
+  useEffect(() => {
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 50);
   }, [isOpen]);
 
   const createTaskMutation = useMutation({

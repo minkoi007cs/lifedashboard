@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -27,7 +37,10 @@ export class AssistantController {
   }
 
   @Delete('conversations/:id')
-  deleteConversation(@Param('id') id: string, @GetUser() user: AuthenticatedUser) {
+  deleteConversation(
+    @Param('id') id: string,
+    @GetUser() user: AuthenticatedUser,
+  ) {
     return this.assistantService.deleteConversation(id, user.userId);
   }
 
@@ -85,7 +98,10 @@ export class AssistantController {
 
     try {
       // Iterate the async generator. Every path in chatStream() ends with 'done'.
-      for await (const event of this.assistantService.chatStream(body, user.userId)) {
+      for await (const event of this.assistantService.chatStream(
+        body,
+        user.userId,
+      )) {
         writeEvent(event);
         if (event.type === 'done') break; // generator is exhausted; stop early to release resources
       }

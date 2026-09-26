@@ -2,7 +2,9 @@ import { WishesService } from '../../wishes/wishes.service';
 import { WishTimeTag, WishType } from '../../wishes/wish.entity';
 import { ToolDefinition } from './tool-registry';
 
-export function buildWishesTools(wishesService: WishesService): ToolDefinition[] {
+export function buildWishesTools(
+  wishesService: WishesService,
+): ToolDefinition[] {
   return [
     // ── READ ─────────────────────────────────────────────────────────────────
     {
@@ -24,21 +26,29 @@ export function buildWishesTools(wishesService: WishesService): ToolDefinition[]
     {
       name: 'wishes_create',
       description:
-        'Add a new wish to the current user\'s wishlist. Requires user confirmation before execution.',
+        "Add a new wish to the current user's wishlist. Requires user confirmation before execution.",
       inputSchema: {
         type: 'object' as const,
         properties: {
-          title: { type: 'string', description: 'Wish title (e.g. "Trip to Japan")' },
-          description: { type: 'string', description: 'Optional details about the wish' },
+          title: {
+            type: 'string',
+            description: 'Wish title (e.g. "Trip to Japan")',
+          },
+          description: {
+            type: 'string',
+            description: 'Optional details about the wish',
+          },
           type: {
             type: 'string',
             enum: ['gift', 'activity', 'goal'],
-            description: 'Wish type: "gift" = something to receive, "activity" = shared experience, "goal" = personal goal',
+            description:
+              'Wish type: "gift" = something to receive, "activity" = shared experience, "goal" = personal goal',
           },
           timeTag: {
             type: 'string',
             enum: ['today', 'this_week', 'soon'],
-            description: 'When the user wants this wish: "today", "this_week", or "soon"',
+            description:
+              'When the user wants this wish: "today", "this_week", or "soon"',
           },
         },
         required: ['title', 'type', 'timeTag'],

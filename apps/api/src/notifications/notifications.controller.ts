@@ -9,15 +9,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { NotificationsService } from './notifications.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
 import type { AccountProvider } from './entities/connected-account.entity';
 import type { TaskPriority } from '../tasks/task.entity';
 
 @Controller('notifications')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
@@ -62,10 +62,7 @@ export class NotificationsController {
   }
 
   @Post('accounts/:id/sync')
-  syncAccount(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  syncAccount(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.notificationsService.syncAccount(id, user.userId);
   }
 
@@ -93,4 +90,3 @@ export class NotificationsController {
     return this.notificationsService.markAllRead(user.userId);
   }
 }
-

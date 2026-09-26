@@ -1,7 +1,9 @@
 import { CaloriesService } from '../../calories/calories.service';
 import { ToolDefinition } from './tool-registry';
 
-export function buildCaloriesTools(caloriesService: CaloriesService): ToolDefinition[] {
+export function buildCaloriesTools(
+  caloriesService: CaloriesService,
+): ToolDefinition[] {
   return [
     // ── READ ─────────────────────────────────────────────────────────────────
     {
@@ -27,20 +29,46 @@ export function buildCaloriesTools(caloriesService: CaloriesService): ToolDefini
       inputSchema: {
         type: 'object' as const,
         properties: {
-          name: { type: 'string', description: 'Food name (e.g. "Chicken breast", "Rice")' },
+          name: {
+            type: 'string',
+            description: 'Food name (e.g. "Chicken breast", "Rice")',
+          },
           date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
           mealType: {
             type: 'string',
             enum: ['breakfast', 'lunch', 'dinner', 'snack'],
             description: 'Which meal this belongs to',
           },
-          calories: { type: 'number', description: 'Total calories for this entry' },
-          protein: { type: 'number', description: 'Protein in grams (use 0 if unknown)' },
-          fat: { type: 'number', description: 'Fat in grams (use 0 if unknown)' },
-          carbs: { type: 'number', description: 'Carbohydrates in grams (use 0 if unknown)' },
-          amount: { type: 'number', description: 'Amount in grams (default 100)' },
+          calories: {
+            type: 'number',
+            description: 'Total calories for this entry',
+          },
+          protein: {
+            type: 'number',
+            description: 'Protein in grams (use 0 if unknown)',
+          },
+          fat: {
+            type: 'number',
+            description: 'Fat in grams (use 0 if unknown)',
+          },
+          carbs: {
+            type: 'number',
+            description: 'Carbohydrates in grams (use 0 if unknown)',
+          },
+          amount: {
+            type: 'number',
+            description: 'Amount in grams (default 100)',
+          },
         },
-        required: ['name', 'date', 'mealType', 'calories', 'protein', 'fat', 'carbs'],
+        required: [
+          'name',
+          'date',
+          'mealType',
+          'calories',
+          'protein',
+          'fat',
+          'carbs',
+        ],
       },
       type: 'MUTATE',
       execute: async (params, userId) => {
@@ -48,7 +76,11 @@ export function buildCaloriesTools(caloriesService: CaloriesService): ToolDefini
           {
             name: params.name as string,
             date: params.date as string,
-            mealType: params.mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+            mealType: params.mealType as
+              | 'breakfast'
+              | 'lunch'
+              | 'dinner'
+              | 'snack',
             calories: params.calories as number,
             protein: params.protein as number,
             fat: params.fat as number,

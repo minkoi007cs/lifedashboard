@@ -14,6 +14,22 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
+  /** Lần đầu login Supabase → tạo ld_users; user cũ (Google passport) khớp theo email nên giữ nguyên dữ liệu. */
+  async findOrCreateByEmail(
+    data: Pick<User, 'email'> & Partial<Pick<User, 'name' | 'avatarUrl'>>,
+  ): Promise<User> {
+    const existing = await this.findByEmail(data.email);
+    if (existing) return existing;
+    try {
+      return await this.create({ ...data, role: 'user' });
+    } catch (err) {
+      // 2 request đầu tiên chạy song song → unique violation; lấy bản ghi vừa tạo
+      const created = await this.findByEmail(data.email);
+      if (created) return created;
+      throw err;
+    }
+  }
+
   async findById(id: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { id } });
   }
