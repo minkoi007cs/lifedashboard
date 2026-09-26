@@ -33,7 +33,8 @@ export function buildFocusTools(focusService: FocusService): ToolDefinition[] {
         properties: {
           startTime: {
             type: 'string',
-            description: 'Session start time in ISO 8601 format (e.g. "2024-01-15T09:00:00Z")',
+            description:
+              'Session start time in ISO 8601 format (e.g. "2024-01-15T09:00:00Z")',
           },
           durationMinutes: {
             type: 'number',
@@ -41,7 +42,8 @@ export function buildFocusTools(focusService: FocusService): ToolDefinition[] {
           },
           label: {
             type: 'string',
-            description: 'Optional label/category for the session (e.g. "Coding", "Reading")',
+            description:
+              'Optional label/category for the session (e.g. "Coding", "Reading")',
           },
         },
         required: ['startTime', 'durationMinutes'],

@@ -8,7 +8,10 @@ export interface ToolDefinition {
   inputSchema: Anthropic.Tool['input_schema'];
   type: ToolType;
   /** Execute the tool for the given user. userId is always injected here — never from params. */
-  execute: (params: Record<string, unknown>, userId: string) => Promise<unknown>;
+  execute: (
+    params: Record<string, unknown>,
+    userId: string,
+  ) => Promise<unknown>;
   /** Human-readable summary of the action (shown in the confirm dialog). MUTATE only. */
   describeAction?: (params: Record<string, unknown>) => string;
 }
@@ -24,12 +27,7 @@ export class ToolRegistry {
     return this.tools.get(name);
   }
 
-  /** Returns the Anthropic-format tool list for messages.create(). */
-  toAnthropicTools(): Anthropic.Tool[] {
-    return Array.from(this.tools.values()).map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: t.inputSchema,
-    }));
+  list(): ToolDefinition[] {
+    return Array.from(this.tools.values());
   }
 }

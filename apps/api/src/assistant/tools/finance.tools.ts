@@ -1,13 +1,15 @@
 import { FinanceService } from '../../finance/finance.service';
 import { ToolDefinition } from './tool-registry';
 
-export function buildFinanceTools(financeService: FinanceService): ToolDefinition[] {
+export function buildFinanceTools(
+  financeService: FinanceService,
+): ToolDefinition[] {
   return [
     // ── READ ─────────────────────────────────────────────────────────────────
     {
       name: 'finance_get_statistics',
       description:
-        'Get the current user\'s finance statistics: total income, total expenses, net profit, and the full list of sales and expenses. Use this before answering any finance question.',
+        "Get the current user's finance statistics: total income, total expenses, net profit, and the full list of sales and expenses. Use this before answering any finance question.",
       inputSchema: {
         type: 'object' as const,
         properties: {},
@@ -28,8 +30,14 @@ export function buildFinanceTools(financeService: FinanceService): ToolDefinitio
         type: 'object' as const,
         properties: {
           date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-          amount: { type: 'number', description: 'Expense amount (positive number)' },
-          description: { type: 'string', description: 'What the expense was for' },
+          amount: {
+            type: 'number',
+            description: 'Expense amount (positive number)',
+          },
+          description: {
+            type: 'string',
+            description: 'What the expense was for',
+          },
           category: {
             type: 'string',
             description:
@@ -62,9 +70,18 @@ export function buildFinanceTools(financeService: FinanceService): ToolDefinitio
         type: 'object' as const,
         properties: {
           date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-          serviceSales: { type: 'number', description: 'Service/check income amount' },
-          cashTips: { type: 'number', description: 'Cash tips amount (use 0 if none)' },
-          description: { type: 'string', description: 'Optional note for this entry' },
+          serviceSales: {
+            type: 'number',
+            description: 'Service/check income amount',
+          },
+          cashTips: {
+            type: 'number',
+            description: 'Cash tips amount (use 0 if none)',
+          },
+          description: {
+            type: 'string',
+            description: 'Optional note for this entry',
+          },
         },
         required: ['date', 'serviceSales', 'cashTips'],
       },
@@ -108,13 +125,19 @@ export function buildFinanceTools(financeService: FinanceService): ToolDefinitio
       inputSchema: {
         type: 'object' as const,
         properties: {
-          month: { type: 'string', description: 'Optional month in YYYY-MM format' },
+          month: {
+            type: 'string',
+            description: 'Optional month in YYYY-MM format',
+          },
         },
         required: [],
       },
       type: 'READ',
       execute: async (params, userId) => {
-        return financeService.getOverview(userId, params.month as string | undefined);
+        return financeService.getOverview(
+          userId,
+          params.month as string | undefined,
+        );
       },
     },
   ];
