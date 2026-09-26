@@ -19,7 +19,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "schema:sync": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/schema-sync.ts"
+    "schema:sync": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/schema-sync.ts",
+    "db:seed": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/seed-mock-data.ts",
+    "db:clean": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/clean-db.ts",
+    "db:reset": "npm run db:clean && npm run db:seed"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.3",
