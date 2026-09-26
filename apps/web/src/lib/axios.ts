@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { getApiBaseUrl } from './api-config';
+import { getAccessToken } from './supabase';
 
 const api = axios.create({
     baseURL: getApiBaseUrl(),
-    withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+api.interceptors.request.use(async (config) => {
+    const token = await getAccessToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }

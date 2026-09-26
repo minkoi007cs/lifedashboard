@@ -9,14 +9,17 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { SocialService } from './social.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
-import type { CreateSocialPostDto, SocialPlatform } from '@life-dashboard/shared';
+import type {
+  CreateSocialPostDto,
+  SocialPlatform,
+} from '@life-dashboard/shared';
 
 @Controller('social')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class SocialController {
   constructor(private readonly socialService: SocialService) {}
 
@@ -46,10 +49,7 @@ export class SocialController {
   }
 
   @Delete('channels/:id')
-  deleteChannel(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  deleteChannel(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.socialService.deleteChannel(id, user.userId);
   }
 
@@ -80,17 +80,12 @@ export class SocialController {
   }
 
   @Delete('posts/:id')
-  deletePost(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  deletePost(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.socialService.deletePost(id, user.userId);
   }
 
   @Post('ai-generate')
-  generateAi(
-    @Body() body: { topic: string; platform: SocialPlatform },
-  ) {
+  generateAi(@Body() body: { topic: string; platform: SocialPlatform }) {
     return this.socialService.generateAiContent(body.topic, body.platform);
   }
 }

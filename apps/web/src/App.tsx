@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
@@ -16,7 +16,8 @@ import { useAuthStore } from './store/authStore';
 import { queryClient } from './lib/query-client';
 
 function ProtectedRoute({ children }: { children: React.ReactElement }) {
-  const { user, isLoading, token } = useAuthStore();
+  const { user, isLoading, session } = useAuthStore();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -31,40 +32,23 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
     );
   }
 
-  if (!token && !user) {
-    return <Navigate to="/login" replace />;
+  if (!session || !user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 
   return children;
 }
 
-function LoginSuccessHandler() {
-  const { login } = useAuthStore();
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-
-  useEffect(() => {
-    if (token) {
-      login(token);
-    }
-  }, [token, login]);
-
-  return <Navigate to="/" replace />;
-}
-
 function App() {
-  const { checkAuth } = useAuthStore();
+  const init = useAuthStore((s) => s.init);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  useEffect(() => init(), [init]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/login/success" element={<LoginSuccessHandler />} />
           <Route
             path="/"
             element={

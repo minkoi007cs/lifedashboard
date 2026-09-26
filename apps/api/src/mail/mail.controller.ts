@@ -9,9 +9,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { MailService } from './mail.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/auth-user';
 import type {
   CreateMailAccountDto,
@@ -20,7 +20,7 @@ import type {
 } from '@life-dashboard/shared';
 
 @Controller('mail')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
@@ -47,7 +47,10 @@ export class MailController {
     @GetUser() user: AuthenticatedUser,
     @Body() body: BatchCreateMailAccountDto,
   ) {
-    return this.mailService.batchCreateAccounts(user.userId, body.accounts || []);
+    return this.mailService.batchCreateAccounts(
+      user.userId,
+      body.accounts || [],
+    );
   }
 
   @Post('incoming/simulate')
@@ -63,22 +66,19 @@ export class MailController {
     @GetUser() user: AuthenticatedUser,
     @Body() body?: { accountId?: string },
   ) {
-    return this.mailService.cleanSpamAndPromotions(user.userId, body?.accountId);
+    return this.mailService.cleanSpamAndPromotions(
+      user.userId,
+      body?.accountId,
+    );
   }
 
   @Delete('accounts/:id')
-  deleteAccount(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  deleteAccount(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mailService.deleteAccount(id, user.userId);
   }
 
   @Post('accounts/:id/sync')
-  syncAccount(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  syncAccount(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mailService.syncAccount(id, user.userId);
   }
 
@@ -102,26 +102,17 @@ export class MailController {
   }
 
   @Get('messages/:id')
-  getMessage(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  getMessage(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mailService.getMessage(id, user.userId);
   }
 
   @Patch('messages/:id/star')
-  toggleStarred(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  toggleStarred(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mailService.toggleStarred(id, user.userId);
   }
 
   @Post('messages/:id/convert-to-task')
-  convertToTask(
-    @GetUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  convertToTask(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mailService.convertToTask(id, user.userId);
   }
 

@@ -1,11 +1,12 @@
-import { INestApplication } from '@nestjs/common';
+import { ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource, Repository } from 'typeorm';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { Task } from '../src/tasks/task.entity';
-import { User } from '../src/users/user.entity';
+import { UsersService } from '../src/users/users.service';
+import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { WishComment, WishResponse } from '../src/wishes/wish.entity';
 
 describe('Wishlist module (e2e)', () => {
@@ -16,12 +17,6 @@ describe('Wishlist module (e2e)', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.JWT_SECRET = 'test-secret';
-    process.env.GOOGLE_CLIENT_ID = 'google-client-id';
-    process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
-    process.env.GOOGLE_CALLBACK_URL =
-      'http://localhost:3000/api/v1/auth/google/callback';
-    process.env.FRONTEND_URL = 'http://localhost:5173';
     delete process.env.DATABASE_URL;
     delete process.env.DB_HOST;
     delete process.env.DB_PORT;
@@ -31,7 +26,26 @@ describe('Wishlist module (e2e)', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      // Test không gọi Supabase: "Bearer <email>" = đăng nhập bằng email đó
+      .overrideGuard(JwtAuthGuard)
+      .useFactory({
+        factory: (users: UsersService) => ({
+          async canActivate(ctx: ExecutionContext) {
+            const req = ctx.switchToHttp().getRequest<{
+              headers: Record<string, string | undefined>;
+              user?: unknown;
+            }>();
+            const email = req.headers.authorization?.replace(/^Bearer /, '');
+            if (!email) return false;
+            const user = await users.findOrCreateByEmail({ email });
+            req.user = { userId: user.id, email: user.email, role: user.role };
+            return true;
+          },
+        }),
+        inject: [UsersService],
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
@@ -47,20 +61,11 @@ describe('Wishlist module (e2e)', () => {
       await app.close();
     }
     delete process.env.NODE_ENV;
-    delete process.env.JWT_SECRET;
-    delete process.env.GOOGLE_CLIENT_ID;
-    delete process.env.GOOGLE_CLIENT_SECRET;
-    delete process.env.GOOGLE_CALLBACK_URL;
-    delete process.env.FRONTEND_URL;
   });
 
   async function devLogin(email: string) {
-    const response = await request(app.getHttpServer())
-      .post('/api/v1/auth/dev-login')
-      .send({ email })
-      .expect(201);
-
-    return response.body as { accessToken: string; user: User };
+    const user = await app.get(UsersService).findOrCreateByEmail({ email });
+    return { accessToken: email, user };
   }
 
   async function createSharedWish(ownerToken: string, recipientIds: string[]) {

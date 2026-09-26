@@ -6,20 +6,8 @@ import { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import 'pg';
 import { AppModule } from './app.module';
-import { getRequiredEnv } from './config/env.config';
 
 let cachedServer: Express | null = null;
-
-function getAllowedOrigins(): string | string[] {
-  const primary = getRequiredEnv('FRONTEND_URL');
-  const extra = process.env.ALLOWED_ORIGINS?.trim();
-  if (!extra) return primary;
-  const extras = extra
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
-  return extras.length ? [primary, ...extras] : primary;
-}
 
 function configureSwagger(app: Awaited<ReturnType<typeof NestFactory.create>>) {
   const config = new DocumentBuilder()
@@ -50,10 +38,11 @@ function configureApp(app: Awaited<ReturnType<typeof NestFactory.create>>) {
   );
 
   app.setGlobalPrefix('api/v1');
-  app.enableCors({
-    origin: getAllowedOrigins(),
-    credentials: true,
-  });
+  // Production: web + API cùng domain (life.minkoi.org) nên không cần CORS.
+  // Local: web chạy cổng 5173 gọi API cổng 3000.
+  if (process.env.NODE_ENV !== 'production') {
+    app.enableCors({ origin: /^http:\/\/(localhost|127\.0\.0\.1):\d+$/ });
+  }
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -123,7 +112,7 @@ export default async function handler(req: Request, res: Response) {
       '[VERCEL HANDLER ERROR] application failed to initialize:',
       error,
     );
-    res.status(500).send(`Internal Server Error: ${String(error)}`);
+    res.status(500).send('Internal Server Error');
   }
 }
 

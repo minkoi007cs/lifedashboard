@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { getApiBaseUrl } from '../../lib/api-config';
+import { getAccessToken } from '../../lib/supabase';
 import type {
   AssistantAction,
   AssistantMessage,
@@ -110,7 +111,7 @@ export const AssistantWidget: React.FC = () => {
       setStreamingActions([]);
 
       // Attach Bearer token the same way the shared axios instance does
-      const token = localStorage.getItem('token');
+      const token = await getAccessToken();
       const body: ChatRequest = {
         messages,
         conversationId,

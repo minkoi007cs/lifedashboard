@@ -1,36 +1,12 @@
-import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService, ConfigModule } from '@nestjs/config';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { GoogleStrategy } from './strategies/google.strategy';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { Global, Module } from '@nestjs/common';
 import { UsersModule } from '../users/users.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
+// Global để mọi controller dùng @UseGuards(JwtAuthGuard) mà không phải import UsersModule.
+@Global()
 @Module({
-  imports: [
-    UsersModule,
-    PassportModule,
-    ConfigModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const secret = configService.get<string>('JWT_SECRET')?.trim();
-        if (!secret) {
-          throw new Error('Missing required environment variable: JWT_SECRET');
-        }
-
-        return {
-          secret,
-          signOptions: { expiresIn: '1d' },
-        };
-      },
-      inject: [ConfigService],
-    }),
-  ],
-  controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
-  exports: [AuthService],
+  imports: [UsersModule],
+  providers: [JwtAuthGuard],
+  exports: [UsersModule, JwtAuthGuard],
 })
 export class AuthModule {}

@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { format } from 'date-fns';
 import { AppNotification, NotificationType } from './notification.entity';
-import { ConnectedAccount, AccountProvider } from './entities/connected-account.entity';
+import {
+  ConnectedAccount,
+  AccountProvider,
+} from './entities/connected-account.entity';
 import { TasksService } from '../tasks/tasks.service';
 import { HabitsService } from '../habits/habits.service';
 import { TaskPriority, TaskStatus } from '../tasks/task.entity';
@@ -121,7 +124,8 @@ export class NotificationsService {
     });
 
     if (existing) {
-      existing.emailOrUsername = data.emailOrUsername || existing.emailOrUsername;
+      existing.emailOrUsername =
+        data.emailOrUsername || existing.emailOrUsername;
       existing.accessToken = data.accessToken || existing.accessToken;
       existing.refreshToken = data.refreshToken || existing.refreshToken;
       existing.syncStatus = 'active';
@@ -168,14 +172,16 @@ export class NotificationsService {
       const mockGithubEvents = [
         {
           title: 'PR Review Requested: #42 Refactor Finance Engine',
-          message: 'khoihoang requested your review on pull request #42 in lifedashboard.',
+          message:
+            'khoihoang requested your review on pull request #42 in lifedashboard.',
           type: NotificationType.GITHUB_PR,
           link: 'https://github.com/minkoi007cs/lifedashboard/pull/42',
           actorName: 'khoihoang',
         },
         {
           title: 'Issue Assigned: #15 Support Weekly Habit Streaks',
-          message: 'You were assigned to issue #15 in lifedashboard: "Support custom rest days without streak penalty".',
+          message:
+            'You were assigned to issue #15 in lifedashboard: "Support custom rest days without streak penalty".',
           type: NotificationType.GITHUB_ISSUE,
           link: 'https://github.com/minkoi007cs/lifedashboard/issues/15',
           actorName: 'github-bot',
@@ -203,7 +209,8 @@ export class NotificationsService {
       const mockGoogleEvents = [
         {
           title: 'Urgent: Team Architecture Alignment',
-          message: 'From: lead@company.org — "Please review the updated C4 architecture diagrams before tomorrow\'s sync."',
+          message:
+            'From: lead@company.org — "Please review the updated C4 architecture diagrams before tomorrow\'s sync."',
           type: NotificationType.EMAIL_IMPORTANT,
           link: 'https://mail.google.com',
           actorName: 'Engineering Lead',
@@ -238,7 +245,8 @@ export class NotificationsService {
       const mockMicrosoftEvents = [
         {
           title: 'Outlook Priority: Contract Renewal Notice',
-          message: 'High priority flag: Please review and acknowledge the terms before end of week.',
+          message:
+            'High priority flag: Please review and acknowledge the terms before end of week.',
           type: NotificationType.EMAIL_IMPORTANT,
           link: 'https://outlook.office.com',
           actorName: 'Microsoft 365',
@@ -281,7 +289,10 @@ export class NotificationsService {
 
   // ── AI Daily Digest Generator ───────────────────────────────────────────────
 
-  async getDailyDigest(userId: string, clientDate?: string): Promise<DailyDigest> {
+  async getDailyDigest(
+    userId: string,
+    clientDate?: string,
+  ): Promise<DailyDigest> {
     const todayStr = clientDate || format(new Date(), 'yyyy-MM-dd');
     const hour = new Date().getHours();
 
@@ -298,7 +309,9 @@ export class NotificationsService {
         id: t.id,
         title: t.title,
         priority: t.priority,
-        dueDate: t.dueDate ? format(new Date(t.dueDate), 'yyyy-MM-dd') : undefined,
+        dueDate: t.dueDate
+          ? format(new Date(t.dueDate), 'yyyy-MM-dd')
+          : undefined,
         status: t.status,
       }));
 
@@ -321,7 +334,9 @@ export class NotificationsService {
           streak: h.streak,
           targetCount: h.targetCount,
           completedCount: todayLog ? todayLog.completedCount : 0,
-          isCompleted: todayLog ? todayLog.completedCount >= h.targetCount : false,
+          isCompleted: todayLog
+            ? todayLog.completedCount >= h.targetCount
+            : false,
         };
       });
 
@@ -342,18 +357,34 @@ export class NotificationsService {
 
     // Quotes collection
     const quotes = [
-      { text: 'Chất lượng không phải là một hành động, nó là một thói quen.', author: 'Aristotle' },
-      { text: 'Tập trung sâu là siêu năng lực của thế kỷ 21.', author: 'Cal Newport' },
-      { text: 'Kỷ luật đưa bạn đến nơi mà động lực không thể mang lại.', author: 'Jim Rohn' },
-      { text: 'Làm những việc nhỏ với sự kiên trì phi thường.', author: 'James Clear' },
+      {
+        text: 'Chất lượng không phải là một hành động, nó là một thói quen.',
+        author: 'Aristotle',
+      },
+      {
+        text: 'Tập trung sâu là siêu năng lực của thế kỷ 21.',
+        author: 'Cal Newport',
+      },
+      {
+        text: 'Kỷ luật đưa bạn đến nơi mà động lực không thể mang lại.',
+        author: 'Jim Rohn',
+      },
+      {
+        text: 'Làm những việc nhỏ với sự kiên trì phi thường.',
+        author: 'James Clear',
+      },
     ];
     const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
     // AI Focus Recommendation
-    let focusRecommendation = 'Hôm nay hãy dành 1 phiên Pomodoro 25 phút để dọn dẹp các ghi chú và lên kế hoạch.';
+    let focusRecommendation =
+      'Hôm nay hãy dành 1 phiên Pomodoro 25 phút để dọn dẹp các ghi chú và lên kế hoạch.';
     if (topPriorities.length > 0) {
       focusRecommendation = `Khuyến nghị tập trung: Dành ít nhất 45 phút Deep Work hoàn thành nhiệm vụ ưu tiên: "${topPriorities[0].title}".`;
-    } else if (activeHabits.length > 0 && completedTodayCount < activeHabits.length) {
+    } else if (
+      activeHabits.length > 0 &&
+      completedTodayCount < activeHabits.length
+    ) {
       focusRecommendation = `Tất cả nhiệm vụ đã xong! Hãy tập trung duy trì chuỗi Streak cho thói quen: "${activeHabits[0].name}".`;
     }
 
@@ -393,7 +424,9 @@ export class NotificationsService {
       throw new NotFoundException(`Notification "${notificationId}" not found`);
     }
 
-    const dueDate = overrides?.dueDate ? new Date(overrides.dueDate) : new Date();
+    const dueDate = overrides?.dueDate
+      ? new Date(overrides.dueDate)
+      : new Date();
     const priority = overrides?.priority || TaskPriority.MEDIUM;
     const taskTitle = overrides?.title || notification.title;
 

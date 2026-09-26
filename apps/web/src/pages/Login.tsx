@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CircleHelp, Monitor, Moon, Sparkles, Sun } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import api from '../lib/axios';
-import { getApiBaseUrl } from '../lib/api-config';
 import { useTheme } from '../components/theme/theme-context';
 import { ActionButton, SoftButton, SurfaceCard } from '../components/ui/shell';
 import { HelpPanel } from '../components/help/HelpPanel';
@@ -11,38 +9,16 @@ import { HelpPanel } from '../components/help/HelpPanel';
 export const Login: React.FC = () => {
   const { login, user } = useAuthStore();
   const navigate = useNavigate();
-  const [devLoading, setDevLoading] = useState(false);
+  const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const { mode, setMode } = useTheme();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (token) {
-      login(token).then(() => navigate('/'));
-    }
-  }, [login, navigate]);
-
-  useEffect(() => {
-    if (user) navigate('/');
-  }, [user, navigate]);
+    if (user) navigate(from, { replace: true });
+  }, [user, navigate, from]);
 
   const handleGoogleLogin = () => {
-    const apiUrl = getApiBaseUrl();
-    window.location.href = `${apiUrl}/api/v1/auth/google`;
-  };
-
-  const handleDevLogin = async () => {
-    setDevLoading(true);
-    try {
-      const res = await api.post('/api/v1/auth/dev-login', {});
-      await login(res.data.accessToken);
-      navigate('/');
-    } catch (err) {
-      console.error('Dev login failed', err);
-    } finally {
-      setDevLoading(false);
-    }
+    void login(from);
   };
 
   return (
@@ -163,29 +139,6 @@ export const Login: React.FC = () => {
             Sign in with Google
           </ActionButton>
 
-          {import.meta.env.DEV && (
-            <>
-              <div className="relative my-5">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-orange-100 dark:border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-xs text-slate-400">
-                  <span className="bg-[hsl(var(--background))] px-3">or</span>
-                </div>
-              </div>
-
-              <SoftButton
-                onClick={handleDevLogin}
-                disabled={devLoading}
-                className="w-full border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
-              >
-                {devLoading ? 'Logging in...' : 'Dev Login (skip OAuth)'}
-              </SoftButton>
-              <p className="mt-3 text-center text-xs text-slate-400">
-                Dev mode only — not available in production.
-              </p>
-            </>
-          )}
         </SurfaceCard>
       </div>
       <HelpPanel
